@@ -173,21 +173,26 @@ alter _raw_kvobj = format_string(
  *  e.g.
  *    key1=val1 key2=val2 key3=val3
  *
- * ### Supported Formats
- *  - 'value' can be quoted with a double quotation mark
- *  - 'value' can contain spaces regardless the quoted text
- *  - 'key' cannot contain any spaces
- *  - 'key' can be quoted with a double quotation mark, but it cannot contain any spaces even if it's quoted.
- *  - 'key' and 'value' between '=' allows any spaces to be inserted,
- *  - A back-slash charator escapes a following charactor in 'value'.
+ * ### Supported Syntax/Formats
+ *  - A back-slash charator escapes a following charactor.
+ *  - 'key' and 'value' can be quoted with a double quotation mark.
+ *  - 'value' can contain spaces regardless the quoted text.
+ *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
+ *  - 'key' and 'value' between '=' allows any spaces to be inserted.
+ *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
  * 
  *   e.g.
  *    - key1="val1" key2="val2"
+ *    - key1="va\\l1" key2="va\\l2"
  *    - key1=v a l 1 key2=v a l 2
  *    - "key1"="val1" "key2"="val2"
  *    - key1 = val1 key2 = val2
  *    - key1 = val1 key2 = "v a l 2"
  *    - key1=val\=1 key2=val\=2
+ *    - "k e y 1" = "v a l 1"key2 = "v a l 2"
+ *    - "k e y 1" = val1"k e y 2" = "v a l 2"
+ *    - "k e y 1" = "v a l 1" "k e y 2" = "v a l 2"
+ *    - "k e y 1" = "v a l 1""k e y 2" = "v a l 2"
  *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
  * It's responsible for you to ensure the text in the correct format before giving it,
@@ -203,35 +208,60 @@ alter _raw_kvobj = format_string(
 alter __kvtext = arraystring(
     arraymap(
         regextract(
-            format_string(
-                "=%s=",
-                replace(to_string(coalesce(__kvtext, "")), "=", "==")
-            ),
-            "=((?:\\==|\\[^=]|[^=\\])+?)="
+            replace(to_string(coalesce(__kvtext, "")), "=", "=="),
+            "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])+?=|=(?:\\==|\\[^=]|[^=\\])+?$"
         ),
-        arrayindex(
+        arraystring(
             arraymap(
-                arraycreate(replace("@element", "\==", "=")),
+                arraycreate(
+                    // val + key
+                    regexcapture(to_string("@element"), "=\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*\"(?P<k>(?:\\==|\\[^=]|[^\\\"])*)\"\s*="),
+                    regexcapture(to_string("@element"), "=\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+)\s*="),
+                    regexcapture(to_string("@element"), "=\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+)\s+(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+?)\s*="),
+                    regexcapture(to_string("@element"), "=\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+?)\s*\"(?P<k>(?:\\==|\\[^=]|[^\\\"])*)\"\s*="),
+
+                    // first key
+                    regexcapture(to_string("@element"), "^\s*\"(?P<k>(?:\\.|[^\\\"])*)\"\s*="),
+                    regexcapture(to_string("@element"), "^\s*(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+)\s*="),
+
+                    // last value
+                    regexcapture(to_string("@element"), "(?P<t>=)\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*$"),
+                    regexcapture(to_string("@element"), "(?P<t>=)\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+?)\s*$")
+                ),
                 arraystring(
                     arraymap(
-                        arrayconcat(
-                            regextract("@element", "^\s*((?:\"(?:\\.|[^\\\"])+?\"|[^\\\"]+?))\s+\S+\s*$"),
-                            regextract("@element", "^\s*(?:\"(?:\\.|[^\\\"])*?\"|[^\\\"]*?)\s*(\S+)\s*$")
-                        ),
-                        arrayindex(
-                            arraymap(
-                                arraycreate(
-                                    regexcapture(to_string("@element"), "\"?(?P<v>(?:\\.|[^\\\"])*)\"?")
+                        arraymap(
+                            arrayconcat(
+                                if(
+                                    "@element"->v != null and "@element"->v != "",
+                                    arraycreate("@element"->v),
+                                    "[]"->[]
                                 ),
-                                format_string("\"%s\"",replace(replace("@element"->v, """\\""", """\\\\"""), "\"", "\\""))
+                                if(
+                                    "@element"->k != null and "@element"->k != "",
+                                    arraycreate("@element"->k),
+                                    "[]"->[]
+                                )
                             ),
-                            0
+                            replace(to_string("@element"), "\==", "=")
+                        ),
+                        format_string(
+                            "\"%s\"",
+                            // Escape backsrashs and double quotations
+                            replace(
+                                replace(
+                                    // Unescape escaped charactors
+                                    replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""), """\\\\""", """\\"""),
+                                    """\\""", """\\\\"""
+                                ),
+                                """\"""", """\\\""""
+                            )
                         )
                     ),
                     ""
                 )
             ),
-            0
+            ""
         )
     ),
     "="
