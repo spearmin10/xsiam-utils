@@ -13,7 +13,7 @@ alter __log = _raw_log
 | filter cef->extension != ""
 
 | alter __kvtext = trim(cef->extension)
-| call minoue_nqssv2kvobj
+| call minoue_nqsskv2kvobj
 
 | alter extensions = _raw_kvobj->{}
 | alter cef_version = cef->cef_version
