@@ -180,6 +180,7 @@ alter _raw_kvobj = format_string(
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
+ *  - 'value' can contains multiple tokens quoted with a double quotation mark.
  * 
  *   e.g.
  *    - key1="val1" key2="val2"
@@ -193,6 +194,7 @@ alter _raw_kvobj = format_string(
  *    - "k e y 1" = val1"k e y 2" = "v a l 2"
  *    - "k e y 1" = "v a l 1" "k e y 2" = "v a l 2"
  *    - "k e y 1" = "v a l 1""k e y 2" = "v a l 2"
+ *    - key1="v1[1]" v1[2] "v1[3]" key2=v2[1] "v2[2]" 
  *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
  * It's responsible for you to ensure the text in the correct format before giving it,
@@ -215,30 +217,33 @@ alter __kvtext = arraystring(
             arraymap(
                 arraycreate(
                     // val + key
-                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))\s*(?P<k>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
+                    regexcapture(to_string("@element"), "^=\s*(?P<v>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))+?)\s*(?P<k>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
 
                     // first key
                     regexcapture(to_string("@element"), "^\s*(?P<k>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
 
                     // last value
-                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))\s*$")
+                    regexcapture(to_string("@element"), "^=\s*(?P<v>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*$")
                 ),
                 arraystring(
                     arraymap(
                         arraymap(
-                            arrayconcat(
-                                if(
-                                    "@element"->v != null and "@element"->v != "",
-                                    regextract("@element"->v, "^\"?(.*?)\"?$"),
-                                    "[]"->[]
+                            arraymap(
+                                arrayconcat(
+                                    if(
+                                        "@element"->v != null and "@element"->v != "",
+                                        arraycreate("@element"->v),
+                                        "[]"->[]
+                                    ),
+                                    if(
+                                        "@element"->k != null and "@element"->k != "",
+                                        arraycreate("@element"->k),
+                                        "[]"->[]
+                                    )
                                 ),
-                                if(
-                                    "@element"->k != null and "@element"->k != "",
-                                    regextract("@element"->k, "^\"?(.*?)\"?$"),
-                                    "[]"->[]
-                                )
+                                regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
                             ),
-                            replace("@element", "\==", "=")
+                            if("@element"->qv != "", "@element"->qv, "@element"->nv)
                         ),
                         format_string(
                             "\"%s\"",
