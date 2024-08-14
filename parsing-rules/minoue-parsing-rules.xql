@@ -178,6 +178,7 @@ alter _raw_kvobj = format_string(
  *  - 'key' and 'value' can be quoted with a double quotation mark.
  *  - 'value' can contain spaces regardless the quoted text.
  *  - 'value' can contain multiple tokens quoted with a double quotation mark.
+ *  - 'value' can have an empty value regardless the quoted text.
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
@@ -194,7 +195,8 @@ alter _raw_kvobj = format_string(
  *    - "k e y 1" = val1"k e y 2" = "v a l 2"
  *    - "k e y 1" = "v a l 1" "k e y 2" = "v a l 2"
  *    - "k e y 1" = "v a l 1""k e y 2" = "v a l 2"
- *    - key1="v1[1]" v1[2] "v1[3]" key2=v2[1] "v2[2]" 
+ *    - key1="v1[1]" v1[2] "v1[3]" key2=v2[1] "v2[2]"
+ *    - key1="" key2= key3=
  *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
  * It's responsible for you to ensure the text in the correct format before giving it,
@@ -216,7 +218,7 @@ alter __kvtext = arraystring(
         arrayindex(
             arraymap(
                 arraycreate(
-                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))+?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*)$")
+                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*)$")
                 ),
                 arraystring(
                     arraymap(
@@ -225,11 +227,7 @@ alter __kvtext = arraystring(
                                 if(
                                     "@element"->vkk != "",
                                     arraycreate("@element"->vkv, "@element"->vkk),
-                                    if(
-                                        "@element"->fk != "",
-                                        arraycreate("@element"->fk),
-                                        if("@element"->lv != "", arraycreate("@element"->lv), "[]"->[])
-                                    )
+                                    if("@element"->fk != "", arraycreate("@element"->fk), arraycreate("@element"->lv))
                                 ),
                                 regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
                             ),
