@@ -5,12 +5,12 @@
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  * ******************************************************/
 [CONST]
-PATTERN_CSV = "^(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*)(,\s*(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*))*$";
-PATTERN_SSV = "^(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*)(\s\s*(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*))*$";
+PATTERN_CSKV = "^(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*)(,\s*(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*))*$";
+PATTERN_SSKV = "^(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*)(\s\s*(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*))*$";
 
-[RULE: minoue_csv2kvobj]
+[RULE: minoue_cskv2kvobj]
 /***
- * This rule transforms a csv (comma separated value) text to a json object.
+ * This rule transforms a comma separated key=value text to a json object.
  * The standard pattern is:
  *    key=value[, key=value]*
  *
@@ -37,11 +37,11 @@ PATTERN_SSV = "^(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\
  *    - key1="v a l 1""key2"="v a l 2"
  *
  * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with PATTERN_CSV in advance.
+ * You should ensure the text in the correct format with PATTERN_CSKV in advance.
  * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A comma separated text
+ * :param __kvtext: A comma separated key=value text
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
@@ -87,9 +87,9 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_ssv2kvobj]
+[RULE: minoue_sskv2kvobj]
 /***
- * This rule transforms a spaces separated value text to a json object.
+ * This rule transforms a spaces separated key=value text to a json object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -114,11 +114,11 @@ alter _raw_kvobj = format_string(
  *    - key1="v a l 1","key2"="v a l 2"
  *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with PATTERN_SSV.
+ * You should ensure the text in the correct format with PATTERN_SSKV.
   * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A comma separated text
+ * :param __kvtext: A comma separated key=value text
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
@@ -164,9 +164,9 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_nqssv2kvobj]
+[RULE: minoue_nqsskv2kvobj]
 /***
- * This rule transforms a spaces separated value text to a json object.
+ * This rule transforms a spaces separated key=value text to a json object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -203,7 +203,7 @@ alter _raw_kvobj = format_string(
  * however you wouldn't be able to check the pattern only with RE2.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A comma separated text (__kvtext will be broken in the function)
+ * :param __kvtext: A comma separated key=value text (__kvtext will be broken in the function)
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
@@ -254,7 +254,7 @@ alter __kvtext = arraystring(
     ),
     "="
 )
-| call minoue_ssv2kvobj
+| call minoue_sskv2kvobj
 ;
 
 [RULE: minoue_syslog_lite]
@@ -412,7 +412,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 | alter _facility = floor(divide(to_number(_x->pri), 8))
 | alter _severity = floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))
 | alter __kvtext = _x->sd_data
-| call minoue_ssv2kvobj
+| call minoue_sskv2kvobj
 
 // Build syslog parameters
 | alter syslog = if(
