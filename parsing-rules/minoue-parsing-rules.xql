@@ -213,32 +213,22 @@ alter __kvtext = arraystring(
             replace(to_string(coalesce(__kvtext, "")), "=", "=="),
             "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])+?=|=(?:\\==|\\[^=]|[^=\\])*?$"
         ),
-        arraystring(
+        arrayindex(
             arraymap(
                 arraycreate(
-                    // val + key
-                    regexcapture(to_string("@element"), "^=\s*(?P<v>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))+?)\s*(?P<k>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
-
-                    // first key
-                    regexcapture(to_string("@element"), "^\s*(?P<k>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
-
-                    // last value
-                    regexcapture(to_string("@element"), "^=\s*(?P<v>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*$")
+                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))+?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*)$")
                 ),
                 arraystring(
                     arraymap(
                         arraymap(
                             arraymap(
-                                arrayconcat(
+                                if(
+                                    "@element"->vkk != "",
+                                    arraycreate("@element"->vkv, "@element"->vkk),
                                     if(
-                                        "@element"->v != null and "@element"->v != "",
-                                        arraycreate("@element"->v),
-                                        "[]"->[]
-                                    ),
-                                    if(
-                                        "@element"->k != null and "@element"->k != "",
-                                        arraycreate("@element"->k),
-                                        "[]"->[]
+                                        "@element"->fk != "",
+                                        arraycreate("@element"->fk),
+                                        if("@element"->lv != "", arraycreate("@element"->lv), "[]"->[])
                                     )
                                 ),
                                 regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
@@ -261,7 +251,7 @@ alter __kvtext = arraystring(
                     ""
                 )
             ),
-            ""
+            0
         )
     ),
     "="
