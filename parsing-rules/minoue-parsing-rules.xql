@@ -2,7 +2,7 @@
  * MINOUE Parsing Rules Library
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  * ******************************************************/
 [CONST]
 PATTERN_CSV = "^(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*)(,\s*(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*))*$";
@@ -45,7 +45,7 @@ PATTERN_SSV = "^(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
 alter _raw_kvobj = format_string(
     "{%s}",
@@ -122,7 +122,7 @@ alter _raw_kvobj = format_string(
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
 alter _raw_kvobj = format_string(
     "{%s}",
@@ -203,7 +203,7 @@ alter _raw_kvobj = format_string(
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
 alter __kvtext = arraystring(
     arraymap(
@@ -310,7 +310,7 @@ alter __kvtext = arraystring(
  * :return syslog: Parameters extracted from the log in JSON object.
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
 // Parse syslog message
 alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)) +(?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})) (?P<host_3164>\S+) ((?P<tag>[^:\[]{1,32})(\[(?P<pid>\d*)\])?: )?(?P<msg_3164>.*)|(?P<version>\d{1,2}) (-|(?P<datetime_5424>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,6})?(Z|[+-]\d{2}:\d{2}))) (-|(?P<host_5424>\S{1,255})) (-|(?P<app>\S{1,48})) (-|(?P<proc_id>\S{1,128})) (-|(?P<msg_id>\S{1,32})) (-|\[(?P<structured_data>(?P<sd_id>[^ =\]]+) (?P<sd_data>(?:[^\]\\]|\\.)*))\])( (?P<msg_5424>(.*)))?)")
@@ -412,7 +412,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  * :return syslog: Parameters extracted from the log in JSON object.
  *
  * @auther Masahiko Inoue
- * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules.xql
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
 // Parse syslog message
 alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)) +(?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})) (?P<host_3164>\S+) ((?P<tag>[^:\[]{1,32})(\[(?P<pid>\d*)\])?: )?(?P<msg_3164>.*)|(?P<version>\d{1,2}) (-|(?P<datetime_5424>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,6})?(Z|[+-]\d{2}:\d{2}))) (-|(?P<host_5424>\S{1,255})) (-|(?P<app>\S{1,48})) (-|(?P<proc_id>\S{1,128})) (-|(?P<msg_id>\S{1,32})) (-|\[(?P<structured_data>(?P<sd_id>[^ =\]]+) (?P<sd_data>(?:[^\]\\]|\\.)*))\])( (?P<msg_5424>(.*)))?)")
