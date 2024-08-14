@@ -178,7 +178,7 @@ alter _raw_kvobj = format_string(
  *  - 'key' and 'value' can be quoted with a double quotation mark.
  *  - 'value' can contain spaces regardless the quoted text.
  *  - 'value' can contain multiple tokens quoted with a double quotation mark.
- *  - 'value' can have an empty value regardless the quoted text.
+ *  - 'value' can be an empty value regardless the quoted text.
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
