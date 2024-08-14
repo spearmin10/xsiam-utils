@@ -177,10 +177,10 @@ alter _raw_kvobj = format_string(
  *  - A back-slash charator escapes a following charactor.
  *  - 'key' and 'value' can be quoted with a double quotation mark.
  *  - 'value' can contain spaces regardless the quoted text.
+ *  - 'value' can contain multiple tokens quoted with a double quotation mark.
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
- *  - 'value' can contains multiple tokens quoted with a double quotation mark.
  * 
  *   e.g.
  *    - key1="val1" key2="val2"
