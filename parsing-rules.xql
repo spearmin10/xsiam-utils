@@ -215,18 +215,13 @@ alter __kvtext = arraystring(
             arraymap(
                 arraycreate(
                     // val + key
-                    regexcapture(to_string("@element"), "=\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*\"(?P<k>(?:\\==|\\[^=]|[^\\\"])*)\"\s*="),
-                    regexcapture(to_string("@element"), "=\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+)\s*="),
-                    regexcapture(to_string("@element"), "=\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+)\s+(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+?)\s*="),
-                    regexcapture(to_string("@element"), "=\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+?)\s*\"(?P<k>(?:\\==|\\[^=]|[^\\\"])*)\"\s*="),
+                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))\s*(?P<k>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
 
                     // first key
-                    regexcapture(to_string("@element"), "^\s*\"(?P<k>(?:\\.|[^\\\"])*)\"\s*="),
-                    regexcapture(to_string("@element"), "^\s*(?P<k>(?:\\==|\\[^=]|[^\\\"=\s])+)\s*="),
+                    regexcapture(to_string("@element"), "^\s*(?P<k>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
 
                     // last value
-                    regexcapture(to_string("@element"), "(?P<t>=)\s*\"(?P<v>(?:\\==|\\[^=]|[^\\\"])*)\"\s*$"),
-                    regexcapture(to_string("@element"), "(?P<t>=)\s*(?P<v>(?:\\==|\\[^=]|[^\\\"=])+?)\s*$")
+                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))\s*$")
                 ),
                 arraystring(
                     arraymap(
@@ -234,16 +229,16 @@ alter __kvtext = arraystring(
                             arrayconcat(
                                 if(
                                     "@element"->v != null and "@element"->v != "",
-                                    arraycreate("@element"->v),
+                                    regextract("@element"->v, "^\"?(.*?)\"?$"),
                                     "[]"->[]
                                 ),
                                 if(
                                     "@element"->k != null and "@element"->k != "",
-                                    arraycreate("@element"->k),
+                                    regextract("@element"->k, "^\"?(.*?)\"?$"),
                                     "[]"->[]
                                 )
                             ),
-                            replace(to_string("@element"), "\==", "=")
+                            replace("@element", "\==", "=")
                         ),
                         format_string(
                             "\"%s\"",
