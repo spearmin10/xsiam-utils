@@ -209,7 +209,7 @@ alter __kvtext = arraystring(
     arraymap(
         regextract(
             replace(to_string(coalesce(__kvtext, "")), "=", "=="),
-            "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])+?=|=(?:\\==|\\[^=]|[^=\\])+?$"
+            "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])+?=|=(?:\\==|\\[^=]|[^=\\])*?$"
         ),
         arraystring(
             arraymap(
@@ -221,7 +221,7 @@ alter __kvtext = arraystring(
                     regexcapture(to_string("@element"), "^\s*(?P<k>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),
 
                     // last value
-                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+?))\s*$")
+                    regexcapture(to_string("@element"), "^=\s*(?P<v>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))\s*$")
                 ),
                 arraystring(
                     arraymap(
