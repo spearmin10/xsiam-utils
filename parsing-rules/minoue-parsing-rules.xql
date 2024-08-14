@@ -89,7 +89,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_sskv2kvobj]
 /***
- * This rule transforms a spaces separated key=value text to a json object.
+ * This rule transforms a space separated key=value text to a json object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -118,7 +118,7 @@ alter _raw_kvobj = format_string(
   * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A comma separated key=value text
+ * :param __kvtext: A space separated key=value text
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
@@ -166,7 +166,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_nqsskv2kvobj]
 /***
- * This rule transforms a spaces separated key=value text to a json object.
+ * This rule transforms a space separated key=value text to a json object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -203,7 +203,7 @@ alter _raw_kvobj = format_string(
  * however you wouldn't be able to check the pattern only with RE2.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A comma separated key=value text (__kvtext will be broken in the function)
+ * :param __kvtext: A space separated key=value text (__kvtext will be broken in the function)
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
@@ -255,6 +255,49 @@ alter __kvtext = arraystring(
     "="
 )
 | call minoue_sskv2kvobj
+;
+
+[RULE: minoue_tokenize_ssv]
+/***
+ * This rule transforms a space separated value to an array.
+ * The standard pattern is:
+ *    value[ value]*
+ *
+ *  e.g.
+ *    val1 val2 val3
+ *
+ * 'value' can be quoted with a double quotation mark, and also a back-slash escapes a following charactor.
+ *   e.g.
+ *    - "value"
+ *    - va\ lue
+ *    - va\\lue
+ *    - va\"lue
+ *
+ * :param __text: A space separated value
+ * :return _tokens: Tokens
+ *
+ * @auther Masahiko Inoue
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
+ ***/
+alter _tokens = arraymap(
+    regextract(
+        to_string(coalesce(__text, "")),
+        "(?:(?:\\.|[^\\\"\s])*\"(?:\\.|[^\\\"])*\"(?:\\.|[^\\\"\s])*)+\s+|(?:(?:\\.|[^\\\"\s])*\"(?:\\.|[^\\\"])*\"(?:\\.|[^\\\"\s])*)+$|(?:(?:\"(?:\\.|[^\\\"])*\")?(?:\\.|[^\\\"\s])+(?:\"(?:\\.|[^\\\"])*\")?)+\s+|(?:(?:\"(?:\\.|[^\\\"])*\")?(?:\\.|[^\\\"\s])+(?:\"(?:\\.|[^\\\"])*\")?)+$"
+    ),
+    arrayindex(
+        arraymap(
+            arraycreate(
+                regexcapture(trim(to_string("@element")), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
+            ),
+            if(
+                "@element"->qv != "",
+                arraystring(arraymap(split("@element"->qv, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+                arraystring(arraymap(split("@element"->nv, """\\\\"""), replace("@element", """\\""", "")), """\\""")
+            )
+        ),
+        0
+    )
+)
 ;
 
 [RULE: minoue_syslog_lite]
