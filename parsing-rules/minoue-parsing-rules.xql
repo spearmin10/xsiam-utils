@@ -69,7 +69,7 @@ alter _raw_kvobj = format_string(
                                 replace(
                                     replace(
                                         // Unescape escaped charactors
-                                        replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""), """\\\\""", """\\"""),
+                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
                                         """\\""", """\\\\"""
                                     ),
                                     """\"""", """\\\""""
@@ -146,7 +146,7 @@ alter _raw_kvobj = format_string(
                                 replace(
                                     replace(
                                         // Unescape escaped charactors
-                                        replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""), """\\\\""", """\\"""),
+                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
                                         """\\""", """\\\\"""
                                     ),
                                     """\"""", """\\\""""
@@ -241,7 +241,7 @@ alter __kvtext = arraystring(
                             replace(
                                 replace(
                                     // Unescape escaped charactors
-                                    replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""), """\\\\""", """\\"""),
+                                    arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
                                     """\\""", """\\\\"""
                                 ),
                                 """\"""", """\\\""""
