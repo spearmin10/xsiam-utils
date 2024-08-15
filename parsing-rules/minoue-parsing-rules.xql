@@ -10,7 +10,6 @@ PATTERN_SSKV = "^(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^=\"\s])+)\s*?=\s*?(?:\"(?:\\.|[^
 PATTERN_CSV = "^\s*(?:(?:\"(?:\"\"|\\.|[^\\\"])*\")|[^,\"]*?)\s*(?:,\s*(?:(?:\"(?:\"\"|\\.|[^\\\"])*\")|[^,\"]*?)\s*)*$";
 PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
 
-
 [RULE: minoue_cskv2kvobj]
 /***
  * This rule transforms a comma separated key=value text to a json object.
@@ -414,8 +413,6 @@ alter _columns = arraymap(
  ***/
 // Parse syslog message
 alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)) +(?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})) (?P<host_3164>\S+) ((?P<tag>[^:\[]{1,32})(\[(?P<pid>\d*)\])?: )?(?P<msg_3164>.*)|(?P<version>\d{1,2}) (-|(?P<datetime_5424>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,6})?(Z|[+-]\d{2}:\d{2}))) (-|(?P<host_5424>\S{1,255})) (-|(?P<app>\S{1,48})) (-|(?P<proc_id>\S{1,128})) (-|(?P<msg_id>\S{1,32})) (-|\[(?P<structured_data>(?P<sd_id>[^ =\]]+) (?P<sd_data>(?:[^\]\\]|\\.)*))\])( (?P<msg_5424>(.*)))?)")
-| alter _facility = floor(divide(to_number(_x->pri), 8))
-| alter _severity = floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))
 
 // Build syslog parameters
 | alter _syslog = if(
@@ -424,13 +421,25 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
         "header", object_create(
             "pri", object_create(
                 "_raw", to_number(_x->pri),
-                "facility", object_create(
-                    "_raw", _facility,
-                    "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), _facility), "unknown")
+                "facility", arrayindex(
+                    arraymap(
+                        arraycreate(floor(divide(to_number(_x->pri), 8))),
+                        object_create(
+                            "_raw", "@element",
+                            "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), "@element"), "unknown")
+                        )
+                    ),
+                    0
                 ),
-                "severity", object_create(
-                    "_raw", _severity,
-                    "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), _severity)
+                "severity", arrayindex(
+                    arraymap(
+                        arraycreate(floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))),
+                        object_create(
+                            "_raw", "@element",
+                            "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
+                        )
+                    ),
+                    0
                 )
             ),
             "version", to_number(_x->version),
@@ -457,13 +466,16 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
             "structured_data", object_create(
                 "_raw", if( _x->structured_data != "", _x->structured_data),
                 "id", if( _x->sd_id != "", _x->sd_id),
-                "data", object_create()
+                "data", object_create(
+                    "_raw", if( _x->sd_data != "", _x->sd_data),
+                    "params", object_create()
+                )
             )
         ),
         "message", if(_x->msg_3164 = "", _x->msg_5424, _x->msg_3164)
     )
 )
-| fields -_x, _facility, _severity
+| fields -_x
 ;
 
 [RULE: minoue_syslog]
@@ -516,8 +528,6 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  ***/
 // Parse syslog message
 alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)) +(?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})) (?P<host_3164>\S+) ((?P<tag>[^:\[]{1,32})(\[(?P<pid>\d*)\])?: )?(?P<msg_3164>.*)|(?P<version>\d{1,2}) (-|(?P<datetime_5424>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,6})?(Z|[+-]\d{2}:\d{2}))) (-|(?P<host_5424>\S{1,255})) (-|(?P<app>\S{1,48})) (-|(?P<proc_id>\S{1,128})) (-|(?P<msg_id>\S{1,32})) (-|\[(?P<structured_data>(?P<sd_id>[^ =\]]+) (?P<sd_data>(?:[^\]\\]|\\.)*))\])( (?P<msg_5424>(.*)))?)")
-| alter _facility = floor(divide(to_number(_x->pri), 8))
-| alter _severity = floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))
 | alter __kvtext = _x->sd_data
 | call minoue_sskv2kvobj
 
@@ -528,13 +538,25 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
         "header", object_create(
             "pri", object_create(
                 "_raw", to_number(_x->pri),
-                "facility", object_create(
-                    "_raw", _facility,
-                    "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), _facility), "unknown")
+                "facility", arrayindex(
+                    arraymap(
+                        arraycreate(floor(divide(to_number(_x->pri), 8))),
+                        object_create(
+                            "_raw", "@element",
+                            "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), "@element"), "unknown")
+                        )
+                    ),
+                    0
                 ),
-                "severity", object_create(
-                    "_raw", _severity,
-                    "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), _severity)
+                "severity", arrayindex(
+                    arraymap(
+                        arraycreate(floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))),
+                        object_create(
+                            "_raw", "@element",
+                            "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
+                        )
+                    ),
+                    0
                 )
             ),
             "version", to_number(_x->version),
@@ -570,7 +592,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
         "message", if(_x->msg_3164 = "", _x->msg_5424, _x->msg_3164)
     )
 )
-| fields -_x, _facility, _severity, __kvtext, _raw_kvobj
+| fields -_x, __kvtext, _raw_kvobj
 ;
 /* ******* END OF MINOUE Parsing Rules Library **********
  * ******************************************************/
