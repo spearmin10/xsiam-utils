@@ -14,14 +14,13 @@ alter __log = _raw_log
 
 | alter __kvtext = trim(cef->extension)
 | call minoue_nqsskv2kvobj
-
-| alter extensions = _raw_kvobj->{}
-| alter cef_version = cef->cef_version
-| alter cef_vendor = cef->cef_vendor
-| alter cef_product = cef->cef_product
-| alter device_version = cef->dev_version
-| alter event_class_id = cef->event_class_id
-| alter name = cef->name
-| alter severity = cef->severity
+| alter extensions = _raw_kvobj->{},
+        cef_version = cef->cef_version,
+        cef_vendor = cef->cef_vendor,
+        cef_product = cef->cef_product,
+        device_version = cef->dev_version,
+        event_class_id = cef->event_class_id,
+        name = cef->name,
+        severity = cef->severity
 | fields _syslog as syslog, cef_version, cef_vendor, cef_product, device_version, event_class_id, name, severity, extensions, _raw_log
 ;
