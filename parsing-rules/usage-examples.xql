@@ -4,10 +4,10 @@
 [INGEST:vendor="unknown", product="unknown", target_dataset="cef_cef_sample", no_hit=drop]
 alter __log = _raw_log
 | call minoue_syslog
-| filter syslog != null
+| filter _syslog != null
 
 | alter cef = regexcapture(
-    syslog->message,
+    _syslog->message,
     "CEF:\s*(?P<cef_version>\d+)\|(?P<cef_vendor>[^|]*)\|(?P<cef_product>[^|]*)\|(?P<dev_version>[^|]*)\|(?P<event_class_id>[^|]*)\|(?P<name>[^|]*)\|(?P<severity>[^|]*)\|(?P<extension>.*)$"
 )
 | filter cef->extension != ""
@@ -23,5 +23,5 @@ alter __log = _raw_log
 | alter event_class_id = cef->event_class_id
 | alter name = cef->name
 | alter severity = cef->severity
-| fields cef_version, cef_vendor, cef_product, device_version, event_class_id, name, severity, extensions, _raw_log
+| fields _syslog as syslog, cef_version, cef_vendor, cef_product, device_version, event_class_id, name, severity, extensions, _raw_log
 ;
