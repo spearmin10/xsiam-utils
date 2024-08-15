@@ -5,8 +5,9 @@
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  * ******************************************************/
 [CONST]
-PATTERN_CSKV = "^(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*)(,\s*(\"(\\.|[^\"])*\"|(\\.|[^,=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^,\"\s])*))*$";
-PATTERN_SSKV = "^(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*?=\s*?(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*)(\s\s*(\"(\\.|[^\"])*\"|(\\.|[^=\"\s])+)\s*=\s*(\"(\\.|[^\"])*\"|(\\.|[^\"\s])*))*$";
+PATTERN_CSKV = "^(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,=\"\s])+)\s*?=\s*?(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,\"\s])*)(?:,\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,=\"\s])+)\s*=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,\"\s])*))*$";
+PATTERN_SSKV = "^(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^=\"\s])+)\s*?=\s*?(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^\"\s])*)(?:\s\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^=\"\s])+)\s*=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^\"\s])*))*$";
+PATTERN_CSV = "^\s*(?:(?:\"(?:\"\"|\\.|[^\\\"])*\")|[^,\"]*?)\s*(?:,\s*(?:(?:\"(?:\"\"|\\.|[^\\\"])*\")|[^,\"]*?)\s*)*$";
 
 [RULE: minoue_cskv2kvobj]
 /***
@@ -218,7 +219,7 @@ alter __kvtext = arraystring(
         arrayindex(
             arraymap(
                 arraycreate(
-                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])*?))+?)\s*)$")
+                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")
                 ),
                 arraystring(
                     arraymap(
@@ -257,7 +258,68 @@ alter __kvtext = arraystring(
 | call minoue_sskv2kvobj
 ;
 
-[RULE: minoue_tokenize_ssv]
+[RULE: minoue_csv2array]
+/***
+ * This rule transforms a comma separated value to an array.
+ * The standard pattern is:
+ *    value[,value]*
+ *
+ *  e.g.
+ *    val1,val2,val3
+ *
+ * ### Supported Syntax/Formats
+ *  - A back-slash charator escapes a following charactor.
+ *  - 'value' can be quoted with a double quotation mark.
+ *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
+ *  - Any spaces can be allowed between a value and a comma separator.
+ *
+ *   e.g.
+ *    - "value"
+ *    - va\ lue
+ *    - va\\lue
+ *    - va\"lue
+ *    - va\,lue
+ *    - "va,lue"
+ *    - "va""lue"
+ *    - val1 , val2 , val3
+ *    - " val1 " , " val2 " , val3
+ *
+ * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
+ * You should ensure the text in the correct format with PATTERN_CSV in advance if needed.
+ *
+ * :param __text: A comma separated text
+ * :return _columns: Columns
+ *
+ * @auther Masahiko Inoue
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
+ ***/
+alter _columns = arraymap(
+    regextract(
+        replace(to_string(coalesce(__text, "")), ",", ",,"),
+        ",(?:\\,,|\\[^,]|[^,\\])+?,|^(?:\\,,|\\[^,]|[^,\\])+?,|,(?:\\,,|\\[^,]|[^,\\])*?$"
+    ),
+    arrayindex(
+        arraymap(
+            arraymap(
+                arraycreate(
+                    regexcapture(replace(to_string("@element"), "\,,", ","), "^\s*,?\s*(?:\"(?P<qv>(?:\"\"|\\.|[^\"])*)\"|(?P<nv>(?:\\.|[^,])*?))\s*,?\s*$")
+                ),
+                if("@element"->qv != "", "@element"->qv, "@element"->nv)
+            ),
+            arraystring(
+                arraymap(
+                    split("@element", """\\\\"""),
+                    replace(replace("@element", """\\""", ""), "\"\"", "\"")
+                ),
+                """\\"""
+            )
+        ),
+        0
+    )
+)
+;
+
+[RULE: minoue_ssv2array]
 /***
  * This rule transforms a space separated value to an array.
  * The standard pattern is:
@@ -273,13 +335,13 @@ alter __kvtext = arraystring(
  *    - va\\lue
  *    - va\"lue
  *
- * :param __text: A space separated value
- * :return _tokens: Tokens
+ * :param __text: A space separated text
+ * :return _columns: Columns
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
-alter _tokens = arraymap(
+alter _columns = arraymap(
     regextract(
         to_string(coalesce(__text, "")),
         "(?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\s]))+\s+|(?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\s]))+$"
@@ -354,7 +416,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 | alter _severity = floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))
 
 // Build syslog parameters
-| alter syslog = if(
+| alter _syslog = if(
     _x->pri != null,
     object_create(
         "header", object_create(
@@ -445,7 +507,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  *  }
  *
  * :param __log: The log to parse
- * :return syslog: Parameters extracted from the log in JSON object.
+ * :return _syslog: Parameters extracted from the log in JSON object.
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -458,7 +520,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 | call minoue_sskv2kvobj
 
 // Build syslog parameters
-| alter syslog = if(
+| alter _syslog = if(
     _x->pri != null,
     object_create(
         "header", object_create(
