@@ -1,4 +1,3 @@
-
 /***
  * This expression transforms a space separated key=value text to a json object.
  * This is compatible with the `minoue_nqsskv2kvobj` rule.
@@ -51,6 +50,7 @@
 dataset = xdr_data 
 | limit 1
 | alter __kvtext = arraycreate(
+    """key1=\"va=l1\" key2=\"va=l2\"""",
     """key1=\"val1\" key2=\"val2\"""",
     """key1=\"va\\\\l1\" key2=\"va\\\\l2\"""",
     """key1=v a l 1 key2=v a l 2""",
@@ -78,7 +78,7 @@ dataset = xdr_data
         arraymap(
             regextract(
                 replace(to_string(coalesce(__kvtext, "")), "=", "=="),
-                "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])*?=|=(?:\\==|\\[^=]|[^=\\])*?$"
+                "=(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))+?=|^(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?=|=(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?$"
             ),
             arrayindex(
                 arraymap(
@@ -95,7 +95,7 @@ dataset = xdr_data
                                 arrayindex(
                                     arraymap(
                                         arraymap(
-                                            arraycreate(replace("@element", "\==", "=")),
+                                            arraycreate(replace("@element", "==", "=")),
                                             arrayindex(
                                                 if(
                                                     "@element" ~= "^\"((?:\\.|[^\"])*)\"$",
