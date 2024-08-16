@@ -51,8 +51,8 @@
 dataset = xdr_data 
 | limit 1
 | alter __kvtext = arraycreate(
-    """key1=\"va=l1\" key2=\"va=l2\"""",
     """key1=\"val1\" key2=\"val2\"""",
+    """key1=\"val=1\" key2=\"val=2\"""",
     """key1=\"va\\\\l1\" key2=\"va\\\\l2\"""",
     """key1=v a l 1 key2=v a l 2""",
     """\"key1\"=\"val1\" \"key2\"=\"val2\"""",
