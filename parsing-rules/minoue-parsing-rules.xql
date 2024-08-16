@@ -468,7 +468,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                 "id", if( _x->sd_id != "", _x->sd_id),
                 "data", object_create(
                     "_raw", if( _x->sd_data != "", _x->sd_data),
-                    "params", object_create()
+                    "params", "{}"->{}
                 )
             )
         ),
