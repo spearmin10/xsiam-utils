@@ -350,12 +350,12 @@ alter _columns = arraymap(
 alter _columns = arraymap(
     regextract(
         to_string(coalesce(__text, "")),
-        "(?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\s]))+\s+|(?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\s]))+$"
+        "((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"
     ),
     arrayindex(
         arraymap(
             arraycreate(
-                regexcapture(trim(to_string("@element")), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
+                regexcapture(trim(to_string("@element")), "^\s*(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*?))\s*$")
             ),
             if(
                 "@element"->qv != "",
