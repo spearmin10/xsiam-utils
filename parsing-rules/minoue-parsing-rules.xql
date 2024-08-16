@@ -308,7 +308,7 @@ alter _columns = arraymap(
         arraymap(
             arraymap(
                 arraycreate(
-                    regexcapture(replace(to_string("@element"), "\,,", ","), "^\s*,?\s*(?:\"(?P<qv>(?:\"\"|\\.|[^\"])*)\"|(?P<nv>(?:\\.|[^,])*?))\s*,?\s*$")
+                    regexcapture(replace(to_string("@element"), ",,", ","), "^\s*,?\s*(?:\"(?P<qv>(?:\"\"|\\.|[^\"])*)\"|(?P<nv>(?:\\.|[^,])*?))\s*,?\s*$")
                 ),
                 if("@element"->qv != "", "@element"->qv, "@element"->nv)
             ),
