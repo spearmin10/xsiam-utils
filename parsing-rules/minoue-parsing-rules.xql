@@ -205,58 +205,62 @@ alter _raw_kvobj = format_string(
  * however you wouldn't be able to check the pattern only with RE2.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A space separated key=value text (__kvtext will be broken in the function)
+ * :param __kvtext: A space separated key=value text
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
  ***/
-alter __kvtext = arraystring(
-    arraymap(
-        regextract(
-            replace(to_string(coalesce(__kvtext, "")), "=", "=="),
-            "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])+?=|=(?:\\==|\\[^=]|[^=\\])*?$"
-        ),
-        arrayindex(
-            arraymap(
-                arraycreate(
-                    regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")
-                ),
-                arraystring(
+alter _raw_kvobj = format_string(
+    "{%s}",
+    arraystring(
+        arraymap(
+            regextract(
+                replace(to_string(coalesce(__kvtext, "")), "=", "=="),
+                "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])*?=|=(?:\\==|\\[^=]|[^=\\])*?$"
+            ),
+            arrayindex(
+                arraymap(
                     arraymap(
-                        arraymap(
-                            arraymap(
-                                if(
-                                    "@element"->vkk != "",
-                                    arraycreate("@element"->vkv, "@element"->vkk),
-                                    if("@element"->fk != "", arraycreate("@element"->fk), arraycreate("@element"->lv))
-                                ),
-                                regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
-                            ),
-                            if("@element"->qv != "", "@element"->qv, "@element"->nv)
+                        arraycreate(
+                            regexcapture(to_string("@element"), "^(?:=\s*(?P<vkv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?P<vkk>\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=|\s*(?P<fk>\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+))\s*=|=\s*(?P<lv>(?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")
                         ),
-                        format_string(
-                            "\"%s\"",
-                            // Escape backsrashs and double quotations
-                            replace(
-                                replace(
-                                    // Unescape escaped charactors
-                                    arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                    """\\""", """\\\\"""
+                        object_create(
+                            "x",
+                            arraymap(
+                                arraymap(
+                                    arraymap(
+                                        if(
+                                            "@element"->vkk != "",
+                                            arraycreate("@element"->vkv, "@element"->vkk),
+                                            if("@element"->fk != "", arraycreate("@element"->fk), arraycreate("@element"->lv))
+                                        ),
+                                        regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
+                                    ),
+                                    if("@element"->qv != "", "@element"->qv, "@element"->nv)
                                 ),
-                                """\"""", """\\\""""
+                                replace(
+                                    replace(
+                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+                                        """\\""", """\\\\"""
+                                    ),
+                                    """\"""", """\\\""""
+                                )
                             )
                         )
                     ),
-                    ""
-                )
-            ),
-            0
-        )
-    ),
-    "="
+                    if(
+                        array_length("@element"->x[]) = 2,
+                        format_string("\"%s\",\"%s\"", "@element"->x[0], "@element"->x[1]),
+                        format_string("\"%s\"", "@element"->x[0])
+                    )
+                ),
+                0
+            )
+        ),
+        ":"
+    )
 )
-| call minoue_sskv2kvobj
 ;
 
 [RULE: minoue_csv2array]
