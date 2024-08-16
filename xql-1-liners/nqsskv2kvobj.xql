@@ -131,4 +131,4 @@ dataset = xdr_data
     )
 )
 
-| fields _raw_kvobj
+| fields __kvtext, _raw_kvobj
