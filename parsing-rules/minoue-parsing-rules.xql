@@ -289,7 +289,7 @@ alter __kvtext = arraystring(
  * You should ensure the text in the correct format with PATTERN_CSV in advance if needed.
  *
  * :param __text: A comma separated text
- * :return _columns: Columns
+ * :return _columns: Array of column values
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -337,7 +337,7 @@ alter _columns = arraymap(
  *    - va\"lue
  *
  * :param __text: A space separated text
- * :return _columns: Columns
+ * :return _columns: Array of column values
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
