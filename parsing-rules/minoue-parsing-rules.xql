@@ -39,7 +39,7 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *    - key1="v a l 1""key2"="v a l 2"
  *
  * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with PATTERN_CSKV in advance.
+ * You should ensure the text in the correct format with $PATTERN_CSKV in advance.
  * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
@@ -116,7 +116,7 @@ alter _raw_kvobj = format_string(
  *    - key1="v a l 1","key2"="v a l 2"
  *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with PATTERN_SSKV.
+ * You should ensure the text in the correct format with $PATTERN_SSKV.
   * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
@@ -286,7 +286,7 @@ alter __kvtext = arraystring(
  *    - " val1 " , " val2 " , val3
  *
  * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with PATTERN_CSV in advance if needed.
+ * You should ensure the text in the correct format with $PATTERN_CSV in advance if needed.
  *
  * :param __text: A comma separated text
  * :return _columns: Array of column values
