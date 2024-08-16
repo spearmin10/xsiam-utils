@@ -236,7 +236,7 @@ alter _raw_kvobj = format_string(
                                             arraycreate("@element"->vkv, "@element"->vkk),
                                             if("@element"->fk != "", arraycreate("@element"->fk), arraycreate("@element"->lv))
                                         ),
-                                        regexcapture(replace("@element", "\==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
+                                        regexcapture(replace("@element", "==", "="), "^(?:\"(?P<qv>(?:\\.|[^\"])*)\"|(?P<nv>.*))$")
                                     ),
                                     if("@element"->qv != "", "@element"->qv, "@element"->nv)
                                 ),
