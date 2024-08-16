@@ -60,7 +60,7 @@ alter _raw_kvobj = format_string(
             arrayindex(
                 arraymap(
                     arraycreate(
-                        regexcapture(to_string("@element"), "^\"?(?P<key>.*?)\"?\s*?=\s*?\"?(?P<val>.*?)\"?$")
+                        regexcapture(to_string("@element"), "^\"?(?P<key>(?:\\.|[^\\\"])*?)\"?\s*?=\s*?\"?(?P<val>.*?)\"?$")
                     ),
                     format_string(
                         "\"%s\"",
@@ -137,7 +137,7 @@ alter _raw_kvobj = format_string(
             arrayindex(
                 arraymap(
                     arraycreate(
-                        regexcapture(to_string("@element"), "^\"?(?P<key>.*?)\"?\s*?=\s*?\"?(?P<val>.*?)\"?$")
+                        regexcapture(to_string("@element"), "^\"?(?P<key>(?:\\.|[^\\\"])*?)\"?\s*?=\s*?\"?(?P<val>.*?)\"?$")
                     ),
                     format_string(
                         "\"%s\"",
