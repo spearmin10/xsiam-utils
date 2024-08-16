@@ -302,7 +302,7 @@ alter _raw_kvobj = format_string(
 alter _columns = arraymap(
     regextract(
         replace(to_string(coalesce(__text, "")), ",", ",,"),
-        ",(?:\\,,|\\[^,]|[^,\\])+?,|^(?:\\,,|\\[^,]|[^,\\])+?,|,(?:\\,,|\\[^,]|[^,\\])*?$"
+        "(?:^|,)\s*(?:\"(?:\"\"|\\.|[^\"])*\"|(?:\\,,|\\[^,]|[^,\\])*)\s*(?:,|$)"
     ),
     arrayindex(
         arraymap(
