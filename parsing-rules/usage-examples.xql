@@ -8,26 +8,18 @@
  ********************************************************************/
 [INGEST:vendor="syslog", product="syslog", target_dataset="syslog_cef", no_hit=drop]
 alter __log = _raw_log
-| call minoue_syslog
-| filter _syslog != null
+| call minoue_parse_cef
+| filter _cef != null
 
-| alter cef = regexcapture(
-    _syslog->message,
-    "CEF:\s*(?P<cef_version>\d+)\|(?P<dev_vendor>[^|]*)\|(?P<dev_product>[^|]*)\|(?P<dev_version>[^|]*)\|(?P<dev_event_class_id>[^|]*)\|(?P<name>[^|]*)\|(?P<severity>[^|]*)\|(?P<extension>.*)$"
-)
-| filter cef->extension != ""
-
-| alter __kvtext = trim(cef->extension)
-| call minoue_nqsskv2kvobj
-| alter extensions = _raw_kvobj->{},
-        cef_version = cef->cef_version,
-        device_vendor = cef->dev_vendor,
-        device_product = cef->dev_product,
-        device_version = cef->dev_version,
-        dev_event_class_id = cef->dev_event_class_id,
-        name = cef->name,
-        severity = cef->severity
-| fields _syslog as syslog, cef_version, device_vendor, device_product, device_version, dev_event_class_id, name, severity, extensions, _raw_log
+| alter cef_version = _cef->cef_version,
+        device_vendor = _cef->dev_vendor,
+        device_product = _cef->dev_product,
+        device_version = _cef->dev_version,
+        device_event_class_id = _cef->dev_event_class_id,
+        name = _cef->name,
+        severity = _cef->severity,
+        extensions = _cef->extension.params{}
+| fields _cef as cef, cef_version, device_vendor, device_product, device_version, device_event_class_id, name, severity, extensions, _raw_log
 ;
 
 /*********************************************************************
