@@ -602,7 +602,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 
 [RULE: minoue_parse_cef]
 /***
- * This rule parse the CEF paramters by finding their pattern in the log message.
+ * This rule parses the CEF paramters by finding their pattern in the log message.
  *
  * The pattern is:
  *    CEF:Version|Device Vendor|Device Product|Device Version|Device Event Class ID|Name|Severity|[Extension]
