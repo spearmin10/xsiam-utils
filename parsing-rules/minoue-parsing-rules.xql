@@ -635,7 +635,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  ***/
 alter _cef = regexcapture(
     to_string(__log),
-    "(?:^|\s)(?P<cef_raw>CEF:\s*(?P<cef_version>\d+)\|(?P<dev_vendor>(?:\\.|[^|])*)\|(?P<dev_product>(?:\\.|[^|])*)\|(?P<dev_version>(?:\\.|[^|])*)\|(?P<dev_event_class_id>(?:\\.|[^|])*)\|(?P<name>(?:\\.|[^|])*)\|(?P<severity>(?:\\.|[^|])*)\|(?P<extension>.*))$"
+    "(?:^|\s)(?P<cef_raw>CEF:\s*(?P<cef_version>\d+)\s*\|\s*(?P<dev_vendor>(?:\\.|[^|])*)\s*\|\s*(?P<dev_product>(?:\\.|[^|])*)\s*\|\s*(?P<dev_version>(?:\\.|[^|])*)\s*\|\s*(?P<dev_event_class_id>(?:\\.|[^|])*)\s*\|\s*(?P<name>(?:\\.|[^|])*)\s*\|\s*(?P<severity>(?:\\.|[^|])*)\s*\|\s*(?P<extension>.*))$"
 )
 | alter __kvtext = _cef->extension
 | call minoue_nqsskv2kvobj
