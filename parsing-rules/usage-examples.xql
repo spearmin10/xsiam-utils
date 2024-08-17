@@ -13,7 +13,7 @@ alter __log = _raw_log
 
 | alter cef = regexcapture(
     _syslog->message,
-    "CEF:\s*(?P<cef_version>\d+)\|(?P<cef_vendor>[^|]*)\|(?P<cef_product>[^|]*)\|(?P<dev_version>[^|]*)\|(?P<event_class_id>[^|]*)\|(?P<name>[^|]*)\|(?P<severity>[^|]*)\|(?P<extension>.*)$"
+    "CEF:\s*(?P<cef_version>\d+)\|(?P<dev_vendor>[^|]*)\|(?P<dev_product>[^|]*)\|(?P<dev_version>[^|]*)\|(?P<dev_event_class_id>[^|]*)\|(?P<name>[^|]*)\|(?P<severity>[^|]*)\|(?P<extension>.*)$"
 )
 | filter cef->extension != ""
 
@@ -21,13 +21,13 @@ alter __log = _raw_log
 | call minoue_nqsskv2kvobj
 | alter extensions = _raw_kvobj->{},
         cef_version = cef->cef_version,
-        cef_vendor = cef->cef_vendor,
-        cef_product = cef->cef_product,
+        device_vendor = cef->dev_vendor,
+        device_product = cef->dev_product,
         device_version = cef->dev_version,
-        event_class_id = cef->event_class_id,
+        dev_event_class_id = cef->dev_event_class_id,
         name = cef->name,
         severity = cef->severity
-| fields _syslog as syslog, cef_version, cef_vendor, cef_product, device_version, event_class_id, name, severity, extensions, _raw_log
+| fields _syslog as syslog, cef_version, device_vendor, device_product, device_version, dev_event_class_id, name, severity, extensions, _raw_log
 ;
 
 /*********************************************************************
