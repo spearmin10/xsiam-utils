@@ -46,4 +46,14 @@ dataset = xdr_data
     ),
     0
 )
+
+/**********
+//
+// 1-line
+//
+
+| alter __text = arrayindex(arraymap(arraycreate(__text),arrayindex(arraymap(if("@element" ~= "^\s*\"(?:\\.|[^\"])*\"\s*$", regextract("@element", "^\s*\"((?:\\.|[^\"])*)\"\s*$"),arraycreate("@element")),arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\""")),0)),0)
+
+**********/
+
 | fields __text
