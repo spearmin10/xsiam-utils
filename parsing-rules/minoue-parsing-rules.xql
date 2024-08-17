@@ -20,7 +20,7 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *    - key1=val1, key2=val2, key3=val3
  *
  * 'key' and 'value' can be quoted with a double quotation mark, 'key' and 'value' between '=' allows any spaces to be inserted,
- * and also a back-slash escapes a following charactor in quoted text.
+ * and also a backslash escapes a following charactor in quoted text.
  *   e.g.
  *    - "key"="value"
  *    - key = value
@@ -99,7 +99,7 @@ alter _raw_kvobj = format_string(
  *    - key1=val1 key2=val2 key3=val3
  *
  * 'key' and 'value' can be quoted with a double quotation mark, 'key' and 'value' between '=' allows any spaces to be inserted,
- * and also a back-slash escapes a following charactor in quoted text.
+ * and also a backslash escapes a following charactor in quoted text.
  *   e.g.
  *    - "key"="value"
  *    - key = value
@@ -176,7 +176,7 @@ alter _raw_kvobj = format_string(
  *    key1=val1 key2=val2 key3=val3
  *
  * ### Supported Syntax/Formats
- *  - A back-slash charator escapes a following charactor.
+ *  - A backslash charator escapes a following charactor.
  *  - 'key' and 'value' can be quoted with a double quotation mark.
  *  - 'value' can contain spaces regardless the quoted text.
  *  - 'value' can contain multiple tokens quoted with a double quotation mark.
@@ -274,7 +274,7 @@ alter _raw_kvobj = format_string(
  *    val1,val2,val3
  *
  * ### Supported Syntax/Formats
- *  - A back-slash charator escapes a following charactor.
+ *  - A backslash charator escapes a following charactor.
  *  - 'value' can be quoted with a double quotation mark.
  *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
  *  - Any spaces can be allowed between a value and a comma separator.
@@ -334,7 +334,7 @@ alter _columns = arraymap(
  *  e.g.
  *    val1 val2 val3
  *
- * 'value' can be quoted with a double quotation mark, and also a back-slash escapes a following charactor.
+ * 'value' can be quoted with a double quotation mark, and also a backslash escapes a following charactor.
  *   e.g.
  *    - "value"
  *    - va\ lue
