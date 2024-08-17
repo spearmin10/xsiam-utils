@@ -9,7 +9,7 @@
  *    - key1=val1 key2=val2 key3=val3
  *
  * 'key' and 'value' can be quoted with a double quotation mark, 'key' and 'value' between '=' allows any spaces to be inserted,
- * and also a back-slash escapes a following charactor in quoted text.
+ * and also a backslash escapes a following charactor in quoted text.
  *   e.g.
  *    - "key"="value"
  *    - key = value
