@@ -9,7 +9,7 @@
  *    val1,val2,val3
  *
  * ### Supported Syntax/Formats
- *  - A back-slash charator escapes a following charactor.
+ *  - A backslash charator escapes a following charactor.
  *  - 'value' can be quoted with a double quotation mark.
  *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
  *  - Any spaces can be allowed between a value and a comma separator.
