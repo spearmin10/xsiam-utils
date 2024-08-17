@@ -102,4 +102,13 @@ dataset = xdr_data
     )
 )
 
+/**********
+//
+// 1-line
+//
+
+| alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(arraymap(arraymap(regextract(__kvtext, "(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,=\"\s])+)\s*?=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,\s])*)"),object_create("kv", split("@element", "="))),object_create("key", lowercase(trim("@element"->kv[0])),"val", trim(arraystring(arrayrange(json_extract_scalar_array("@element", "$.kv"), 1, 100000), "=")))),format_string("\"%s\"",arraystring(arraymap(arraycreate(if("@element"->key ~= "^\"", arrayindex(regextract("@element"->key, "\"((?:\\.|[^\"])*)\""), 0), "@element"->key),if("@element"->val ~= "^\"", arrayindex(regextract("@element"->val, "\"((?:\\.|[^\"])*)\""), 0), "@element"->val)),replace(replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),"""\\""", """\\\\"""),"""\"""", """\\\"""")),"\":\""))),","))
+
+**********/
+
 | fields __kvtext, _raw_kvobj
