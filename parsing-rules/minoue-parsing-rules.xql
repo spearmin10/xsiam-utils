@@ -599,5 +599,68 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 )
 | fields -_x, __kvtext, _raw_kvobj
 ;
+
+[RULE: minoue_parse_cef]
+/***
+ * This rule parse the CEF paramters by finding their pattern in the log message.
+ *
+ * The pattern is:
+ *    CEF:Version|Device Vendor|Device Product|Device Version|Device Event Class ID|Name|Severity|[Extension]
+ *
+ * The parameters extracted are saved to '_cef' in JSON object with the following structure.
+ * However '_cef' will be null if it doesn't find the CEF pattern in the log message given.
+ *
+ *  {
+ *    "_raw": <string>,
+ *     "cef_version": <number>,
+ *     "dev_vendor": <string>,
+ *     "dev_product": <string>,
+ *     "dev_version": <string>,
+ *     "dev_event_class_id": <string>,
+ *     "name": <string>,
+ *     "severity": <string>,
+ *     "extension": {
+ *         "_raw": <string>,
+ *         "params": {
+ *          <param-key>: <param-value: string>
+ *        }
+ *     }
+ *  }
+ *
+ * :param __log: A log message
+ * :return _cef: The CEF parameters extracted from the log
+ *
+ * @auther Masahiko Inoue
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
+ ***/
+alter _cef = regexcapture(
+    to_string(__log),
+    "(?:^|\s)(?P<cef_raw>CEF:\s*(?P<cef_version>\d+)\|(?P<dev_vendor>(?:\\.|[^|])*)\|(?P<dev_product>(?:\\.|[^|])*)\|(?P<dev_version>(?:\\.|[^|])*)\|(?P<dev_event_class_id>(?:\\.|[^|])*)\|(?P<name>(?:\\.|[^|])*)\|(?P<severity>(?:\\.|[^|])*)\|(?P<extension>.*))$"
+)
+| alter __kvtext = _cef->extension
+| call minoue_nqsskv2kvobj
+
+| alter _cef = if(
+    _cef->cef_raw in (null, ""),
+    null,
+    object_create(
+        "_raw", _cef->cef_raw,
+        "cef_version", to_number(_cef->cef_version),
+        "dev_vendor", arraystring(arraymap(split(_cef->dev_vendor, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "dev_product", arraystring(arraymap(split(_cef->dev_product, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "dev_version", arraystring(arraymap(split(_cef->dev_version, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "dev_event_class_id", arraystring(arraymap(split(_cef->dev_event_class_id, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "name", arraystring(arraymap(split(_cef->name, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "severity", arraystring(arraymap(split(_cef->severity, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "extension", object_create(
+            "_raw", _cef->extension,
+            "params", _raw_kvobj->{}
+        )
+    )
+)
+
+| fields - __kvtext, _raw_kvobj
+;
+
 /* ******* END OF MINOUE Parsing Rules Library **********
  * ******************************************************/
