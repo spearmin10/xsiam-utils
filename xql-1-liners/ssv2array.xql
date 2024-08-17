@@ -36,4 +36,14 @@ dataset = xdr_data
          0
      )
 )
+
+/**********
+//
+// 1-line
+//
+
+| alter _columns = arraymap(regextract(to_string(coalesce(__text, "")),"((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"),arrayindex(arraymap(if("@element" ~= "^\s*\"((?:\\.|[^\"])*)\"\s*$",regextract("@element", "^\s*\"((?:\\.|[^\"])*)\"\s*$"),regextract("@element", "^\s*((?:\\.|[^\s])*)\s*$")),arraystring(arraymap(split("@element", """\\\\"""),replace(replace("@element", """\\""", ""), "\"\"", "\"")),"""\\""")),0))
+
+**********/
+
 | fields __text, _columns
