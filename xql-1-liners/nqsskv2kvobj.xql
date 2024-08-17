@@ -97,13 +97,10 @@ dataset = xdr_data
                                     arraymap(
                                         arraymap(
                                             arraycreate(replace("@element", "==", "=")),
-                                            arrayindex(
-                                                if(
-                                                    "@element" ~= "^\"((?:\\.|[^\"])*)\"$",
-                                                    regextract("@element", "^\"((?:\\.|[^\"])*)\"$"),
-                                                    arraycreate("@element")
-                                                ),
-                                                0
+                                            if(
+                                                "@element" ~= "^\"((?:\\.|[^\"])*)\"$",
+                                                arrayindex(regextract("@element", "^\"((?:\\.|[^\"])*)\"$"), 0),
+                                                "@element"
                                             )
                                         ),
                                         replace(
