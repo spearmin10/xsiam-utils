@@ -7,7 +7,7 @@
  *     - ` "token1" token2 `
  *
  * :param __text: A text that can be quoted.
- * :return __text: A text of characters with any escaped characters converted to the raw text.
+ * :return __text: A text converted to the raw text.
  *
  * @auther Masahiko Inoue
  ***/
