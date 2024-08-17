@@ -130,10 +130,12 @@ dataset = xdr_data
 )
 
 /**********
+//
 // 1-line
+//
 
 | alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(regextract(replace(to_string(coalesce(__kvtext, "")), "=", "=="),"=(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))+?=|^(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?=|=(?:\"(?:\\==|\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?$"),arrayindex(arraymap(arraycreate(object_create("x",arraymap(arrayconcat(regextract("@element", "^=\s*((?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=\s])+)\s*=$"),regextract("@element", "^=\s*(?:(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),regextract("@element", "^(?:\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+))\s*=)$"),regextract("@element", "^(?:=\s*((?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")),arrayindex(arraymap(arraymap(arraycreate(replace("@element", "==", "=")),if("@element" ~= "^\"((?:\\.|[^\"])*)\"$",arrayindex(regextract("@element", "^\"((?:\\.|[^\"])*)\"$"), 0),"@element")),replace(replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),"""\\""", """\\\\"""),"""\"""", """\\\"""")),0)))),if(array_length("@element"->x[]) = 2,format_string("\"%s\",\"%s\"", "@element"->x[0], "@element"->x[1]),format_string("\"%s\"", "@element"->x[0]))),0)),":"))
 
-*********/
+**********/
 
 | fields __kvtext, _raw_kvobj
