@@ -9,7 +9,7 @@
  *    key1=val1 key2=val2 key3=val3
  *
  * ### Supported Syntax/Formats
- *  - A back-slash charator escapes a following charactor.
+ *  - A backslash charator escapes a following charactor.
  *  - 'key' and 'value' can be quoted with a double quotation mark.
  *  - 'value' can contain spaces regardless the quoted text.
  *  - 'value' can contain multiple tokens quoted with a double quotation mark.
