@@ -25,6 +25,14 @@
  *    - key1="v a l 1""key2"="v a l 2"
  *    - key1="v a l 1","key2"="v a l 2"
  *
+ * The following escape sequences are treated as control codes.
+ *
+ *  - \b : backspace
+ *  - \f : form feed
+ *  - \n : line feed
+ *  - \r : carriage return
+ *  - \t : tab
+ *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
  * You should ensure the text in the correct format with the PATTERN_SSKV below in advance.
  *
@@ -85,12 +93,29 @@ dataset = xdr_data
                           if("@element"->key ~= "^\"", arrayindex(regextract("@element"->key, "\"((?:\\.|[^\"])*)\""), 0), "@element"->key),
                           if("@element"->val ~= "^\"", arrayindex(regextract("@element"->val, "\"((?:\\.|[^\"])*)\""), 0), "@element"->val)
                         ),
-                        replace(
-                            replace(
-                                arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                """\\""", """\\\\"""
+                        replace(replace(replace(replace(replace(replace(replace(replace(
+                            arraystring(
+                                arraymap(
+                                    split("@element", """\\\\"""),
+                                    replace(replace(replace(replace(replace(replace("@element",
+                                        "\n", convert_from_base_64("Cg==")),
+                                        "\r", convert_from_base_64("DQ==")),
+                                        "\t", convert_from_base_64("CQ==")),
+                                        "\b", convert_from_base_64("CA==")),
+                                        "\f", convert_from_base_64("DA==")),
+                                        """\\""", ""
+                                    )
+                                ),
+                                """\\"""
                             ),
-                            """\"""", """\\\""""
+                            convert_from_base_64("Cg=="), "\n"),
+                            convert_from_base_64("DQ=="), "\r"),
+                            convert_from_base_64("CQ=="), "\t"),
+                            convert_from_base_64("CA=="), "\b"),
+                            convert_from_base_64("DA=="), "\f"),
+                            """\\""", """\\\\"""),
+                            """\"""", """\\\""""),
+                            "/", """\\/"""
                         )
                     ),
                     "\":\""
@@ -106,7 +131,7 @@ dataset = xdr_data
 // 1-line
 //
 
-| alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(arraymap(arraymap(regextract(__kvtext, "(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^=\"\s])+)\s*?=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^\s])*)"),object_create("kv", split("@element", "="))),object_create("key", lowercase(trim("@element"->kv[0])),"val", trim(arraystring(arrayrange(json_extract_scalar_array("@element", "$.kv"), 1, 100000), "=")))),format_string("\"%s\"",arraystring(arraymap(arraycreate(if("@element"->key ~= "^\"", arrayindex(regextract("@element"->key, "\"((?:\\.|[^\"])*)\""), 0), "@element"->key),if("@element"->val ~= "^\"", arrayindex(regextract("@element"->val, "\"((?:\\.|[^\"])*)\""), 0), "@element"->val)),replace(replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),"""\\""", """\\\\"""),"""\"""", """\\\"""")),"\":\""))),","))
+| alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(arraymap(arraymap(regextract(__kvtext, "(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^=\"\s])+)\s*?=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^\s])*)"),object_create("kv", split("@element", "="))),object_create("key", lowercase(trim("@element"->kv[0])),"val", trim(arraystring(arrayrange(json_extract_scalar_array("@element", "$.kv"), 1, 100000), "=")))),format_string("\"%s\"",arraystring(arraymap(arraycreate(if("@element"->key ~= "^\"", arrayindex(regextract("@element"->key, "\"((?:\\.|[^\"])*)\""), 0), "@element"->key),if("@element"->val ~= "^\"", arrayindex(regextract("@element"->val, "\"((?:\\.|[^\"])*)\""), 0), "@element"->val)),replace(replace(replace(replace(replace(replace(replace(replace(arraystring(arraymap(split("@element", """\\\\"""),replace(replace(replace(replace(replace(replace("@element","\n", convert_from_base_64("Cg==")),"\r", convert_from_base_64("DQ==")),"\t", convert_from_base_64("CQ==")),"\b", convert_from_base_64("CA==")),"\f", convert_from_base_64("DA==")),"""\\""", "")),"""\\"""),convert_from_base_64("Cg=="), "\n"),convert_from_base_64("DQ=="), "\r"),convert_from_base_64("CQ=="), "\t"),convert_from_base_64("CA=="), "\b"),convert_from_base_64("DA=="), "\f"),"""\\""", """\\\\"""),"""\"""", """\\\""""),"/", """\\/""")),"\":\""))),","))
 
 **********/
 
