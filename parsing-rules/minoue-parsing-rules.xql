@@ -38,6 +38,14 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *    - key1="v a l 1"key2="v a l 2"
  *    - key1="v a l 1""key2"="v a l 2"
  *
+ * The following escape sequences are treated as control codes.
+ *
+ *  - \b : backspace
+ *  - \f : form feed
+ *  - \n : line feed
+ *  - \r : carriage return
+ *  - \t : tab
+ *
  * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
  * You should ensure the text in the correct format with $PATTERN_CSKV in advance.
  * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
@@ -67,14 +75,30 @@ alter _raw_kvobj = format_string(
                         arraystring(
                             arraymap(
                                 arraycreate(lowercase("@element"->key), "@element"->val),
-                                // Escape backsrashs and double quotations
-                                replace(
-                                    replace(
-                                        // Unescape escaped charactors
-                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                        """\\""", """\\\\"""
+                                // Encode to JSON string
+                                replace(replace(replace(replace(replace(replace(replace(replace(
+                                    arraystring(
+                                        arraymap(
+                                            split("@element", """\\\\"""),
+                                            replace(replace(replace(replace(replace(replace("@element",
+                                                "\n", convert_from_base_64("Cg==")),
+                                                "\r", convert_from_base_64("DQ==")),
+                                                "\t", convert_from_base_64("CQ==")),
+                                                "\b", convert_from_base_64("CA==")),
+                                                "\f", convert_from_base_64("DA==")),
+                                                """\\""", ""
+                                            )
+                                        ),
+                                        """\\"""
                                     ),
-                                    """\"""", """\\\""""
+                                    convert_from_base_64("Cg=="), "\n"),
+                                    convert_from_base_64("DQ=="), "\r"),
+                                    convert_from_base_64("CQ=="), "\t"),
+                                    convert_from_base_64("CA=="), "\b"),
+                                    convert_from_base_64("DA=="), "\f"),
+                                    """\\""", """\\\\"""),
+                                    """\"""", """\\\""""),
+                                    "/", """\\/"""
                                 )
                             ),
                             "\":\""
@@ -115,9 +139,17 @@ alter _raw_kvobj = format_string(
  *    - key1="v a l 1""key2"="v a l 2"
  *    - key1="v a l 1","key2"="v a l 2"
  *
+ * The following escape sequences are treated as control codes.
+ *
+ *  - \b : backspace
+ *  - \f : form feed
+ *  - \n : line feed
+ *  - \r : carriage return
+ *  - \t : tab
+ *
  * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
  * You should ensure the text in the correct format with $PATTERN_SSKV.
-  * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
+ * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
  * :param __kvtext: A space separated key=value text
@@ -144,14 +176,30 @@ alter _raw_kvobj = format_string(
                         arraystring(
                             arraymap(
                                 arraycreate(lowercase("@element"->key), "@element"->val),
-                                // Escape backsrashs and double quotations
-                                replace(
-                                    replace(
-                                        // Unescape escaped charactors
-                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                        """\\""", """\\\\"""
+                                // Encode to JSON string
+                                replace(replace(replace(replace(replace(replace(replace(replace(
+                                    arraystring(
+                                        arraymap(
+                                            split("@element", """\\\\"""),
+                                            replace(replace(replace(replace(replace(replace("@element",
+                                                "\n", convert_from_base_64("Cg==")),
+                                                "\r", convert_from_base_64("DQ==")),
+                                                "\t", convert_from_base_64("CQ==")),
+                                                "\b", convert_from_base_64("CA==")),
+                                                "\f", convert_from_base_64("DA==")),
+                                                """\\""", ""
+                                            )
+                                        ),
+                                        """\\"""
                                     ),
-                                    """\"""", """\\\""""
+                                    convert_from_base_64("Cg=="), "\n"),
+                                    convert_from_base_64("DQ=="), "\r"),
+                                    convert_from_base_64("CQ=="), "\t"),
+                                    convert_from_base_64("CA=="), "\b"),
+                                    convert_from_base_64("DA=="), "\f"),
+                                    """\\""", """\\\\"""),
+                                    """\"""", """\\\""""),
+                                    "/", """\\/"""
                                 )
                             ),
                             "\":\""
@@ -184,7 +232,13 @@ alter _raw_kvobj = format_string(
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
- * 
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
+ *
  *   e.g.
  *    - key1="val1" key2="val2"
  *    - key1="val=1" key2="val=2"
@@ -240,12 +294,30 @@ alter _raw_kvobj = format_string(
                                     ),
                                     if("@element"->qv != "", "@element"->qv, "@element"->nv)
                                 ),
-                                replace(
-                                    replace(
-                                        arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                        """\\""", """\\\\"""
+                                // Encode to JSON string
+                                replace(replace(replace(replace(replace(replace(replace(replace(
+                                    arraystring(
+                                        arraymap(
+                                            split("@element", """\\\\"""),
+                                            replace(replace(replace(replace(replace(replace("@element",
+                                                "\n", convert_from_base_64("Cg==")),
+                                                "\r", convert_from_base_64("DQ==")),
+                                                "\t", convert_from_base_64("CQ==")),
+                                                "\b", convert_from_base_64("CA==")),
+                                                "\f", convert_from_base_64("DA==")),
+                                                """\\""", ""
+                                            )
+                                        ),
+                                        """\\"""
                                     ),
-                                    """\"""", """\\\""""
+                                    convert_from_base_64("Cg=="), "\n"),
+                                    convert_from_base_64("DQ=="), "\r"),
+                                    convert_from_base_64("CQ=="), "\t"),
+                                    convert_from_base_64("CA=="), "\b"),
+                                    convert_from_base_64("DA=="), "\f"),
+                                    """\\""", """\\\\"""),
+                                    """\"""", """\\\""""),
+                                    "/", """\\/"""
                                 )
                             )
                         )
@@ -278,6 +350,12 @@ alter _raw_kvobj = format_string(
  *  - 'value' can be quoted with a double quotation mark.
  *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
  *  - Any spaces can be allowed between a value and a comma separator.
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
  *
  *   e.g.
  *    - "value"
@@ -315,7 +393,14 @@ alter _columns = arraymap(
             arraystring(
                 arraymap(
                     split("@element", """\\\\"""),
-                    replace(replace("@element", """\\""", ""), "\"\"", "\"")
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
                 ),
                 """\\"""
             )
@@ -341,6 +426,14 @@ alter _columns = arraymap(
  *    - va\\lue
  *    - va\"lue
  *
+ * The following escape sequences are treated as control codes.
+ *
+ *  - \b : backspace
+ *  - \f : form feed
+ *  - \n : line feed
+ *  - \r : carriage return
+ *  - \t : tab
+ *
  * :param __text: A space separated text
  * :return _columns: Array of column values
  *
@@ -359,8 +452,34 @@ alter _columns = arraymap(
             ),
             if(
                 "@element"->qv != "",
-                arraystring(arraymap(split("@element"->qv, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                arraystring(arraymap(split("@element"->nv, """\\\\"""), replace("@element", """\\""", "")), """\\""")
+                arraystring(
+                    arraymap(
+                        split("@element"->qv, """\\\\"""),
+                        replace(replace(replace(replace(replace(replace("@element",
+                            "\n", convert_from_base_64("Cg==")),
+                            "\r", convert_from_base_64("DQ==")),
+                            "\t", convert_from_base_64("CQ==")),
+                            "\b", convert_from_base_64("CA==")),
+                            "\f", convert_from_base_64("DA==")),
+                            """\\""", ""
+                        )
+                    ),
+                    """\\"""
+                ),
+                arraystring(
+                    arraymap(
+                        split("@element"->nv, """\\\\"""),
+                        replace(replace(replace(replace(replace(replace("@element",
+                            "\n", convert_from_base_64("Cg==")),
+                            "\r", convert_from_base_64("DQ==")),
+                            "\t", convert_from_base_64("CQ==")),
+                            "\b", convert_from_base_64("CA==")),
+                            "\f", convert_from_base_64("DA==")),
+                            """\\""", ""
+                        )
+                    ),
+                    """\\"""
+                )
             )
         ),
         0
@@ -646,12 +765,96 @@ alter _cef = regexcapture(
     object_create(
         "_raw", _cef->cef_raw,
         "cef_version", to_number(_cef->cef_version),
-        "dev_vendor", arraystring(arraymap(split(_cef->dev_vendor, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-        "dev_product", arraystring(arraymap(split(_cef->dev_product, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-        "dev_version", arraystring(arraymap(split(_cef->dev_version, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-        "dev_event_class_id", arraystring(arraymap(split(_cef->dev_event_class_id, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-        "name", arraystring(arraymap(split(_cef->name, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-        "severity", arraystring(arraymap(split(_cef->severity, """\\\\"""), replace("@element", """\\""", "")), """\\"""),
+        "dev_vendor",
+            arraystring(
+                arraymap(
+                    split(_cef->dev_vendor, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
+        "dev_product",
+            arraystring(
+                arraymap(
+                    split(_cef->dev_product, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
+        "dev_version",
+            arraystring(
+                arraymap(
+                    split(_cef->dev_version, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
+        "dev_event_class_id",
+            arraystring(
+                arraymap(
+                    split(_cef->dev_event_class_id, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
+        "name", 
+            arraystring(
+                arraymap(
+                    split(_cef->name, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
+        "severity",
+            arraystring(
+                arraymap(
+                    split(_cef->severity, """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            ),
         "extension", object_create(
             "_raw", _cef->extension,
             "params", _raw_kvobj->{}
