@@ -15,6 +15,14 @@
  *    - va\\lue
  *    - va\"lue
  *
+ * The following escape sequences are treated as control codes.
+ *
+ *  - \b : backspace
+ *  - \f : form feed
+ *  - \n : line feed
+ *  - \r : carriage return
+ *  - \t : tab
+ *
  * :param __text: A space separated text
  * :return _columns: Array of column values
  *
@@ -40,12 +48,12 @@ dataset = xdr_data
 // Run
 //
 | alter _columns = arraymap(
-     regextract(
-         to_string(coalesce(__text, "")),
-         "((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"
-     ),
-     arrayindex(
-         arraymap(
+    regextract(
+        to_string(coalesce(__text, "")),
+        "((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"
+    ),
+    arrayindex(
+        arraymap(
             if(
                 "@element" ~= "^\s*\"((?:\\.|[^\"])*)\"\s*$",
                 regextract("@element", "^\s*\"((?:\\.|[^\"])*)\"\s*$"),
@@ -54,13 +62,20 @@ dataset = xdr_data
             arraystring(
                 arraymap(
                     split("@element", """\\\\"""),
-                    replace(replace("@element", """\\""", ""), "\"\"", "\"")
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
                 ),
                 """\\"""
             )
-         ),
-         0
-     )
+        ),
+        0
+    )
 )
 
 /**********
@@ -68,7 +83,7 @@ dataset = xdr_data
 // 1-line
 //
 
-| alter _columns = arraymap(regextract(to_string(coalesce(__text, "")),"((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"),arrayindex(arraymap(if("@element" ~= "^\s*\"((?:\\.|[^\"])*)\"\s*$",regextract("@element", "^\s*\"((?:\\.|[^\"])*)\"\s*$"),regextract("@element", "^\s*((?:\\.|[^\s])*)\s*$")),arraystring(arraymap(split("@element", """\\\\"""),replace(replace("@element", """\\""", ""), "\"\"", "\"")),"""\\""")),0))
+| alter _columns = arraymap(regextract(to_string(coalesce(__text, "")),"((?:\"(?:\\.|[^\\\"])*\"|(?:\\.|[^\\\"\s]))+)\s*"),arrayindex(arraymap(if("@element" ~= "^\s*\"((?:\\.|[^\"])*)\"\s*$",regextract("@element", "^\s*\"((?:\\.|[^\"])*)\"\s*$"),regextract("@element", "^\s*((?:\\.|[^\s])*)\s*$")),arraystring(arraymap(split("@element", """\\\\"""),replace(replace(replace(replace(replace(replace("@element","\n", convert_from_base_64("Cg==")),"\r", convert_from_base_64("DQ==")),"\t", convert_from_base_64("CQ==")),"\b", convert_from_base_64("CA==")),"\f", convert_from_base_64("DA==")),"""\\""", "")),"""\\""")),0))
 
 **********/
 
