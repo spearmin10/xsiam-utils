@@ -13,6 +13,12 @@
  *  - 'value' can be quoted with a double quotation mark.
  *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
  *  - Any spaces can be allowed between a value and a comma separator.
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
  *
  *   e.g.
  *    - "value"
@@ -65,24 +71,31 @@ dataset = xdr_data
      ),
      arrayindex(
          arraymap(
-             arraymap(
-                 arraycreate(replace("@element", ",,", ",")),
-                 arrayindex(
-                     if(
-                         "@element" ~= "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$",
-                         regextract("@element", "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$"),
-                         regextract("@element", "^\s*,?\s*((?:\\.|[^,])*)\s*,?\s*$")
-                     ),
-                     0
-                 )
-             ),
-             arraystring(
-                 arraymap(
-                     split("@element", """\\\\"""),
-                     replace(replace("@element", """\\""", ""), "\"\"", "\"")
-                 ),
-                 """\\"""
-             )
+            arraymap(
+                arraycreate(replace("@element", ",,", ",")),
+                arrayindex(
+                    if(
+                        "@element" ~= "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$",
+                        regextract("@element", "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$"),
+                        regextract("@element", "^\s*,?\s*((?:\\.|[^,])*)\s*,?\s*$")
+                    ),
+                    0
+                )
+            ),
+            arraystring(
+                arraymap(
+                    split("@element", """\\\\"""),
+                    replace(replace(replace(replace(replace(replace("@element",
+                        "\n", convert_from_base_64("Cg==")),
+                        "\r", convert_from_base_64("DQ==")),
+                        "\t", convert_from_base_64("CQ==")),
+                        "\b", convert_from_base_64("CA==")),
+                        "\f", convert_from_base_64("DA==")),
+                        """\\""", ""
+                    )
+                ),
+                """\\"""
+            )
          ),
          0
      )
@@ -93,7 +106,7 @@ dataset = xdr_data
 // 1-line
 //
 
-| alter _columns = arraymap(regextract(replace(to_string(coalesce(__text, "")), ",", ",,"),"(?:^|,)\s*(?:\"(?:\"\"|\\.|[^\"])*\"|(?:\\,,|\\[^,]|[^,\\])*)\s*(?:,|$)"),arrayindex(arraymap(arraymap(arraycreate(replace("@element", ",,", ",")),arrayindex(if("@element" ~= "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$",regextract("@element", "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$"),regextract("@element", "^\s*,?\s*((?:\\.|[^,])*)\s*,?\s*$")),0)),arraystring(arraymap(split("@element", """\\\\"""),replace(replace("@element", """\\""", ""), "\"\"", "\"")),"""\\""")),0))
+| alter _columns = arraymap(regextract(replace(to_string(coalesce(__text, "")), ",", ",,"),"(?:^|,)\s*(?:\"(?:\"\"|\\.|[^\"])*\"|(?:\\,,|\\[^,]|[^,\\])*)\s*(?:,|$)"),arrayindex(arraymap(arraymap(arraycreate(replace("@element", ",,", ",")),arrayindex(if("@element" ~= "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$",regextract("@element", "^\s*,?\s*\"((?:\\.|[^\"])*)\"\s*,?\s*$"),regextract("@element", "^\s*,?\s*((?:\\.|[^,])*)\s*,?\s*$")),0)),arraystring(arraymap(split("@element", """\\\\"""),replace(replace(replace(replace(replace(replace("@element","\n", convert_from_base_64("Cg==")),"\r", convert_from_base_64("DQ==")),"\t", convert_from_base_64("CQ==")),"\b", convert_from_base_64("CA==")),"\f", convert_from_base_64("DA==")),"""\\""", "")),"""\\""")),0))
 
 **********/
 
