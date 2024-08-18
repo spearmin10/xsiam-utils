@@ -762,103 +762,52 @@ alter _cef = regexcapture(
 | alter _cef = if(
     _cef->cef_raw in (null, ""),
     null,
-    object_create(
-        "_raw", _cef->cef_raw,
-        "cef_version", to_number(_cef->cef_version),
-        "dev_vendor",
-            arraystring(
-                arraymap(
-                    split(_cef->dev_vendor, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
+    arrayindex(
+        arraymap(
+            arraycreate(
+                object_create(
+                    "x",
+                    arraymap(
+                        arraycreate(
+                            _cef->dev_vendor,
+                            _cef->dev_product,
+                            _cef->dev_version,
+                            _cef->dev_event_class_id,
+                            _cef->name,
+                            _cef->severity
+                        ),
+                        arraystring(
+                            arraymap(
+                                split("@element", """\\\\"""),
+                                replace(replace(replace(replace(replace(replace("@element",
+                                    "\n", convert_from_base_64("Cg==")),
+                                    "\r", convert_from_base_64("DQ==")),
+                                    "\t", convert_from_base_64("CQ==")),
+                                    "\b", convert_from_base_64("CA==")),
+                                    "\f", convert_from_base_64("DA==")),
+                                    """\\""", ""
+                                )
+                            ),
+                            """\\"""
+                        )
                     )
-                ),
-                """\\"""
+                )
             ),
-        "dev_product",
-            arraystring(
-                arraymap(
-                    split(_cef->dev_product, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
-                    )
-                ),
-                """\\"""
-            ),
-        "dev_version",
-            arraystring(
-                arraymap(
-                    split(_cef->dev_version, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
-                    )
-                ),
-                """\\"""
-            ),
-        "dev_event_class_id",
-            arraystring(
-                arraymap(
-                    split(_cef->dev_event_class_id, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
-                    )
-                ),
-                """\\"""
-            ),
-        "name", 
-            arraystring(
-                arraymap(
-                    split(_cef->name, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
-                    )
-                ),
-                """\\"""
-            ),
-        "severity",
-            arraystring(
-                arraymap(
-                    split(_cef->severity, """\\\\"""),
-                    replace(replace(replace(replace(replace(replace("@element",
-                        "\n", convert_from_base_64("Cg==")),
-                        "\r", convert_from_base_64("DQ==")),
-                        "\t", convert_from_base_64("CQ==")),
-                        "\b", convert_from_base_64("CA==")),
-                        "\f", convert_from_base_64("DA==")),
-                        """\\""", ""
-                    )
-                ),
-                """\\"""
-            ),
-        "extension", object_create(
-            "_raw", _cef->extension,
-            "params", _raw_kvobj->{}
-        )
+            object_create(
+                "cef_version", to_number(_cef->cef_version),
+                "dev_vendor", "@element"->x[0],
+                "dev_product", "@element"->x[1],
+                "dev_version", "@element"->x[2],
+                "dev_event_class_id", "@element"->x[3],
+                "name", "@element"->x[4],
+                "severity", "@element"->x[5],
+                "extension", object_create(
+                    "_raw", _cef->extension,
+                    "params", _raw_kvobj->{}
+                )
+            )
+        ),
+        0
     )
 )
 
