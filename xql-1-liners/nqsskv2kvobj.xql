@@ -17,7 +17,13 @@
  *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
  *  - 'key' and 'value' between '=' allows any spaces to be inserted.
  *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
- * 
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
+ *
  *   e.g.
  *    - key1="val1" key2="val2"
  *    - key1="val=1" key2="val=2"
@@ -99,12 +105,29 @@ dataset = xdr_data
                                             arraycreate(replace("@element", "==", "=")),
                                             if("@element" !~= "^\"((?:\\.|[^\"])*)\"$", "@element", arrayindex(regextract("@element", "^\"((?:\\.|[^\"])*)\"$"), 0))
                                         ),
-                                        replace(
-                                            replace(
-                                                arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),
-                                                """\\""", """\\\\"""
+                                        replace(replace(replace(replace(replace(replace(replace(replace(
+                                            arraystring(
+                                                arraymap(
+                                                    split("@element", """\\\\"""),
+                                                    replace(replace(replace(replace(replace(replace("@element",
+                                                        "\n", convert_from_base_64("Cg==")),
+                                                        "\r", convert_from_base_64("DQ==")),
+                                                        "\t", convert_from_base_64("CQ==")),
+                                                        "\b", convert_from_base_64("CA==")),
+                                                        "\f", convert_from_base_64("DA==")),
+                                                        """\\""", ""
+                                                    )
+                                                ),
+                                                """\\"""
                                             ),
-                                            """\"""", """\\\""""
+                                            convert_from_base_64("Cg=="), "\n"),
+                                            convert_from_base_64("DQ=="), "\r"),
+                                            convert_from_base_64("CQ=="), "\t"),
+                                            convert_from_base_64("CA=="), "\b"),
+                                            convert_from_base_64("DA=="), "\f"),
+                                            """\\""", """\\\\"""),
+                                            """\"""", """\\\""""),
+                                            "/", """\\/"""
                                         )
                                     ),
                                     0
@@ -130,7 +153,7 @@ dataset = xdr_data
 // 1-line
 //
 
-| alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(regextract(replace(to_string(coalesce(__kvtext, "")), "=", "=="),"=(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))+?=|^(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?=|=(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?$"),arrayindex(arraymap(arraycreate(object_create("x",arraymap(arrayconcat(regextract("@element", "^=\s*((?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=\s])+)\s*=$"),regextract("@element", "^=\s*(?:(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),regextract("@element", "^(?:\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+))\s*=)$"),regextract("@element", "^(?:=\s*((?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")),arrayindex(arraymap(arraymap(arraycreate(replace("@element", "==", "=")),if("@element" !~= "^\"((?:\\.|[^\"])*)\"$", "@element", arrayindex(regextract("@element", "^\"((?:\\.|[^\"])*)\"$"), 0))),replace(replace(arraystring(arraymap(split("@element", """\\\\"""), replace("@element", """\\""", "")), """\\"""),"""\\""", """\\\\"""),"""\"""", """\\\"""")),0)))),if(array_length("@element"->x[]) = 2,format_string("\"%s\",\"%s\"", "@element"->x[0], "@element"->x[1]),format_string("\"%s\"", "@element"->x[0]))),0)),":"))
+| alter _raw_kvobj = format_string("{%s}",arraystring(arraymap(regextract(replace(to_string(coalesce(__kvtext, "")), "=", "=="),"=(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))+?=|^(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?=|=(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=\"]|[^=\\\"]))*?$"),arrayindex(arraymap(arraycreate(object_create("x",arraymap(arrayconcat(regextract("@element", "^=\s*((?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=\s])+)\s*=$"),regextract("@element", "^=\s*(?:(?:\"(?:\\.|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=\s])+))\s*=$"),regextract("@element", "^(?:\s*(\"(?:\\.|[^\\\"])*\"|(?:(?:\\==|\\[^=]|[^\\\"=])+))\s*=)$"),regextract("@element", "^(?:=\s*((?:\"(?:\\==|\\[^=]|[^\\\"])*\"|(?:\\==|\\[^=]|[^\\\"=]))*?)\s*)$")),arrayindex(arraymap(arraymap(arraycreate(replace("@element", "==", "=")),if("@element" !~= "^\"((?:\\.|[^\"])*)\"$", "@element", arrayindex(regextract("@element", "^\"((?:\\.|[^\"])*)\"$"), 0))),replace(replace(replace(replace(replace(replace(replace(replace(arraystring(arraymap(split("@element", """\\\\"""),replace(replace(replace(replace(replace(replace("@element","\n", convert_from_base_64("Cg==")),"\r", convert_from_base_64("DQ==")),"\t", convert_from_base_64("CQ==")),"\b", convert_from_base_64("CA==")),"\f", convert_from_base_64("DA==")),"""\\""", "")),"""\\"""),convert_from_base_64("Cg=="), "\n"),convert_from_base_64("DQ=="), "\r"),convert_from_base_64("CQ=="), "\t"),convert_from_base_64("CA=="), "\b"),convert_from_base_64("DA=="), "\f"),"""\\""", """\\\\"""),"""\"""", """\\\""""),"/", """\\/""")),0)))),if(array_length("@element"->x[]) = 2,format_string("\"%s\",\"%s\"", "@element"->x[0], "@element"->x[1]),format_string("\"%s\"", "@element"->x[0]))),0)),":"))
 
 **********/
 
