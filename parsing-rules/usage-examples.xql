@@ -46,5 +46,5 @@ alter __log = _raw_log
         gen_time = arrayindex(_columns, 5),
         src = arrayindex(_columns, 6),
         dst = arrayindex(_columns, 7)
-| fields _time, serial_no, type, sub_type, gen_time, src, dst, params
+| fields _syslog as syslog, _time, serial_no, type, sub_type, gen_time, src, dst, params
 ;
