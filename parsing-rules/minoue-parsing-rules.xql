@@ -19,32 +19,29 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *   e.g.
  *    - key1=val1, key2=val2, key3=val3
  *
- * 'key' and 'value' can be quoted with a double quotation mark, 'key' and 'value' between '=' allows any spaces to be inserted,
- * and also a backslash escapes a following charactor in quoted text.
+ * ### Supported Syntax/Formats
+ *  - 'key' and 'value' can be quoted with a double quotation mark.
+ *  - 'key' and 'value' between '=' allows any spaces to be inserted.
+ *  - `value` can contain any spaces.
+ *  - A backslash escapes a following charactor in quoted text.
+ *  - Any spaces can be allowed between a value and a comma separator.
+ *  - It supports text separated with any delimiters and without a delimiter if `value` is quoted with a double quotation mark.
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
+ *
  *   e.g.
  *    - "key"="value"
  *    - key = value
  *    - key = "value"
  *    - "k\"ey" = "va\\lue"
- *
- * If `value` doesn't include the delimiter which is ',', it supports to transform from a spaces separated text.
- *   e.g.
- *    - key1=value1 key2=value2 key3=value3
- *
- * If `value` is quoted with a double quotation mark, it supports text separated with any delimiters and without a delimiter.
- *
- *   e.g.
+ *    - key1=v a l 1, key2= v a l 2
  *    - key1="v a l 1" key2="v a l 2", key3=val3
  *    - key1="v a l 1"key2="v a l 2"
  *    - key1="v a l 1""key2"="v a l 2"
- *
- * The following escape sequences are treated as control codes.
- *
- *  - \b : backspace
- *  - \f : form feed
- *  - \n : line feed
- *  - \r : carriage return
- *  - \t : tab
  *
  * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
  * You should ensure the text in the correct format with $PATTERN_CSKV in advance.
@@ -63,7 +60,7 @@ alter _raw_kvobj = format_string(
         arraymap(
             regextract(
                 to_string(coalesce(__kvtext, "")),
-                "(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,=\"\s])+)\s*?=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,\s])*)"
+                "(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,=\"\s])+)\s*?=\s*(?:\"(?:\\.|[^\"])*\"|(?:\\.|[^,])*)"
             ),
             arrayindex(
                 arraymap(
