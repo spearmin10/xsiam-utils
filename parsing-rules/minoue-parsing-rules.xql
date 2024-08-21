@@ -215,7 +215,6 @@ alter _raw_kvobj = format_string(
 ;
 
 [RULE: minoue_nqcskv2kvobj]
-
 /***
  * This rule transforms a comma separated key=value text to a json object.
  * The standard pattern is:
