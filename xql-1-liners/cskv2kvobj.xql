@@ -14,20 +14,23 @@
  *  - `value` can contain any spaces.
  *  - A backslash escapes a following charactor in quoted text.
  *  - Any spaces can be allowed between a value and a comma separator.
- *  - It supports text separated with any delimiters and without a delimiter if `value` is quoted with a double quotation mark.
  *  - The following escape sequences are treated as control codes.
  *      * \b : backspace
  *      * \f : form feed
  *      * \n : line feed
  *      * \r : carriage return
  *      * \t : tab
- *
  *   e.g.
  *    - "key"="value"
  *    - key = value
  *    - key = "value"
  *    - "k\"ey" = "va\\lue"
  *    - key1=v a l 1, key2= v a l 2
+ *
+ *  It also supports text separated with any delimiters and without a delimiter if `value` is quoted with a double quotation mark.
+ *  However $PATTERN_CSKV doesn't match the text because it is not comma separated keyed-value.
+ *
+ *   e.g.
  *    - key1="v a l 1" key2="v a l 2", key3=val3
  *    - key1="v a l 1"key2="v a l 2"
  *    - key1="v a l 1""key2"="v a l 2"
