@@ -87,7 +87,7 @@ alter __log = _raw_log
 
 | alter __text = _raw_kvobj->to
 | call minoue_csv2array
-| alter to = coalesce(_columns)
+| alter to = if(__text in (null, ""), null, _columns)
 
 | fields _syslog as syslog, queue_id, params, to, from, delay, xdelay, mailer, pri, relay, dsn, stat, size, class, nrcpts, msgid, proto, daemon
 ;
