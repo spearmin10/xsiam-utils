@@ -70,24 +70,31 @@ alter __log = _raw_log
 | alter __kvtext = x->params
 | call minoue_nqcskv2kvobj
 | alter params = _raw_kvobj->{},
-        from = _raw_kvobj->from,
-        delay = _raw_kvobj->delay,
-        xdelay = _raw_kvobj->xdelay,
-        mailer = _raw_kvobj->mailer,
-        pri = _raw_kvobj->pri,
-        relay = _raw_kvobj->relay,
-        dsn = _raw_kvobj->dsn,
-        stat = _raw_kvobj->stat,
-        size = to_number(_raw_kvobj->size),
-        class = _raw_kvobj->class,
-        nrcpts = to_number(_raw_kvobj->nrcpts),
-        msgid = _raw_kvobj->msgid,
-        proto = _raw_kvobj->proto,
-        daemon = _raw_kvobj->daemon
+    from = _raw_kvobj->from,
+    delay = _raw_kvobj->delay,
+    xdelay = _raw_kvobj->xdelay,
+    mailer = _raw_kvobj->mailer,
+    pri = _raw_kvobj->pri,
+    relay = _raw_kvobj->relay,
+    dsn = _raw_kvobj->dsn,
+    stat = _raw_kvobj->stat,
+    size = to_number(_raw_kvobj->size),
+    class = _raw_kvobj->class,
+    nrcpts = to_number(_raw_kvobj->nrcpts),
+    msgid = _raw_kvobj->msgid,
+    proto = _raw_kvobj->proto,
+    daemon = _raw_kvobj->daemon
 
 | alter __text = _raw_kvobj->to
 | call minoue_csv2array
-| alter to = if(__text in (null, ""), null, _columns)
+| alter to = if(
+    __text not in (null, ""),
+    arraymap(
+        _columns,
+        if("@element" ~= "^\s*<[^>]*>\s*$", arrayindex(regextract("@element", "^\s*<([^>]*)>\s*$"), 0), "@element")
+    )
+)
+| alter from = if(from ~= "^\s*<[^>]*>\s*$", arrayindex(regextract("@element", "^\s*<([^>]*)>\s*$"), 0), from)
 
 | fields _syslog as syslog, queue_id, params, to, from, delay, xdelay, mailer, pri, relay, dsn, stat, size, class, nrcpts, msgid, proto, daemon
 ;
