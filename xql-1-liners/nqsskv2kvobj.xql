@@ -45,7 +45,7 @@
  * however you wouldn't be able to check the pattern only with RE2.
  * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
  *
- * :param __kvtext: A space separated key=value text (__kvtext will be broken in the function)
+ * :param __kvtext: A space separated key=value text
  * :return _raw_kvobj: JSON object text
  *
  * @auther Masahiko Inoue
