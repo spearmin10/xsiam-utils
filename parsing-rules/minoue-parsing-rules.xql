@@ -665,10 +665,10 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
     object_create(
         "header", object_create(
             "pri", object_create(
-                "_raw", to_number(_x->pri),
+                "_raw", to_integer(_x->pri),
                 "facility", arrayindex(
                     arraymap(
-                        arraycreate(floor(divide(to_number(_x->pri), 8))),
+                        arraycreate(floor(divide(to_integer(_x->pri), 8))),
                         object_create(
                             "_raw", "@element",
                             "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), "@element"), "unknown")
@@ -678,7 +678,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                 ),
                 "severity", arrayindex(
                     arraymap(
-                        arraycreate(floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))),
+                        arraycreate(floor(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8)))),
                         object_create(
                             "_raw", "@element",
                             "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
@@ -687,7 +687,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                     0
                 )
             ),
-            "version", to_number(_x->version),
+            "version", to_integer(_x->version),
             "datetime", if(_x->datetime_5424 != "", _x->datetime_5424, if(_x->datetime_3164 != "", _x->datetime_3164)),
             "timestamp", if(
                 _x->datetime_5424 = "",
@@ -707,7 +707,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
             "proc_id", if( _x->proc_id != "", _x->proc_id),
             "msg_id", if( _x->msg_id != "", _x->msg_id),
             "tag", if( _x->["tag"] != "", _x->["tag"]),
-            "pid", to_number(_x->pid),
+            "pid", to_integer(_x->pid),
             "structured_data", object_create(
                 "_raw", if( _x->structured_data != "", _x->structured_data),
                 "id", if( _x->sd_id != "", _x->sd_id),
@@ -782,10 +782,10 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
     object_create(
         "header", object_create(
             "pri", object_create(
-                "_raw", to_number(_x->pri),
+                "_raw", to_integer(_x->pri),
                 "facility", arrayindex(
                     arraymap(
-                        arraycreate(floor(divide(to_number(_x->pri), 8))),
+                        arraycreate(floor(divide(to_integer(_x->pri), 8))),
                         object_create(
                             "_raw", "@element",
                             "name", coalesce(arrayindex(split("kern,user,mail,daemon,auth,syslog,lpr,news,uucp,cron,authpriv,ftp,ntp,audit,alert,clock,local0,local1,local2,local3,local4,local5,local6,local7", ","), "@element"), "unknown")
@@ -795,7 +795,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                 ),
                 "severity", arrayindex(
                     arraymap(
-                        arraycreate(floor(subtract(to_number(_x->pri), multiply(floor(divide(to_number(_x->pri), 8)), 8)))),
+                        arraycreate(floor(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8)))),
                         object_create(
                             "_raw", "@element",
                             "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
@@ -804,7 +804,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                     0
                 )
             ),
-            "version", to_number(_x->version),
+            "version", to_integer(_x->version),
             "datetime", if(_x->datetime_5424 != "", _x->datetime_5424, if(_x->datetime_3164 != "", _x->datetime_3164)),
             "timestamp", if(
                 _x->datetime_5424 = "",
@@ -824,7 +824,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
             "proc_id", if( _x->proc_id != "", _x->proc_id),
             "msg_id", if( _x->msg_id != "", _x->msg_id),
             "tag", if( _x->["tag"] != "", _x->["tag"]),
-            "pid", to_number(_x->pid),
+            "pid", to_integer(_x->pid),
             "structured_data", object_create(
                 "_raw", if( _x->structured_data != "", _x->structured_data),
                 "id", if( _x->sd_id != "", _x->sd_id),
@@ -915,7 +915,7 @@ alter _cef = regexcapture(
                 )
             ),
             object_create(
-                "cef_version", to_number(_cef->cef_version),
+                "cef_version", to_integer(_cef->cef_version),
                 "dev_vendor", "@element"->x[0],
                 "dev_product", "@element"->x[1],
                 "dev_version", "@element"->x[2],
