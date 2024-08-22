@@ -98,3 +98,78 @@ alter __log = _raw_log
 
 | fields _syslog as syslog, queue_id, params, to, from, delay, xdelay, mailer, pri, relay, dsn, stat, size, class, nrcpts, msgid, proto, daemon
 ;
+
+/*********************************************************************
+ *
+ * Parse a squid log message
+ *
+ * e.g.
+ * [logformat squid %ts.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %[un %Sh/%<a %mt]
+ *  <13>Jan 1 01:23:45 host squid: 1724296797.527      6 192.168.1.1 TCP_MISS/200 1276 GET http://site.example.lan/ - HIER_DIRECT/1.2.3.4 application/octet-stream
+ *
+ * [logformat common %>a - %[un [%tl] "%rm %ru HTTP/%rv" %>Hs %<st %Ss:%Sh]
+ *  <13>Jan 1 01:23:45 host squid: 192.168.1.1 - - [01/Jan/2024:01:23:45 +0900] "GET http://site.example.lan/ HTTP/1.1" 200 1276 TCP_MISS:HIER_DIRECT
+ * 
+ * [logformat combined %>a - %[un [%tl] "%rm %ru HTTP/%rv" %>Hs %<st "%{Referer}>h" "%{User-Agent}>h" %Ss:%Sh]
+ *  <13>Jan 1 01:23:45 host squid: 192.168.1.1 - - [01/Jan/2024:01:23:45 +0900] "GET http://site.example.lan/ HTTP/1.1" 200 1276 "-" "curl/7.67.0" TCP_MISS:HIER_DIRECT
+ *
+ ********************************************************************/
+[INGEST:vendor="squid", product="squid", target_dataset="squid_squid", no_hit=drop]
+alter __log = _raw_log
+| call minoue_syslog
+| filter _syslog != null
+
+// logformat=combined
+| alter x = regexcapture(
+    _syslog->message,
+    "^\s*(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+\"(?P<referer>[^\"]*)\"\s+\"(?P<user_agent>[^\"]*)\"\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
+)
+| alter x = if(
+    x->server_ip not in (null, ""),
+    x,
+    // logformat=common
+    regexcapture(
+        _syslog->message,
+        "^\s*(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
+    )
+)
+| alter x = if(
+    x->server_ip not in (null, ""),
+    x,
+    // logformat=squid
+    regexcapture(
+        _syslog->message,
+        "^\s*(?P<epoch_time>\d+)\.(?P<epoch_time_f>\d{1,3})\s+(?P<resp_time>\d+)\s+(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<req_status>\w+)/(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+(?P<user_name>\S+)\s+(?P<hierarchy_status>\w+)/(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<content_type>\w+/[\w-]+)\s*$"
+    )
+)
+| filter x->server_ip not in (null, "")
+
+| alter _time = if(
+    x->epoch_time not in (null, ""),
+    to_timestamp(
+        add(multiply(to_integer(x->epoch_time), 1000), to_integer(x->epoch_time_f)), "MILLIS"
+    ),
+    parse_timestamp(
+        "%Y %b %d %H:%M:%S",
+        format_string("%d %s", x->year, x->mon, x->day, x->hour, x->minute, x->second)
+    )
+)
+
+| alter server_ip = if(x->server_ip not in (null, "", "-"), x->server_ip),
+    client_ip = if(x->client_ip not in (null, "", "-"), x->client_ip),
+    user_name = if(x->user_name not in (null, "", "-"), x->user_name),
+    req_method = if(x->req_method not in (null, "", "-"), x->req_method),
+    req_url = if(x->req_url not in (null, "", "-"), x->req_url),
+    req_version = if(x->req_version not in (null, "", "-"), x->req_version),
+    req_status = if(x->req_status not in (null, "", "-"), x->req_status),
+    resp_time = to_number(x->resp_time),
+    resp_status = to_number(x->resp_status),
+    resp_size = to_number(x->resp_size),
+    referer = if(x->referer not in (null, "", "-"), x->referer),
+    user_agent = if(x->user_agent not in (null, "", "-"), x->user_agent),
+    hierarchy_status = if(x->hierarchy_status not in (null, "", "-"), x->hierarchy_status),
+    content_type = if(x->content_type not in (null, "", "-"), x->content_type)
+
+| fields _syslog as syslog, server_ip, client_ip, user_name, req_method, req_url, req_version, req_status, resp_time, resp_status, resp_size, referer, user_agent, hierarchy_status, content_type
+;
+
