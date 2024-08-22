@@ -122,19 +122,19 @@ alter __log = _raw_log
 // logformat=combined
 | alter x = regexcapture(
     _syslog->message,
-    "^\s*(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+\"(?P<referer>[^\"]*)\"\s+\"(?P<user_agent>[^\"]*)\"\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
+    "^\s*(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+\"(?P<referer>[^\"]*)\"\s+\"(?P<user_agent>[^\"]*)\"\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
 )
 | alter x = if(
-    x->server_ip not in (null, ""),
+    x->client_ip not in (null, ""),
     x,
     // logformat=common
     regexcapture(
         _syslog->message,
-        "^\s*(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
+        "^\s*(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
     )
 )
 | alter x = if(
-    x->server_ip not in (null, ""),
+    x->client_ip not in (null, ""),
     x,
     // logformat=squid
     regexcapture(
@@ -142,7 +142,7 @@ alter __log = _raw_log
         "^\s*(?P<epoch_time>\d+)\.(?P<epoch_time_f>\d{1,3})\s+(?P<resp_time>\d+)\s+(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<req_status>\w+)/(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+(?P<user_name>\S+)\s+(?P<hierarchy_status>\w+)/(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<content_type>\w+/[\w-]+)\s*$"
     )
 )
-| filter x->server_ip not in (null, "")
+| filter x->client_ip not in (null, "")
 
 | alter _time = if(
     x->epoch_time not in (null, ""),
@@ -155,8 +155,8 @@ alter __log = _raw_log
     )
 )
 
-| alter server_ip = if(x->server_ip not in (null, "", "-"), x->server_ip),
-    client_ip = if(x->client_ip not in (null, "", "-"), x->client_ip),
+| alter client_ip = if(x->client_ip not in (null, "", "-"), x->client_ip),
+    server_ip = if(x->server_ip not in (null, "", "-"), x->server_ip),
     user_name = if(x->user_name not in (null, "", "-"), x->user_name),
     req_method = if(x->req_method not in (null, "", "-"), x->req_method),
     req_url = if(x->req_url not in (null, "", "-"), x->req_url),
