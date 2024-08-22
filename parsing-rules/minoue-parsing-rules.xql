@@ -678,7 +678,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                 ),
                 "severity", arrayindex(
                     arraymap(
-                        arraycreate(floor(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8)))),
+                        arraycreate(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8))),
                         object_create(
                             "_raw", "@element",
                             "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
@@ -795,7 +795,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                 ),
                 "severity", arrayindex(
                     arraymap(
-                        arraycreate(floor(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8)))),
+                        arraycreate(subtract(to_integer(_x->pri), multiply(floor(divide(to_integer(_x->pri), 8)), 8))),
                         object_create(
                             "_raw", "@element",
                             "name", arrayindex(split("emergency,alert,critical,error,warning,notice,informational,debug", ","), "@element")
