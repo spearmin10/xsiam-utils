@@ -193,7 +193,7 @@ alter __log = _raw_log
 | alter __ent_separator = ";"
 | alter __kv_separator = ":"
 | alter __kvtext = x->params
-| call minoue_nqkv2kvobj
+| call minoue_skv2kvobj
 | alter params = _raw_kvobj->{}
 
 | alter _time = parse_timestamp(
