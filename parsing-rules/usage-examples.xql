@@ -173,3 +173,38 @@ alter __log = _raw_log
 | fields _syslog as syslog, server_ip, client_ip, user_name, req_method, req_url, req_version, req_status, resp_time, resp_status, resp_size, referer, user_agent, hierarchy_status, content_type
 ;
 
+/*********************************************************************
+ *
+ * Extract parameters from a checkpoint syslog message 
+ *
+ * e.g.
+ * <13>Jan 1 01:23:45 host Checkpoint: 21Aug2007 12:00:00 accept 10.10.10.2 >eth0 rule: 100; rule_uid: {00000000-0000-0000-0000-000000000000}; service_id: nbdatagram; src: 10.10.10.3; dst: 10.10.10.255; proto: udp; product: VPN-1 & FireWall-1; service: 138; s_port: 138;
+ *
+ ********************************************************************/
+[INGEST:vendor="checkpoint", product="vpn1fw1", target_dataset="checkpoint_vpn1fw1", no_hit=drop]
+alter __log = _raw_log
+| call minoue_syslog
+| filter _syslog != null
+
+| alter x = regexcapture(
+    _syslog->message,
+    "^\s*(?P<day>\d{1,2})(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))(?P<year>\d{4})\s+(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<action>\w+)\s+(?P<origin>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+>(?P<ifname>\w+)\s+(?P<params>.*)$"
+)
+| alter __ent_separator = ";"
+| alter __kv_separator = ":"
+| alter __kvtext = x->params
+| call minoue_nqkv2kvobj
+| alter params = _raw_kvobj->{}
+
+| alter _time = parse_timestamp(
+    "%Y %b %d %H:%M:%S",
+    format_string("%s %s %s %s:%s:%s", x->year, x->mon, x->day, x->hour, x->minute, x->second)
+)
+
+| alter src = params->src,
+        dst = params->dst,
+        rule_uid = params->rule_uid,
+        proto = params->proto
+| fields _syslog as syslog, src, dst, params
+;
+
