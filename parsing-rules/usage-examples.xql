@@ -170,7 +170,7 @@ alter __log = _raw_log
     hierarchy_status = if(x->hierarchy_status not in (null, "", "-"), x->hierarchy_status),
     content_type = if(x->content_type not in (null, "", "-"), x->content_type)
 
-| fields _syslog as syslog, server_ip, client_ip, user_name, req_method, req_url, req_version, req_status, resp_time, resp_status, resp_size, referer, user_agent, hierarchy_status, content_type
+| fields _syslog as syslog, _time, server_ip, client_ip, user_name, req_method, req_url, req_version, req_status, resp_time, resp_status, resp_size, referer, user_agent, hierarchy_status, content_type
 ;
 
 /*********************************************************************
@@ -205,6 +205,6 @@ alter __log = _raw_log
         dst = params->dst,
         rule_uid = params->rule_uid,
         proto = params->proto
-| fields _syslog as syslog, src, dst, params
+| fields _syslog as syslog, _time, src, dst, params
 ;
 
