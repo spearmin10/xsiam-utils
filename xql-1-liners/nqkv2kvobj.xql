@@ -15,7 +15,7 @@
  *  - The Key-Value separator (<kv-separator>) must be a charactor (length=1).
  *  - The entry separator (<ent-separator>) must be a charactor (length=1).
  *  - The Key-Value separator and the entry separator must be a different charactor.
- *  - The Key-Value separator and the entry must not be backslash and double quotation mark.
+ *  - The Key-Value separator and the entry are unable to be backslash and double quotation mark.
  *  - A backslash escapes a following charactor in quoted text.
  *  - Any spaces can be allowed between a value and a comma separator.
  *  - 'key' and 'value' can be quoted with a double quotation mark.
