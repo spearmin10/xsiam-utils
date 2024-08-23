@@ -214,7 +214,7 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_nqkv2kvobj]
+[RULE: minoue_nqskv2kvobj]
 /***
  * This rule transforms a separated keyed-value text to a json object.
  * Any of a charactor can be usable except for backslash and double quotation as the separator.
