@@ -64,7 +64,6 @@ dataset = xdr_data
     """key = value""",
     """key = \"value\"""",
     """\"k\\\"ey\" = \"va\\\\lue\"""",
-    """key1=value1 key2=value2 key3=value3""",
     """key1=\"v a l 1\" key2=\"v a l 2\", key3=val3""",
     """key1=\"v a l 1\"key2=\"v a l 2\"""",
     """key1=\"v a l 1\"\"key2\"=\"v a l 2\""""
