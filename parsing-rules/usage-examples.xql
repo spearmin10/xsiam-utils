@@ -151,7 +151,7 @@ alter __log = _raw_log
     ),
     parse_timestamp(
         "%Y %b %d %H:%M:%S",
-        format_string("%d %s", x->year, x->mon, x->day, x->hour, x->minute, x->second)
+        format_string(""%s %s %s %s:%s:%s"", x->year, x->mon, x->day, x->hour, x->minute, x->second)
     )
 )
 
