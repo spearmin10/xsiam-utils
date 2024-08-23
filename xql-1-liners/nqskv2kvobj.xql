@@ -2,7 +2,7 @@
  * This expression transforms a separated keyed-value text to a json object.
  * Any of a charactor can be usable except for backslash and double quotation as the separator.
  *
- * This is compatible with the `minoue_nqkv2kvobj` rule.
+ * This is compatible with the `minoue_nqskv2kvobj` rule.
  *
  * The standard pattern is:
  *    key<kv-separator>value[<ent-separator> key<kv-separator>value]*
