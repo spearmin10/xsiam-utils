@@ -1,0 +1,1367 @@
+commonfields:
+  id: NGFW Alert Ingester
+  version: -1
+vcShouldKeepItemLegacyProdMachine: false
+name: NGFW Alert Ingester
+display: NGFW Alert Ingester
+category: Utilities
+image: data:image/png;base64,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eG1wTU06RG9jdW1lbnRJRD0iZ2ltcDpkb2NpZDpnaW1wOmMzZTIzMWJlLWRmNzktNDE1NS1hNmVjLWYzNTI0M2FiMjI2NSIKICAgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo3YzNmZGJlNi1kMjk5LTRiZjEtODJmMC1mZTM3OGYyY2Y1YjEiCiAgIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDozNDVlMzA5Ny0wZTRlLTQ3ZjUtYTJlNi1jMDFkMmJiMTM3MGIiCiAgIGRjOkZvcm1hdD0iaW1hZ2UvcG5nIgogICBHSU1QOkFQST0iMi4wIgogICBHSU1QOlBsYXRmb3JtPSJXaW5kb3dzIgogICBHSU1QOlRpbWVTdGFtcD0iMTcxNTE0OTYwMTQzMzQ1NCIKICAgR0lNUDpWZXJzaW9uPSIyLjEwLjMyIgogICB0aWZmOk9yaWVudGF0aW9uPSIxIgogICB4bXA6Q3JlYXRvclRvb2w9IkdJTVAgMi4xMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyNDowNTowOFQxNToyNjozOSswOTowMCIKICAgeG1wOk1vZGlmeURhdGU9IjIwMjQ6MDU6MDhUMTU6MjY6MzkrMDk6MDAiPgogICA8eG1wTU06SGlzdG9yeT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJzYXZlZCIKICAgICAgc3RFdnQ6Y2hhbmdlZD0iLyIKICAgICAgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDoyY2Y4NTY3NS0wMzEyLTRjYTQtOTVmNy03NDMwYmI1MWY3ODkiCiAgICAgIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkdpbXAgMi4xMCAoV2luZG93cykiCiAgICAgIHN0RXZ0OndoZW49IjIwMjQtMDUtMDhUMTU6MjY6NDEiLz4KICAgIDwvcmRmOlNlcT4KICAgPC94bXBNTTpIaXN0b3J5PgogIDwvcmRmOkRlc2NyaXB0aW9uPgogPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgIAo8P3hwYWNrZXQgZW5kPSJ3Ij8+vHMuKwAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAABcRgAAXEYBFJRDQQAAAAd0SU1FB+gFCAYaKc2FitUAAAbqSURBVHja7Zx/bF1lGcc/z7n9tUp1sMzgUMdCIIEQI7aKP2D2bI6ekuA2MuP+GFsnpx0QF9yUiD8QQhai44cuugHraZ0KJMQJmzPb6aC8jUQjyMIkwbgwM5HNRGBjGV1pt/Y8/nHPna3r5jm9595buvf7T3vufd5z7/N+zvu+z/u+z3uFSSI39D8KfA5oAi4FPgJMB+qBJuMFb2GVWlUVhjobWAHcCHwCkDOYOhbV+wiwG/qNwHeBL1f6IbOAswV7EbAeWGpb5RQD7Ib+cmBDPK5aTRXAbujXAZuAlba6pxhgN/SnA9uBubaqpxjgGO5u4NO2misnp0Rwa4FtFu4UBQxsBL6Y0b0UqJ8ftovFlV5SgtZ7E/DLCRY/CRjgd8BLwH5BDit6FKgBDgB7gRD4rfGCdyzCMgJ2Q38W8OoEpkIDcaT9E+MFh8a57zGgYZwyvwDWGS/4l0VZniDr/gnA7QXajRccSFmuHrgVWOaG/p2OyMO9LZ1qkZZoDI6XH5emHFt/JNAyAbij1QBsjFSfiOfcViUKsr6X8n7fN15w53NeMJLR5y8FnrKQSwDYDf055DcOEkfZxgvuK4E/rcCjC3o6bMSdcQteAeQS2r4MfLOEPi0f1miFRZst4K8ktIuAW40XDJXYrwfc0L/A4s0AcNw9X57QfLvxghfK4NeMEvcS51QLvibFfHpDGX1rtwFXNoCvTmh3UJDny+jbTGC+BVy8Lkto98xzXmdUZv9aLODi9bGEdnsq4N+nLOBsusIkOlAB/y62gIvXtIR2Ryvg3/kWcPlkNwLep4AHE9pVIpvyqAVcvJIeKanEePi6BVy8Dia0a6yAfy9bwMVrX0K7BfPC9nKfZuixgIvXiwntPq7o58vo2xHgGQu4eP0hRYR8exl9C4wXvGcBFynjBftTdNOL49SeUusd4AE7ScpuHvybhHY5YJMb+tUl9uvb9sB4XlllVf4c+E7CB+YzwA8p3X7tk45IMN4b80J/neZzxwBQR67qu65zb+G62bRNl6Gqg8AH4pe2Gy9Y1Gza6mSo6gzdvb5gvK7Pjnd/RG82LV3dhUs39LcBCwG0dvj8PnfLmHm62+M3CnxDlbnAhSCDoK+p8PS0kfd+uuv6x49VpAUbL/g7+WT1pFrjhv6aEsDtBVYmTZ+ViLVjrodyHaPgnlKfu2XQeIGoVs0ZPcc2XiAFuOOzl/Xzn10+I8l3aQ7bb0d5UZVloBu1tmbGiOM0AcdFWTfoTNs7d/eqSyvVRQPclyLYEuBBN/TvznDq9DSwMF1gpUsX7P7arHzrvacK5OsZP3AzouGa+xPA/ZKgPwYcQbcYr2t9n7up//fXPfpaDboY5Bgwpyoa2d74Ukd1RQDHqThbUxQR4B5Fd8Q/wDJRDQDfEmSJ8YLjKctWD2suD3Xw0BKSb30m0XD8t615V8c1Z68IvSuuDwTpHjOR97qOgG4j33oub3gr+mqlWjDxuPpuyjLXA391Q/9eN/Q/nKLcENANXGG84MEJJBP05RuxrrphR0e9iK7JV6KYLCpC0I2Ff0Wih8/U8prNbecBXyh0KfUnnT3j3OvPp4A56ZIYMj26YrzgjXhsDVIWbQDuAu5wQ7+HUYfPjBf0xzYR8Ab55cce4CnjBW8WGRg2ARf0V+sjcfA3gGo3gltsXUSa24pEVwgsAK5seFvXjvsgDA5ehDiFlOP+HTdsHjhtIMF5szD6RcrsigEGyInTPaJRM7BsAsXr4ihzYcE3N/SHyGdm7DdecDKr76mix1B5TOAW0JviVx/HcY6i2exsikarEecVoEbQHwjs0/9TIsG4lurLZb42/GzLZgVWAX/MpKfLQz+SJdz/3lx+NqYydOx10T1aa/c+VR6KL+sVrjrtQaurOwTEx3e0odm01Z3egvVU1owI/6wo4LirHohb4V8m8yKA8TpfLYy5Cs/3tgavZP0ZNc7QunhoGT8QcDf1k1/uBRDnRPVpeWSO6KkgLYrSbaA4pau84G3yaat/msyQ+7zOecYLpM8LSvJDMbtbfnVchbVnHy/03sIUUyPtGP3WtTtXzlSVxfHl396d6Tw5KQDHkA/HkJ84l5cL+1qCrXqWnS3T2tWryBogQljh7vLvaDa3nTdvZ8clVbncr4Fa4HU0WrSnafPJSQO40F1XSW4ZcMsEplCTQs2mrc4NfRUZHp0ZOtsNfXXDmxP1UKLRauDEWXqSDepEV4vwGMJqGTpxWJ1orygfBL1ba4c/aVq796X97mU9ZumG/sXAQ8CilJ99ofGCf2OVWmXNsDBe8A/jBTcC1wI747mtVQlV0YPSbuhfRv5s8RLyvxEttgVPIcD/A/sS8kt2jTHsWcCHyO/uXFnkqtU5q/8Aaq4/vTq/L3sAAAAASUVORK5CYII=
+description: Ingest Alerts from Palo Alto Networks Firewall
+configuration:
+- section: Connect
+  display: The base URL of the NGFW API endpoints (e.g. https://192.168.1.2/api/)
+  name: ngfw_api_url
+  type: 0
+  required: true
+- section: Connect
+  display: ""
+  displaypassword: NGFW API Key
+  name: ngfw_credentials
+  type: 9
+  required: true
+  hiddenusername: true
+- section: Connect
+  advanced: true
+  display: Device group - Panorama instances only (write shared for Shared location)
+  name: device_group
+  type: 0
+  required: false
+  additionalinfo: Located in the Panorama UI. Go to Panorama, Device Groups and select
+    the desired Device Group
+- display: Templates - Panorama instances only
+  name: template
+  type: 0
+  required: false
+- section: Connect
+  display: Vsys - Firewall instances only
+  name: vsys
+  type: 0
+  required: false
+  additionalinfo: Located in the Firewall URL; by default of PAN-OS it is vsys1
+- display: Device Time Zone
+  name: device_timezone
+  defaultvalue: UTC
+  type: 0
+  required: false
+- section: Collect
+  display: First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)
+  name: first_fetch
+  defaultvalue: 24 hours
+  type: 0
+  required: false
+- section: Collect
+  display: Max incidents per fetch (for each selected Log Type Query)
+  name: max_fetch
+  defaultvalue: "500"
+  type: 0
+  required: false
+  additionalinfo: The maximum number of incidents to fetch per Log Type Query. To
+    ensure optimal efficiency, it is strongly advised to keep the limit as low as
+    possible.
+- section: Collect
+  advanced: true
+  display: Log type max number of job pulling attempts
+  name: fetch_job_polling_max_num_attempts
+  defaultvalue: "10"
+  type: 0
+  required: false
+  additionalinfo: |-
+    The maximum number of attempts to try and pull results for each log type from a job that was created by its query. Each attempt takes around 1 second. Increasing this value is useful in case there are many logs to pull from a given log type.
+    Note: When increasing this number, in case fetching more than 4 logs types together, it is recommended to split different log types for different integration instances
+- display: Incidents Fetch Interval
+  name: incidentFetchInterval
+  defaultvalue: "1"
+  type: 19
+  required: false
+- display: Log Type
+  name: log_types
+  type: 16
+  required: false
+  options:
+  - Threat
+- section: Collect
+  advanced: true
+  display: Threat Log Type Query
+  name: threat_query
+  defaultvalue: severity geq medium
+  type: 12
+  required: false
+  additionalinfo: "Threat Log Type query example: (severity geq high).\nIn case of
+    multiple devices, for the sake of speed it is recommended to narrow the query
+    to a specific device. \nFor example:(device_name eq dummy_device)"
+- section: Connect
+  advanced: true
+  display: Trust any certificate (not secure)
+  name: insecure
+  type: 8
+  required: false
+- section: Connect
+  advanced: true
+  display: Use system proxy settings
+  name: proxy
+  type: 8
+  required: false
+- section: Collect
+  display: Fetch incidents
+  name: isFetch
+  type: 8
+  required: false
+- section: Connect
+  display: Incident type
+  name: incidentType
+  type: 13
+  required: false
+- display: The base URL of the XSIAM API endpoints
+  name: xsiam_api_url
+  type: 0
+  required: true
+- display: XSIAM API ID
+  displaypassword: XSIAM API Key
+  name: xsiam_credentials
+  type: 9
+  required: true
+- display: XSIAM API Key Type
+  name: xsiam_apikey_type
+  defaultvalue: Advanced
+  type: 15
+  required: false
+  options:
+  - Standard
+  - Advanced
+script:
+  script: |
+    register_module_line('NGFW Alert Ingester', 'start', __line__())
+
+
+    ''' IMPORTS '''
+    import panos.errors
+    from enum import Enum
+    from typing import Any, List, Tuple
+    from datetime import datetime
+    import secrets
+    import string
+    import hashlib
+    import random
+    import urllib3
+    from urllib.parse import urlparse
+    from urllib.error import HTTPError
+
+    # disable insecure warnings
+    urllib3.disable_warnings()
+
+
+    FETCH_DEFAULT_TIME = '1 day'
+    FETCH_INCIDENTS_LOG_TYPES = ['Threat']
+    MAX_INCIDENTS_TO_FETCH = 100
+    GET_LOG_JOB_ID_MAX_RETRIES = 10
+    QUERY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'  # ISO8601 format with UTC, default in XSOAR
+
+    PAN_OS_ERROR_DICT = {
+        '1': 'Unknown command - The specific config or operational command is not recognized.',
+        '2': 'Internal errors - Check with technical support when seeing these errors.',
+        '3': 'Internal errors - Check with technical support when seeing these errors.',
+        '4': 'Internal errors - Check with technical support when seeing these errors.',
+        '5': 'Internal errors - Check with technical support when seeing these errors.',
+        '6': 'Bad Xpath -The xpath specified in one or more attributes of the command is invalid.'
+             'Check the API browser for proper xpath values.',
+        '7': 'Object not present - Object specified by the xpath is not present. For example,'
+             'entry[@name=value] where no object with name value is present.',
+        '8': 'Object not unique - For commands that operate on a single object, the specified object is not unique.',
+        '10': 'Reference count not zero - Object cannot be deleted as there are other objects that refer to it.'
+              'For example, address object still in use in policy.',
+        '11': 'Internal error - Check with technical support when seeing these errors.',
+        '12': 'Invalid object - Xpath or element values provided are not complete.',
+        '14': 'Operation not possible - Operation is allowed but not possible in this case.'
+              'For example, moving a rule up one position when it is already at the top.',
+        '15': 'Operation denied - Operation is allowed. For example, Admin not allowed to delete own account,'
+              'Running a command that is not allowed on a passive device.',
+        '16': 'Unauthorized -The API role does not have access rights to run this query.',
+        '17': 'Invalid command -Invalid command or parameters.',
+        '18': 'Malformed command - The XML is malformed.',
+        # 19,20: success
+        '21': 'Internal error - Check with technical support when seeing these errors.',
+        '22': 'Session timed out - The session for this query timed out.'
+    }
+
+
+    ''' HELPER FUNCTIONS '''
+
+    def log_types_queries_to_dict(
+        params: dict[str, str]
+    ) -> dict[str, str]:
+        """ Converts chosen log type queries from parameters to a queries dictionary.
+        Example:
+        for parameters: log_types=['X_log_type'], X_log_type_query='(example query for X_log_type)'
+        the dictionary returned is: {'X_log_type':'(example query for X_log_type)'}
+
+        :param params: Instance configuration parameters
+        :return: Queries per log type dictionary
+        """
+        queries_dict = {}
+        if log_types := params.get('log_types'):
+            # if 'All' is chosen in Log Type (log_types) parameter then all query parameters are used,
+            # else only the chosen query parameters are used.
+            if 'All' in log_types:
+                log_types = FETCH_INCIDENTS_LOG_TYPES
+
+            for log_type in log_types:
+                queries_dict[log_type.capitalize()] = params.get(f'{log_type.lower()}_query', '')
+        return queries_dict
+
+
+    def update_max_fetch_dict(
+        configured_max_fetch: int,
+        max_fetch_dict: dict[str, int],
+        last_fetch_dict: dict[str, str],
+        last_id_dict: dict[str, dict]
+    ) -> dict[str, int]:
+        """ This function updates the max fetch value for each log type according to the last fetch timestamp.
+
+        :param configured_max_fetch: The max fetch value for the first fetch cycle
+        :param max_fetch_dict: A dictionary of log type and its max fetch value
+        :param last_fetch_dict: A dictionary of log type and its last fetch timestamp
+        :param last_id_dict: Last id dictionary
+        :return: A dictionary of log type and its updated max fetch value
+        """
+        last_run = demisto.getLastRun()
+        for log_type in last_fetch_dict:
+            previous_fetch_timestamp = last_run.get('last_fetch_dict', {}).get(log_type)
+            previous_last_id = last_run.get('last_id_dict', {}).get(log_type)
+
+            # If the latest timestamp of the current fetch is the same as the previous fetch timestamp,
+            # that means we did not get all logs for that timestamp, in such a case,
+            # we will increase the limit to be last limit + configured limit.
+            demisto.debug(
+                f"{log_type}: {previous_fetch_timestamp=}, {last_fetch_dict.get(log_type)=}, {previous_last_id=}, {last_id_dict.get(log_type)=}"
+            )
+            if (
+                previous_fetch_timestamp and
+                (previous_fetch_timestamp == last_fetch_dict.get(log_type)) and
+                (previous_last_id != last_id_dict.get(log_type))
+            ):
+                max_fetch_dict[log_type] += configured_max_fetch
+            else:
+                max_fetch_dict[log_type] = configured_max_fetch
+
+        demisto.debug(f'{max_fetch_dict=}')
+        return max_fetch_dict
+
+
+    def flatten_keys(
+        d: dict[str, Any]
+    ) -> dict[str, Any]:
+        """ Convert nested keys to dotted keys flatten
+
+        :param d: A nested dictionary
+        :return: A dictionary flatten
+        """
+        res = {}
+        for k, v in d.items():
+            if isinstance(v, dict):
+                for fk, fv in flatten_keys(v).items():
+                    res[f'{k}.{fk}'] = fv
+            elif isinstance(v, list):
+                for i, lv in enumerate(v):
+                    for fk, fv in flatten_keys(lv).items():
+                        res[f'{k}.{i}.{fk}'] = fv
+            else:
+                res[k] = v
+        return res
+
+
+    def build_cef_extensions(
+        params: dict[str, str]
+    ) -> str:
+        """ Build a CEF extensions from a named value dictionary
+
+        :param params: Named value dictionary
+        :return: CEF extensions text.
+        """
+        def _to_cef_name(name: str) -> str:
+            name = name.replace('@', '').replace('#', '').replace('-', '_').replace('.', '_')
+            components = [x for r in name.split(' ') for x in r.split('_')]
+            camelize_without_first_char = ''.join(map(lambda x: x.title(), components[1:]))
+            name = components[0].lower() + camelize_without_first_char
+            if not name.isalnum():
+                raise DemistoException(f'CEF extension name must only contain alpha numeric charactors - {name}')
+            return name
+
+        def _to_cef_value(value: str) -> str:
+            return value.replace('\\', '\\\\').replace('=', r'\=').replace('\n', r'\n').replace('\r', r'\r')
+
+        return ' '.join([_to_cef_name(str(k)) + '=' + _to_cef_value(str(v)) for k, v in params.items()])
+
+
+    def build_ngfw_cef_log(
+        log_type: str,
+        incident: dict[str, Any]
+    ) -> str:
+        """ Build a NGFW CEF log from an incident
+
+        :param log_type: Log type
+        :param incident: An incident
+        :return: CEF log record.
+        """
+        if raw_json := json.loads(incident.get('rawJSON') or 'null'):
+            cef_exts = build_cef_extensions(flatten_keys(raw_json))
+        else:
+            cef_exts = ''
+
+        device_vendor = 'PANW'
+        device_product = 'NGFW'
+        device_version = '0'
+        device_event_class = log_type
+        name = f'{log_type} log'.lower()
+        severity = 'Unknown'
+        return f'CEF:0|{device_vendor}|{device_product}|{device_version}|{device_event_class}|{name}|{severity}|{cef_exts}'
+
+
+    def build_cortex_alert(
+        log_type: str,
+        incident: dict[str, Any]
+    ) -> dict[str, Any]:
+        """ Build XDR/XSIAM alerts from an incident
+
+        :param log_type: Log type
+        :param incident: An incident
+        :return: An alert created.
+        """
+        node = json.loads(incident.get('rawJSON') or '{}')
+
+        match node.get('action'):
+            case 'alert':
+                action_status = 'Reported'
+            case x if x.startswith('drop'):
+                action_status = 'Blocked'
+            case _:
+                action_status = None
+
+        thr_category = node.get('thr_category')
+        misc = node.get('misc')
+        alert_description = f'{thr_category.title()} ({misc})'
+
+        alert = assign_params(
+            vendor='PANW',
+            product='NGFW',
+            local_ip=node.get('src'),
+            local_port=arg_to_number(node.get('sport')),
+            remote_ip=node.get('dst'),
+            remote_port=arg_to_number(node.get('dport')),
+            event_timestamp=int(datetime.strptime(node.get('high_res_timestamp'), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp() * 1000),
+            severity=(node.get('severity') or '').capitalize(),
+            alert_name=node.get('threat_name'),
+            alert_description=alert_description,
+            action_status=action_status
+        )
+        return alert
+
+
+    ''' CLASS DEFINITIONS '''
+
+
+    class PAN_OS_Not_Found(Exception):
+        """ PAN-OS Error. """
+
+        def __init__(self, *args):  # real signature unknown
+            pass
+
+
+    class NgfwClient(BaseClient):
+        """ NGFW Client class
+        """
+        def __init__(
+            self,
+            params: dict[str, str]
+        ) -> None:
+            """ Initialize the instance
+
+            :param params: Instance configuration parameters
+            """
+            base_url = params.get('ngfw_api_url')
+            insecure = params.get('insecure', False)
+            proxy = params.get('proxy', False)
+            super().__init__(base_url, not insecure, proxy)
+
+            self.__ngfw_api_key = str((params.get('ngfw_credentials') or {}).get('password', ''))
+            self.__vsys = params.get('vsys', '')
+            self.__device_group = params.get('device_group', '')
+            self.__template = params.get('template')
+            self.__device_timezone = params.get('device_timezone', 'UTC')
+
+        @property
+        def ngfw_api_key(
+            self
+        ) -> int:
+            return self.__ngfw_api_key
+
+        @property
+        def device_group(
+            self
+        ) -> int:
+            return self.__device_group
+
+        def __get_query_by_job_id_request(
+            self,
+            log_type: str,
+            query: str,
+            max_fetch: int
+        ) -> str:
+            """ Get the Job ID linked to a particular query.
+
+            :param log_type: Query log type
+            :param query: Query for the fatch
+            :param max_fetch: Maximum number of entries to fetch
+            :return: The job ID assosiated with the given query.
+            """
+            params = assign_params(
+                key=self.ngfw_api_key,
+                type='log',
+                log_type=log_type.lower(),
+                query=query,
+                nlogs=max_fetch,
+                dir='forward'
+            )
+            demisto.debug(f'{query=}')
+            resp = self.call_api('GET', params=params)
+            return demisto.get(resp, 'response.result.job') or ''
+
+        def __get_query_entries_by_id_request(
+            self,
+            job_id: str,
+            fetch_job_polling_max_num_attempts: int
+        ) -> dict[str, Any]:
+            """ Get the entries of a particular Job ID.
+
+            :param job_id: ID of a query job
+            :param fetch_job_polling_max_num_attempts: The maximal number of attempts to try and pull results.
+            :return: A dictionary of the raw entries linked to the Job ID
+            """
+            params = assign_params(
+                key=self.ngfw_api_key,
+                type='log',
+                action='get',
+                job_id=job_id
+            )
+            # if the job has not finished, wait for 1 second and try again (until success or max retries)
+            for try_num in range(1, fetch_job_polling_max_num_attempts + 1):
+                resp = self.call_api('GET', params=params)
+                status = demisto.get(resp, 'response.result.job.status')
+                demisto.debug(f'Job ID {job_id}, response status: {status}')
+                demisto.debug(f'raw response: {resp}')
+                if status == 'FIN':
+                    return resp
+                else:
+                    demisto.debug(f'Attempt number: {try_num}. Job not completed, Retrying in 1 second...')
+                    # due to short job life, saving the unfinished job id's to the context to query in the next fetch cycle is not a valid solution.
+                    time.sleep(1)
+
+            demisto.debug(
+                f'Maximum attempt number: {try_num} has reached.'
+                f' Job ID {job_id} might be not completed which could result in missing incidents.'
+            )
+            return {}
+
+        def __get_query_entries(
+            self,
+            log_type: str,
+            query: str,
+            max_fetch: int,
+            fetch_job_polling_max_num_attempts: int
+        ) -> List[dict[Any, Any]]:
+            """ Get query entries according to a specific query.
+
+            :param log_type: Query log type
+            :param query: Query for the fetch
+            :param max_fetch: Maximum number of entries to fetch
+            :param fetch_job_polling_max_num_attempts: The maximal number of attempts to try and pull results from a job.
+            :return: A list of raw entries for the specified query
+            """
+            # first http request: send request with query, valid response will contain a job id.
+            job_id = self.__get_query_by_job_id_request(log_type, query, max_fetch)
+            demisto.debug(f'{job_id=}')
+
+            # second http request: send request with job id, valid response will contain a dictionary of entries.
+            query_entries = self.__get_query_entries_by_id_request(job_id, fetch_job_polling_max_num_attempts)
+
+            # extract all entries from response
+            entries = []
+            if result := demisto.get(query_entries, 'response.result.log.logs.entry'):
+                if isinstance(result, list):
+                    entries.extend(result)
+                elif isinstance(result, dict):
+                    entries.append(result)
+                else:
+                    raise DemistoException(f'Could not parse fetch results: {result}')
+
+            entries_log_info = {entry.get('seqno', ''): entry.get('time_generated') for entry in entries}
+            demisto.debug(f'{log_type} log type: {len(entries)} raw incidents (entries) found.')
+            demisto.debug(f'fetched raw incidents (entries) are (ID:time_generated): {entries_log_info}')
+            return entries
+
+        def __get_fetch_start_datetime_dict(
+            self,
+            last_fetch_dict: dict[str, str],
+            first_fetch: str,
+            queries_dict: dict[str, str] | None
+        ) -> Tuple[
+            dict[str, datetime],
+            dict[str, str]
+        ]:
+            """ Calculate fetch start time for each log type query.
+                - if last fetch time already exists for a log type, it will not be changed (only converted to datetime object).
+                - if last fetch time does not exist for the log_type, it will be changed into first_fetch parameter (and converted to datetime object).
+                - example: {'log_name':'2022-12-18T05:58:17'} --> {'log_name': datetime.datetime(2022, 12, 18, 5, 58, 17)}
+
+            :param last_fetch_dict: Last fetch dictionary
+            :param first_fetch: First fetch parameter
+            :param ueries_dict: Queries per log type dictionary
+            :return: log_type:datetime pairs dictionary, Updated last fetch dictionary.
+            """
+            fetch_start_datetime_dict = {}
+            updated_last_fetch_dict = dict(**last_fetch_dict)
+            first_fetch_parsed = dateparser.parse(
+                first_fetch,
+                settings={'TIMEZONE': self.__device_timezone}
+            )
+            # add new log types to updated_last_fetch_dict
+            if queries_dict:
+                for log_type in queries_dict.keys():
+                    if (
+                        (log_type not in updated_last_fetch_dict) and
+                        (log_type != 'All')
+                    ):
+                        updated_last_fetch_dict[log_type] = ''
+
+            # update fetch_start_datetime_dict with relevant last fetch time per log type in datetime UTC format
+            # if there is no prior last fetch time available for a log type - it will be set it to first_fetch
+            for log_type, last_fetch in updated_last_fetch_dict.items():
+                if not last_fetch and first_fetch_parsed:
+                    fetch_start_datetime_dict[log_type] = first_fetch_parsed
+                else:
+                    if updated_last_fetch := dateparser.parse(
+                        last_fetch,
+                        settings={'TIMEZONE': self.__device_timezone}
+                    ):
+                        fetch_start_datetime_dict[log_type] = updated_last_fetch
+
+                demisto.debug(
+                    f'last fetch for {log_type} log type was at: {last_fetch},'
+                    f' new time to fetch start time is: {fetch_start_datetime_dict[log_type]}.'
+                )
+            return fetch_start_datetime_dict, updated_last_fetch_dict
+
+        def __fetch_incidents_request(
+            self,
+            queries_dict: dict[str, str] | None,
+            max_fetch_dict: dict,
+            fetch_start_datetime_dict: dict[str, datetime] | None,
+            fetch_job_polling_max_num_attempts: int
+        ) -> dict[str, List[dict[str, Any]]]:
+            """ Get raw entires of incidents according to provided queries, log types and max_fetch parameters.
+
+            :param queries_dict: Chosen log type queries dictionaries
+            :param max_fetch_dict: Max incidents per fetch parameter per log type dictionary
+            :parma fetch_start_datetime_dict: Updated last fetch time per log type dictionary
+            :param fetch_job_polling_max_num_attempts: The maximal number of attempts to try and pull results for each log type
+            :return: A dictionary of all fetched raw incidents entries
+            """
+            entries = {}
+            if queries_dict:
+                for log_type, query in queries_dict.items():
+                    max_fetch = max_fetch_dict.get(log_type, MAX_INCIDENTS_TO_FETCH)
+                    if fetch_start_time := fetch_start_datetime_dict.get(log_type):
+                        if 'time_generated' in query:
+                            raise DemistoException('Query parameter must not contain time_generated filter.')
+
+                        if query:
+                            query += ' and '
+
+                        query += f"(time_generated geq '{fetch_start_time.strftime(QUERY_DATE_FORMAT)}')"
+
+                    entries[log_type] = self.__get_query_entries(
+                        log_type,
+                        query,
+                        max_fetch,
+                        fetch_job_polling_max_num_attempts
+                    )
+            return entries
+
+        def __filter_fetched_entries(
+            self,
+            entries_dict: dict[str, List[dict[str, Any]]],
+            id_dict: dict[str, dict[str, str]]
+        ) -> dict[str, list]:
+            """ This function removes entries that have already been fetched in the previous fetch cycle.
+
+            :param entries_dict: A dictionary of log type and its raw entries
+            :param id_dict: A dictionary of devices and their largest id so far
+            :return: A dictionary of log type and its raw entries without entries that have already been fetched in the previous fetch cycle
+            """
+            new_entries_dict: dict = {}
+            for log_type in entries_dict:
+                demisto.debug(f'Filtering {log_type} type enties, recived {len(entries_dict[log_type])} to filter.')
+
+                for log in entries_dict[log_type]:
+                    device_name = log.get('device_name', '')
+                    current_log_id = arg_to_number(log.get('seqno'))
+
+                    # Get the latest id for that device, if that device is not in the dict, set the id to 0
+                    latest_id_per_device = id_dict.get(log_type, {}).get(device_name, 0)
+                    demisto.debug(f'{latest_id_per_device=} for {log_type=} and {device_name=}')
+                    if not current_log_id or not device_name:
+                        demisto.debug(f'Could not parse seqno or device name from log: {log}, skipping.')
+                        continue
+
+                    if current_log_id > arg_to_number(latest_id_per_device):  # type: ignore
+                        new_entries_dict.setdefault(log_type, []).append(log)
+                demisto.debug(f'Filtered {log_type} type entries, left with {len(new_entries_dict.get(log_type, []))} entries.')
+            return new_entries_dict
+
+        def __find_largest_id_per_device(
+            self,
+            incident_entries: List[dict[str, Any]]
+        ) -> dict[str, str]:
+            """ This function finds the largest sequence id per device in the incident entries list.
+
+            :param incident_entries: List of dictionaries representing raw incident entries
+            :return: A dictionary of the largest sequence id per device
+            """
+            new_largest_id: dict[str, str] = {}
+            for entry in incident_entries:
+                device_name: str = entry.get('device_name', '')
+                incident_id: str = entry.get('seqno', '')
+                if not device_name or not incident_id:
+                    continue
+
+                # Upsert the device's id if it's a new device, or it's a larger id
+                if (
+                    device_name not in new_largest_id.keys() or
+                    int(incident_id) > int(new_largest_id[device_name])
+                ):
+                    new_largest_id[device_name] = incident_id
+
+            demisto.debug(f'{new_largest_id=}')
+            return new_largest_id
+
+        def __incident_entry_to_incident_context(
+            self,
+            incident_entry: dict[str, Any]
+        ) -> dict[str, Any]:
+            """ Convert raw incident entry to basic cortex incident format.
+
+            :param incident_entry: Raw incident entry represented by a dictionary
+            :return: Context formatted incident entry represented by a dictionary
+            """
+            occurred = incident_entry.get('time_generated', '')
+            occurred_datetime = dateparser.parse(
+                occurred,
+                settings={'TIMEZONE': self.__device_timezone}
+            )
+            incident_context = {}
+            if occurred_datetime:
+                incident_context = {
+                    'name': f"{incident_entry.get('device_name')} {incident_entry.get('seqno')}",
+                    'occurred': occurred_datetime.strftime(DATE_FORMAT),
+                    'rawJSON': json.dumps(incident_entry),
+                    'type': incident_entry.get('type')
+                }
+            return incident_context
+
+        def __parse_incident_entries(
+            self,
+            incident_entries: List[dict[str, Any]]
+        ) -> Tuple[
+            dict[str, str] | None,
+            datetime | None,
+            List[dict[str, Any]]
+        ]:
+            """ Parses raw incident entries of a specific log type query into basic context incidents.
+
+            :param incident_entries: List of dictionaries representing raw incident entries
+            :return: A tuple of the largest id, the largest last fetch time and a list of parsed incidents
+            """
+            # if no new incidents are available, return empty list of incidents
+            if not incident_entries:
+                return None, None, incident_entries
+
+            # calculate largest last fetch time for each log type query
+            last_fetch_string = max({entry.get('time_generated', '') for entry in incident_entries})
+            new_fetch_datetime = dateparser.parse(
+                last_fetch_string,
+                settings={'TIMEZONE': self.__device_timezone}
+            )
+            # calculate largest unique id for each log type query
+            new_largest_id = self.__find_largest_id_per_device(incident_entries)
+
+            # convert incident entries to incident context and filter any empty incidents if exists
+            parsed_incidents: List[dict[str, Any]] = [
+                self.__incident_entry_to_incident_context(incident_entry) for incident_entry in incident_entries
+            ]
+            filtered_parsed_incidents = list(filter(lambda incident: incident, parsed_incidents))
+            return new_largest_id, new_fetch_datetime, filtered_parsed_incidents
+
+        def __get_parsed_incident_entries(
+            self,
+            incident_entries_dict: dict[str, List[dict[str, Any]]],
+            last_fetch_dict: dict[str, str],
+            last_id_dict: dict[str, dict]
+        ) -> Tuple[
+            dict[str, Any],
+            dict[str, str],
+            dict[str, str]
+        ]:
+            """ For each log type incident entries array, parse the raw incidents into context incidents.
+                if necessary, update the latest fetch time and last ID values in their corresponding dictionaries.
+
+            :param incident_entries_dict: List of dictionaries representing raw incident entries
+            :param last_fetch_dict: Last fetch dictionary
+            :param last_id_dict: Last id dictionary
+            :return: Parsed context incident dictionary, Updated last fetch dictionary, Updated last id dictionary.
+            """
+            updated_last_fetch_dict = dict(**last_fetch_dict)
+            updated_last_id_dict = dict(**last_id_dict)
+            parsed_incident_entries_dict = {}
+            for log_type, incident_entries in incident_entries_dict.items():
+                if incident_entries:
+                    updated_last_id, updated_last_fetch, incidents = self.__parse_incident_entries(incident_entries)
+                    demisto.debug(
+                        f'{log_type} log type: {len(incidents)} parsed incidents returned from parse_incident_entries function.'
+                    )
+                    demisto.debug(
+                        f"{log_type} log type: parsed incidents unique ID list: {[incident.get('name', '') for incident in incidents]}"
+                    )
+                    parsed_incident_entries_dict[log_type] = incidents
+                    if updated_last_fetch:
+                        updated_last_fetch_dict[log_type] = str(updated_last_fetch)
+
+                    if updated_last_id:
+                        # upsert updated_last_id_dict with the latest ID for each device for each log type,
+                        # without removing devices that were not fetched in this fetch cycle.
+                        if updated_last_id_dict.get(log_type):
+                            updated_last_id_dict[log_type].update(updated_last_id)
+                        else:
+                            updated_last_id_dict.update({log_type: updated_last_id})
+
+                    demisto.debug(
+                        f'{log_type} log type: incidents parsing has completed with total of {len(incidents)} incidents.'
+                        f' Updated last run is: {updated_last_fetch_dict.get(log_type)}. Updated last ID is: {updated_last_id_dict.get(log_type)}'
+                    )
+                    demisto.debug(f'incidents ID list: {[incident.get("name") for incident in incidents]}')
+
+            return parsed_incident_entries_dict, updated_last_fetch_dict, updated_last_id_dict
+
+        def call_api(
+            self,
+            method: str,
+            headers: dict = {},
+            body: dict = {},
+            params: dict = {}
+        ) -> Any:
+            """ Makes an API call with the given arguments
+
+            :param method: HTTP method
+            :param headers: HTTP header fields
+            :param body: HTTP body
+            :param params: HTTP query/request parameters
+            :return: JSON response replied from the server.
+            """
+            resp_text = self._http_request(
+                method=method,
+                headers=headers,
+                data=body,
+                params=params,
+                resp_type='text'
+            )
+            json_result = json.loads(xml2json(resp_text))
+
+            # handle raw response that does not contain the response key, e.g configuration export
+            resp_node = json_result.get('response')
+            if (
+                (
+                    resp_node is None or
+                    '@code' not in resp_node
+                )
+                and
+                (
+                    not resp_node['@status'] != 'success'
+                )
+            ):
+                return json_result
+
+            # handle non success
+            if resp_node['@status'] != 'success':
+                if (
+                    'msg' in resp_node and
+                    'line' in resp_node['msg']
+                ):
+                    response_msg = resp_node['msg']['line']
+                    # catch non existing object error and display a meaningful message
+                    if response_msg == 'No such node':
+                        raise DemistoException(
+                            'Object was not found, verify that the name is correct and that the instance was committed.'
+                        )
+
+                    # catch non valid jobID errors and display a meaningful message
+                    elif (
+                        isinstance(resp_node['msg']['line'], str) and
+                        resp_node['msg']['line'].find('job') != -1 and
+                        (
+                            resp_node['msg']['line'].find('not found') != -1 or
+                            resp_node['msg']['line'].find('No such query job') != -1
+                        )
+                    ):
+                        raise DemistoException(
+                            f"Invalid Job ID error: {resp_node['msg']['line']}"
+                        )
+
+                    # catch timed out log queries and return this as an entry.note
+                    elif str(resp_node['msg']['line']).find('Query timed out') != -1:
+                        return_results(str(resp_node['msg']['line']) + '. Rerun the query.')
+                        sys.exit(0)
+
+                if '@code' in resp_node:
+                    raise DemistoException(
+                        'Request Failed.\n'
+                        f"Status code: {resp_node['@code']}\n"
+                        f"With message: {resp_node['msg']['line']}"
+                    )
+                else:
+                    raise DemistoException(f"Request Failed.\n{resp_node}")
+
+            # handle @code
+            code = resp_node['@code']
+            if msg := PAN_OS_ERROR_DICT.get(code):
+                error_message = f'Request Failed.\n{msg}'
+                if code == '7' and self.__device_group:
+                    device_group_names = self.get_device_groups_names()
+                    if self.__device_group not in device_group_names:
+                        error_message += (
+                            f'\nDevice Group: {self.__device_group} does not exist.'
+                            f' The available Device Groups for this instance:'
+                            f' {", ".join(device_group_names)}.'
+                        )
+
+                    xpath = params.get('xpath') or body.get('xpath')
+                    demisto.debug(f'Object with {xpath=} was not found')
+                    raise PAN_OS_Not_Found(error_message)
+
+                return_warning('List not found and might be empty', True)
+            if code not in ['19', '20']:
+                # error code non exist in dict and not of success
+                if 'msg' in resp_node:
+                    raise DemistoException(
+                        'Request Failed.\n'
+                        'Status code: {code}\n',
+                        "With message: {resp_node['msg']}"
+                    )
+                else:
+                    raise DemistoException(f"Request Failed.\n{resp_node}")
+
+            return json_result
+
+        def get_device_groups_names(
+            self
+        ) -> List[str]:
+            """ Get device group names in the Panorama
+
+            :return: List of device groups.
+            """
+            resp = self.__call('GET',
+                params={
+                    'action': 'get',
+                    'type': 'config',
+                    'xpath': '/config/devices/entry/device-group/entry',
+                    'key': self.ngfw_api_key
+                }
+            )
+            device_groups = resp['response']['result']['entry']
+            if isinstance(device_groups, dict):
+                # only one device group in the panorama
+                return [device_groups.get('@name')]
+            else:
+                return [group.get('@name') for group in device_groups]
+
+        def get_templates_names(
+            self
+        ) -> List[str]:
+            """ Get templates names in the Panorama
+
+            :return: List of templates names.
+            """
+            resp = self.call_api('GET', params={
+                'action': 'get',
+                'type': 'config',
+                'xpath': "/config/devices/entry[@name=\'localhost.localdomain\']/template/entry",
+                'key': self.ngfw_api_key
+            })
+            templates = result['response']['result']['entry']
+            if isinstance(templates, dict):
+                # only one template in the panorama
+                return [templates.get('@name')]
+            else:
+                return [template.get('@name') for template in templates]
+
+        def get_pan_os_version(
+            self
+        ) -> str:
+            """ Retrieves pan-os version
+
+            :return: String representation of the version
+            """
+            resp = self.call_api('GET', params={
+                'type': 'version',
+                'key': self.ngfw_api_key
+            })
+            return resp['response']['result']['sw-version']
+
+        def set_xpath_network(
+            self,
+            template: str | None = None
+        ) -> Tuple[str, str | None]:
+            """ Setting template xpath relevant to panorama instances.
+
+            :return: Xpath and template.
+            """
+            if template:
+                if not self.__device_group or self.__vsys:
+                    raise DemistoException('Template is only relevant for Panorama instances.')
+
+            if not template:
+                template = self.__template
+
+            # setting network xpath relevant to FW or panorama management
+            if self.__device_group:
+                xpath_network = (
+                    f'/config/devices/entry[@name=\'localhost.localdomain\']/template/entry[@name=\'{template}\']'
+                    f'/config/devices/entry[@name=\'localhost.localdomain\']/network'
+                )
+            else:
+                xpath_network = "/config/devices/entry[@name='localhost.localdomain']/network"
+            return xpath_network, template
+
+        def fetch_incidents(
+            self,
+            last_fetch_dict: dict[str, str],
+            last_id_dict: dict[str, dict],
+            first_fetch: str,
+            queries_dict: dict[str, str] | None,
+            max_fetch_dict: dict,
+            fetch_job_polling_max_num_attempts: int
+        ) -> Tuple[
+            dict[str, str],
+            dict[str, str],
+            dict[str, dict[str, list]]
+        ]:
+            """ Run one cycle of fetch incidents.
+
+            :param last_fetch_dict: A dictionary of log type and its last fetch timestamp
+            :param last_id_dict: Last id dictionary
+            :param first_fetch: First time to fetch from (First fetch timestamp parameter)
+            :param queries_dict: Queries per log type dictionary
+            :param max_fetch_dict: Max incidents per fetch parameter per log type dictionary
+            :param fetch_job_polling_max_num_attempts: The maximal number of attempts to try and pull results for each log type
+            :return: Updated last fetch per log type dictionary, Updated last unique id per log type dictionary, Parsed context incident dictionary
+            """
+            last_fetch_dict = dict(**last_fetch_dict)
+            last_id_dict = dict(**last_id_dict)
+            demisto.debug(f'last fetch time dictionary from previous fetch is: {last_fetch_dict=}.')
+            demisto.debug(f'last id dictionary from previous fetch is: {last_id_dict=}.')
+
+            fetch_start_datetime_dict, last_fetch_dict = self.__get_fetch_start_datetime_dict(
+                last_fetch_dict,
+                first_fetch,
+                queries_dict
+            )
+            demisto.debug(f'updated last fetch per log type: {fetch_start_datetime_dict=}.')
+
+            incident_entries_dict = self.__fetch_incidents_request(
+                queries_dict,
+                max_fetch_dict,
+                fetch_start_datetime_dict,
+                fetch_job_polling_max_num_attempts
+            )
+            demisto.debug('raw incident entries fetching has completed.')
+
+            # remove duplicated incidents from incident_entries_dict
+            unique_incident_entries_dict = self.__filter_fetched_entries(
+                entries_dict=incident_entries_dict,
+                id_dict=last_id_dict
+            )
+            parsed_incident_entries_dict, last_fetch_dict, last_id_dict = self.__get_parsed_incident_entries(
+                unique_incident_entries_dict,
+                last_fetch_dict,
+                last_id_dict
+            )
+            return last_fetch_dict, last_id_dict, parsed_incident_entries_dict
+
+
+    class XsiamAPIKeyType(Enum):
+        STANDARD = 'Standard'
+        ADVANCED = 'Advanced'
+
+
+    class XsiamClient(BaseClient):
+        """ XSIAM Client class
+        """
+        API_NONCE_LENGTH = 64
+
+        def __init__(
+            self,
+            params: dict[str, str]
+        ) -> None:
+            """ Initialize the instance
+
+            :param params: Instance configuration parameters
+            """
+            base_url = params.get('xsiam_api_url')
+            match (v := params.get('xsiam_apikey_type')):
+                case XsiamAPIKeyType.STANDARD.value:
+                    apikey_type = XsiamAPIKeyType.STANDARD
+                case XsiamAPIKeyType.ADVANCED.value:
+                    apikey_type = XsiamAPIKeyType.ADVANCED
+                case _:
+                    raise DemistoException(f'Invalid XSIAM API Key Type - {v}')
+
+            creds = params.get('xsiam_credentials', {})
+            apikey_id = creds.get('identifier')
+            if not apikey_id:
+                raise DemistoException('XSIAM API Key ID is required.')
+
+            apikey_val = creds.get('password')
+            if not apikey_val:
+                raise DemistoException('XSIAM API Key is required.')
+
+            insecure = params.get('insecure', False)
+            proxy = params.get('proxy', False)
+
+            super().__init__(base_url, not insecure, proxy)
+            self.__apikey_type = apikey_type
+            self.__apikey_id = apikey_id
+            self.__apikey_value = apikey_val
+
+        def __set_auth_headers(
+            self,
+            headers: dict[str, str]
+        ) -> dict[str, str]:
+            """ Build a new header with authentication parameters
+
+            :param headers: The header fields
+            :return: The new header fileds
+            """
+            headers = dict(**headers)
+            match self.__apikey_type:
+                case XsiamAPIKeyType.STANDARD:
+                    headers['x-xdr-auth-id'] = self.__apikey_id
+                    headers['Authorization'] = self.__apikey_value
+
+                case XsiamAPIKeyType.ADVANCED:
+                    nonce = ''.join(
+                        [secrets.choice(string.ascii_letters + string.digits)
+                        for _ in range(XsiamClient.API_NONCE_LENGTH)]
+                    )
+                    timestamp = str(
+                        int(datetime.now(timezone.utc).timestamp() * 1000)
+                    )
+                    key_hash = hashlib.sha256(
+                        (self.__apikey_value + nonce + timestamp).encode()
+                    ).hexdigest()
+
+                    headers['x-xdr-auth-id'] = self.__apikey_id
+                    headers['x-xdr-timestamp'] = timestamp
+                    headers['x-xdr-nonce'] = nonce
+                    headers['Authorization'] = key_hash
+
+                case _:
+                    raise DemistoException(f'Invalid API key type - {self.__apikey_type.name}')
+
+            return headers
+
+        def request(
+            self,
+            method: str,
+            path: str,
+            body: dict[str, Any],
+        ) -> dict[str, Any]:
+            """ Request something to the API endpoint
+
+            :param method: The HTTP request method
+            :param path: The relative path of the API endpoint from the base URL
+            :param body: The request data given to the API endpoint
+            :return: The response data retrieved from the API endpoint.
+            """
+            resp = self._http_request(
+                method=method,
+                url_suffix=path,
+                headers=self.__set_auth_headers({}),
+                json_data=body
+            )
+            return resp
+
+
+    ''' COMMANDS '''
+
+    def test_module(
+        args: dict[str, str],
+        params: dict[str, str],
+    ) -> str:
+        """
+        Validates:
+        """
+        # Test to connect to NGFW
+        nc = NgfwClient(params)
+
+        if is_debug_mode():
+            demisto.debug(f'PAN-OS Version (debug-mode): {nc.get_pan_os_version()}')
+
+        nc.call_api('GET', params={
+            'type': 'op',
+            'cmd': '<show><system><info></info></system></show>',
+            'key': nc.ngfw_api_key
+        })
+
+        if nc.device_group and nc.device_group != 'shared':
+            # Test device group
+            device_group_names = nc.get_device_groups_names()
+            if nc.device_group not in device_group_names:
+                raise DemistoException(
+                    f'Device Group: {nc.device_group} does not exist.'
+                    f' The available Device Groups for this instance: {", ".join(device_group_names)}.'
+                )
+
+        _, template = nc.set_xpath_network()
+        if template:
+            # Test templates
+            template_names = nc.get_templates_names()
+            if template not in template_names:
+                raise DemistoException(
+                    f'Template: {template} does not exist.'
+                    f' The available Templates for this instance: {", ".join(template_names)}.'
+                )
+
+        # Test to connect to XSIAM
+        xc = XsiamClient(params)
+        resp = xc.request(
+            method='POST',
+            path='/public_api/v1/incidents/get_incidents',
+            body={
+                'request_data': {
+                    'search_from': 0,
+                    'search_to': 1
+                }
+            }
+        )
+        if not resp.get('reply'):
+            raise DemistoException(f'Invalid XSIAM API response - {json.dumps(resp)}')
+
+        return 'ok'
+
+
+    def fetch_incidents(
+        args: dict[str, str],
+        params: dict[str, str],
+    ):
+        last_run = demisto.getLastRun()
+        last_fetch_dict = last_run.get('last_fetch_dict', {})
+        last_id_dict = last_run.get('last_id_dict', {})
+        first_fetch = params.get('first_fetch') or FETCH_DEFAULT_TIME
+        configured_max_fetch = arg_to_number(params.get('max_fetch')) or MAX_INCIDENTS_TO_FETCH
+        queries_dict = log_types_queries_to_dict(params)
+        fetch_job_polling_max_num_attempts = arg_to_number(
+            params.get('fetch_job_polling_max_num_attempts')
+        ) or GET_LOG_JOB_ID_MAX_RETRIES
+
+        max_fetch_dict = last_run.get('max_fetch_dict') or {key: configured_max_fetch for key in queries_dict}
+
+        last_fetch_dict, last_id_dict, parsed_incident_entries_dict = NgfwClient(params).fetch_incidents(
+            last_fetch_dict=last_fetch_dict,
+            last_id_dict=last_id_dict,
+            first_fetch=first_fetch,
+            queries_dict=queries_dict,
+            max_fetch_dict=max_fetch_dict,
+            fetch_job_polling_max_num_attempts=fetch_job_polling_max_num_attempts
+        )
+        next_max_fetch_dict = update_max_fetch_dict(
+            configured_max_fetch=configured_max_fetch,
+            max_fetch_dict=max_fetch_dict,
+            last_fetch_dict=last_fetch_dict,
+            last_id_dict=last_id_dict,
+        )
+        alerts = []
+        for log_type, incidents in parsed_incident_entries_dict.items():
+            for incident in incidents:
+                alerts.append(build_cortex_alert(log_type, incident))
+
+        if alerts:
+            n = 60 # max:60
+            for i in range(0, len(alerts), n):
+                XsiamClient(params).request(
+                    method='POST',
+                    path='/public_api/v1/alerts/insert_parsed_alerts',
+                    body={
+                        'request_data': {
+                            'alerts': alerts[i: i+n]
+                        }
+                    }
+                )
+
+        demisto.setLastRun({
+            'last_fetch_dict': last_fetch_dict,
+            'last_id_dict': last_id_dict,
+            'max_fetch_dict': next_max_fetch_dict
+        })
+
+        """
+        # flatten incident_entries_dict to a single list of dictionaries representing context entries
+        incidents = [
+            incident
+                for incident_list in parsed_incident_entries_dict.values()
+                    for incident in incident_list
+        ]
+        demisto.incidents(incidents)
+        """
+        demisto.incidents([])
+
+
+    def ngfw_alert_save_file_as_cef(
+        args: dict[str, str],
+        params: dict[str, str],
+    ) -> dict[str, Any]:
+        first_fetch = args.get('start_time') or FETCH_DEFAULT_TIME
+        limit = arg_to_number(args.get('limit')) or MAX_INCIDENTS_TO_FETCH
+        log_type = args.get('log_type')
+        queries_dict = {
+            log_type: args.get('query') or ''
+        }
+        fetch_job_polling_max_num_attempts = arg_to_number(
+            params.get('fetch_job_polling_max_num_attempts')
+        ) or GET_LOG_JOB_ID_MAX_RETRIES
+
+        max_fetch_dict = {key: limit for key in queries_dict}
+
+        conn = NgfwClient(params)
+        _, _, parsed_incident_entries_dict = conn.fetch_incidents(
+            last_fetch_dict={},
+            last_id_dict={},
+            first_fetch=first_fetch,
+            queries_dict=queries_dict,
+            max_fetch_dict=max_fetch_dict,
+            fetch_job_polling_max_num_attempts=fetch_job_polling_max_num_attempts
+        )
+
+        res_list = []
+        for log_type, incidents in parsed_incident_entries_dict.items():
+            cef_logs = []
+            for incident in incidents:
+                cef_logs.append(build_ngfw_cef_log(log_type, incident))
+            res_list.append(fileResult(f'{log_type}.log', '\n'.join(cef_logs).encode()))
+
+        return res_list
+
+
+    def ngfw_alert_save_file(
+        args: dict[str, str],
+        params: dict[str, str],
+    ) -> list[dict[str, Any]]:
+        first_fetch = args.get('start_time') or FETCH_DEFAULT_TIME
+        limit = arg_to_number(args.get('limit')) or MAX_INCIDENTS_TO_FETCH
+        log_type = args.get('log_type')
+        queries_dict = {
+            log_type: args.get('query') or ''
+        }
+        fetch_job_polling_max_num_attempts = arg_to_number(
+            params.get('fetch_job_polling_max_num_attempts')
+        ) or GET_LOG_JOB_ID_MAX_RETRIES
+
+        max_fetch_dict = {key: limit for key in queries_dict}
+
+        conn = NgfwClient(params)
+        _, _, parsed_incident_entries_dict = conn.fetch_incidents(
+            last_fetch_dict={},
+            last_id_dict={},
+            first_fetch=first_fetch,
+            queries_dict=queries_dict,
+            max_fetch_dict=max_fetch_dict,
+            fetch_job_polling_max_num_attempts=fetch_job_polling_max_num_attempts
+        )
+
+        res_list = []
+        for log_type, incidents in parsed_incident_entries_dict.items():
+            match (file_format := args.get('format') or 'raw'):
+                case 'raw':
+                    alerts = [json.loads(incident.get('rawJSON') or '{}') for incident in incidents]
+                case 'parsed_alert':
+                    alerts = [build_cortex_alert(log_type, incident) for incident in incidents]
+                case _:
+                    raise DemistoException(f'Invalid file format - {file_format}')
+
+            res_list.append(fileResult(f'{log_type}.json', json.dumps(alerts, indent=2)))
+
+        return res_list
+
+
+    def main():  # pragma: no cover
+        try:
+            args = demisto.args()
+            params = demisto.params()
+            command = demisto.command()
+            LOG(f'Command being called is: {command}')
+
+            commands = {
+                'test-module': test_module,
+                'fetch-incidents': fetch_incidents,
+                'ngfw-alert-save-file': ngfw_alert_save_file
+            }
+            if function := commands.get(command):
+                try:
+                    return_results(function(assign_params(**args), params))
+                except Exception as e:
+                    raise
+                    raise DemistoException(f'Failed to execute {command} command.\nError:\n{str(e)}')
+            else:
+                raise NotImplementedError(f'Command {command} is not implemented.')
+        except Exception as err:
+            raise
+            return_error(str(err), error=traceback.format_exc())
+
+        finally:
+            LOG.print_log()
+
+
+    if __name__ in ('__builtin__', 'builtins', '__main__'):
+        main()
+
+    register_module_line('NGFW Alert Ingester', 'end', __line__())
+  type: python
+  commands:
+  - name: ngfw-alert-save-file
+    arguments:
+    - name: log_type
+      required: true
+      auto: PREDEFINED
+      predefined:
+      - Threat
+      description: Log Type
+      defaultValue: Threat
+    - name: start_time
+      description: Start time of the search time range (<number> <time unit>, e.g.,
+        12 hours, 7 days)
+      defaultValue: 24 hours
+    - name: query
+      description: Search query
+    - name: limit
+      description: Max log records
+      defaultValue: "100"
+    - name: format
+      auto: PREDEFINED
+      predefined:
+      - raw
+      - parsed_alert
+      description: File format
+      defaultValue: raw
+    description: Retrieve and save logs to a file in JSON
+  dockerimage: demisto/pan-os-python:1.0.0.89330
+  isfetch: true
+  runonce: false
+  subtype: python3
+sourcemoduleid: Panorama
