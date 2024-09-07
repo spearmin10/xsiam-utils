@@ -1,0 +1,635 @@
+commonfields:
+  id: XSIAM Alert Feed
+  version: -1
+vcShouldKeepItemLegacyProdMachine: false
+name: XSIAM Alert Feed
+display: XSIAM Alert Feed
+category: Utilities
+image: data:image/png;base64,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eG1wTU06RG9jdW1lbnRJRD0iZ2ltcDpkb2NpZDpnaW1wOmMzZTIzMWJlLWRmNzktNDE1NS1hNmVjLWYzNTI0M2FiMjI2NSIKICAgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo3YzNmZGJlNi1kMjk5LTRiZjEtODJmMC1mZTM3OGYyY2Y1YjEiCiAgIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDozNDVlMzA5Ny0wZTRlLTQ3ZjUtYTJlNi1jMDFkMmJiMTM3MGIiCiAgIGRjOkZvcm1hdD0iaW1hZ2UvcG5nIgogICBHSU1QOkFQST0iMi4wIgogICBHSU1QOlBsYXRmb3JtPSJXaW5kb3dzIgogICBHSU1QOlRpbWVTdGFtcD0iMTcxNTE0OTYwMTQzMzQ1NCIKICAgR0lNUDpWZXJzaW9uPSIyLjEwLjMyIgogICB0aWZmOk9yaWVudGF0aW9uPSIxIgogICB4bXA6Q3JlYXRvclRvb2w9IkdJTVAgMi4xMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyNDowNTowOFQxNToyNjozOSswOTowMCIKICAgeG1wOk1vZGlmeURhdGU9IjIwMjQ6MDU6MDhUMTU6MjY6MzkrMDk6MDAiPgogICA8eG1wTU06SGlzdG9yeT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJzYXZlZCIKICAgICAgc3RFdnQ6Y2hhbmdlZD0iLyIKICAgICAgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDoyY2Y4NTY3NS0wMzEyLTRjYTQtOTVmNy03NDMwYmI1MWY3ODkiCiAgICAgIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkdpbXAgMi4xMCAoV2luZG93cykiCiAgICAgIHN0RXZ0OndoZW49IjIwMjQtMDUtMDhUMTU6MjY6NDEiLz4KICAgIDwvcmRmOlNlcT4KICAgPC94bXBNTTpIaXN0b3J5PgogIDwvcmRmOkRlc2NyaXB0aW9uPgogPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg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
+description: Insert alerts from JSON to XSIAM/XDR
+configuration:
+- display: The base URL of the XSIAM API endpoints
+  name: xsiam_api_url
+  type: 0
+  required: true
+- display: XSIAM API ID
+  displaypassword: XSIAM API Key
+  name: xsiam_credentials
+  type: 9
+  required: true
+- display: XSIAM API Key Type
+  name: xsiam_apikey_type
+  defaultvalue: Advanced
+  type: 15
+  required: false
+  options:
+  - Standard
+  - Advanced
+- section: Connect
+  advanced: true
+  display: Trust any certificate (not secure)
+  name: insecure
+  type: 8
+  required: false
+- section: Connect
+  advanced: true
+  display: Use system proxy settings
+  name: proxy
+  type: 8
+  required: false
+- section: Collect
+  display: Fetch incidents
+  name: isFetch
+  type: 8
+  required: false
+- section: Connect
+  display: Incident type
+  name: incidentType
+  type: 13
+  required: false
+- display: Templates to generate alerts for insert_parsed_alerts
+  name: templates
+  type: 12
+  required: false
+- display: Number of templates to feed alerts in fetch cycle
+  name: number_of_templates
+  type: 0
+  required: false
+- display: Choose templates at random
+  name: random_choices
+  defaultvalue: "false"
+  type: 8
+  required: false
+- display: Incidents Fetch Interval
+  name: incidentFetchInterval
+  defaultvalue: "1"
+  type: 19
+  required: false
+script:
+  script: |
+    register_module_line('XSIAM Alert Feed', 'start', __line__())
+
+
+    ''' IMPORTS '''
+    from enum import Enum
+    from typing import Any, List, Tuple, Iterator
+    from datetime import datetime
+    import re
+    import math
+    import types
+    import secrets
+    import string
+    import hashlib
+    import random
+    import ipaddress
+    import dateparser
+
+
+    NUMBER_OF_ALERTS_IN_INSERT_PARSED_ALERTS_API = 60
+
+
+    ''' CLASS DEFINITIONS '''
+
+
+    class AlertGenerator:
+        def __init__(
+            self,
+            alert: dict[str, Any],
+            environments: dict[str, Any] = {}
+        ) -> None:
+            self.__alert = alert
+            self.__envs = environments
+
+        def __choose_ip(
+            self,
+            pattern: list[str] | str,
+            extra_envs: dict[str, Any] = {}
+        ) -> str:
+            """ Choose an IP from IP list, IP range or CIDR.
+
+            :param pattern: IP address pattern
+            :param extra_envs: Extra environment variables
+            :return: Selected IP address.
+            """
+            if not isinstance(pattern, list):
+                pattern = [pattern]
+
+            pattern = random.choice(pattern)
+            if pattern == 'public':
+                while True:
+                    ip = ipaddress.ip_address(random.randint(1, 0xffffffff))
+                    if not ip.is_private:
+                        return str(ip)
+
+            if m := re.fullmatch(r'([^-]+)-(.+)', pattern):
+                ip1 = self.__replace_env_vals(m[1], extra_envs)
+                ip2 = self.__replace_env_vals(m[2], extra_envs)
+                ip = random.randint(int(ipaddress.ip_address(ip1)), int(ipaddress.ip_address(ip2)))
+                return str(ipaddress.ip_address(ip))
+            else:
+                ip = ipaddress.ip_network(self.__replace_env_vals(pattern, extra_envs), strict=False)
+                return str(ip[random.randrange(0, ip.num_addresses)])
+
+        def __choose_port(
+            self,
+            pattern: list[str | int | None] | str | int | None,
+            extra_envs: dict[str, Any] = {}
+        ) -> int:
+            """ Choose a port number from port list or port range.
+
+            :param pattern: Port number pattern
+            :param extra_envs: Extra environment variables
+            :return: Selected port number.
+            """
+            if not isinstance(pattern, list):
+                pattern = [pattern]
+
+            pattern = random.choice(pattern)
+            if pattern is None:
+                return random.randint(1025, 65534)
+            elif isinstance(pattern, int):
+                return pattern
+
+            if m := re.fullmatch(r'([^-]+)-(.*)', pattern):
+                port1 = self.__replace_env_vals(m[1], extra_envs)
+                port2 = self.__replace_env_vals(m[2], extra_envs) if m[2] else 65534
+                return random.randint(int(port1), int(port2))
+            else:
+                return int(self.__replace_env_vals(pattern, extra_envs))
+
+        def __replace_env_vals(
+            self,
+            text: str,
+            extra_envs: dict[str, Any] = {}
+        ) -> int:
+            """ Replace variables in text by environment variables
+
+            :param text: Target text
+            :param extra_envs: Extra environment variables
+            :return: Result.
+            """
+            envs = dict(extra_envs, **self.__envs)
+            return multiple_replace(
+                text,
+                dict(
+                    **{'${' + k + '}': v for k, v in envs.items()},
+                    **{'$(' + k + ')': v for k, v in envs.items()}
+                )
+            )
+
+        def build(
+            self,
+        ) -> dict[str, Any]:
+            """ Build a parsed alert
+
+            :return: A parsed alert generated.
+            """
+            envs = {}
+
+            if local_ip := self.__alert.get('local_ip'):
+                local_ip = self.__choose_ip(local_ip, envs)
+                envs['local_ip'] = local_ip
+
+            if remote_ip := self.__alert.get('remote_ip'):
+                remote_ip = self.__choose_ip(remote_ip, envs)
+                envs['remote_ip'] = remote_ip
+
+            local_port = None
+            if 'local_port' in self.__alert:
+                local_port = self.__choose_port(self.__alert.get('local_port'), envs)
+                envs['local_port'] = str(local_port)
+
+            remote_port = None
+            if 'remote_port' in self.__alert:
+                remote_port = self.__choose_port(self.__alert.get('remote_port'), envs)
+                envs['remote_port'] = str(remote_port)
+
+            if event_timestamp := self.__alert.get('event_timestamp'):
+                if isinstance(event_timestamp, str):
+                    event_timestamp = dateparser.parse(
+                        self.__replace_env_vals(event_timestamp, envs),
+                        settings={
+                            'TIMEZONE': 'UTC',
+                            'TO_TIMEZONE': 'UTC',
+                            'RETURN_AS_TIMEZONE_AWARE': True
+                        }
+                    ).timestamp() * 1000
+            else:
+                event_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+            envs['event_timestamp'] = str(event_timestamp)
+
+            if severity := self.__alert.get('severity'):
+                severity = self.__replace_env_vals(severity, envs).capitalize()
+                if severity not in ('Critical', 'High', 'Medium', 'Low', 'Informational'):
+                    raise DemistoException(f'severity must be Critical, High, Medium, Low or Informational - {severity}')
+                envs['severity'] = str(severity)
+
+            if action_status := self.__alert.get('action_status'):
+                action_status = self.__replace_env_vals(action_status, envs).capitalize()
+                if action_status not in ('Reported', 'Blocked'):
+                    raise DemistoException(f'action_status must be either Reported or Blocked - {action_status}')
+                envs['action_status'] = str(action_status)
+
+            if alert_name := self.__alert.get('alert_name'):
+                alert_name = self.__replace_env_vals(str(alert_name), envs)
+                envs['alert_name'] = str(alert_name)
+
+            if alert_description := self.__alert.get('alert_description'):
+                alert_description = self.__replace_env_vals(str(alert_description), envs)
+                envs['alert_description'] = str(alert_description)
+
+            return assign_params(
+                vendor=self.__replace_env_vals(self.__alert.get('vendor', 'Unknown'), envs),
+                product=self.__replace_env_vals(self.__alert.get('product', 'Unknown'), envs),
+                local_ip=local_ip,
+                local_port=arg_to_number(local_port),
+                remote_ip=remote_ip,
+                remote_port=arg_to_number(remote_port),
+                event_timestamp=event_timestamp,
+                severity=severity,
+                alert_name=alert_name,
+                alert_description=alert_description,
+                action_status=action_status,
+                local_ip_v6=self.__alert.get('local_ip_v6'),
+                remote_ip_v6=self.__alert.get('remote_ip_v6'),
+            )
+
+
+    class AlertsTemplate:
+        def __init__(
+            self,
+            template: dict[str, Any]
+        ) -> None:
+            self.__number_of_clones = template.get('number_of_clones')
+            self.__envs = template.get('environments') or {}
+            self.__envs_evals = template.get('environments.evals') or {}
+
+            alerts = template.get('alerts')
+            if alerts is None:
+                raise DemistoException('No alerts field in the template.')
+
+            if isinstance(alerts, dict):
+                self.__alerts = [alerts]
+            elif isinstance(alerts, list):
+                self.__alerts = alerts
+            else:
+                raise DemistoException('alerts field must be list or dict.')
+
+        def build_alerts(
+            self
+        ) -> list[str, Any]:
+            eval_globals = {k: v for k, v in globals().items() if isinstance(v, types.ModuleType)}
+            eval_locals = {k: v for k, v in locals().items() if isinstance(v, types.ModuleType)}
+            envs = dict(
+                {
+                    k: random.choice(v) if isinstance(v, list) else str(v)
+                    for k, v in self.__envs.items()
+                },
+                **{
+                    k: str(eval(v, eval_globals, eval_locals)) for k, v in self.__envs_evals.items()
+                }
+            )
+            return [AlertGenerator(alert, envs).build() for alert in self.__alerts]
+
+        def generate_number_of_clones(
+            self
+        ) -> int:
+            if self.__number_of_clones is None:
+                number_of_clones = 1
+            elif isinstance(self.__number_of_clones, int):
+                number_of_clones = self.__number_of_clones
+            elif m := re.fullmatch(r'(\d+)-(\d+)', self.__number_of_clones):
+                number_of_clones = random.randint(int(m[1]), int(m[2]))
+            else:
+                number_of_clones = int(self.__number_of_clones)
+            return max(0, number_of_clones)
+
+
+    class XsiamAPIKeyType(Enum):
+        STANDARD = 'Standard'
+        ADVANCED = 'Advanced'
+
+
+    class XsiamClient(BaseClient):
+        """ XSIAM Client class
+        """
+        API_NONCE_LENGTH = 64
+
+        def __init__(
+            self,
+            params: dict[str, str]
+        ) -> None:
+            """ Initialize the instance
+
+            :param params: Instance configuration parameters
+            """
+            base_url = params.get('xsiam_api_url')
+            match (v := params.get('xsiam_apikey_type')):
+                case XsiamAPIKeyType.STANDARD.value:
+                    apikey_type = XsiamAPIKeyType.STANDARD
+                case XsiamAPIKeyType.ADVANCED.value:
+                    apikey_type = XsiamAPIKeyType.ADVANCED
+                case _:
+                    raise DemistoException(f'Invalid XSIAM API Key Type - {v}')
+
+            creds = params.get('xsiam_credentials', {})
+            apikey_id = creds.get('identifier')
+            if not apikey_id:
+                raise DemistoException('XSIAM API Key ID is required.')
+
+            apikey_val = creds.get('password')
+            if not apikey_val:
+                raise DemistoException('XSIAM API Key is required.')
+
+            insecure = params.get('insecure', False)
+            proxy = params.get('proxy', False)
+
+            super().__init__(base_url, not insecure, proxy)
+            self.__apikey_type = apikey_type
+            self.__apikey_id = apikey_id
+            self.__apikey_value = apikey_val
+
+        def __set_auth_headers(
+            self,
+            headers: dict[str, str]
+        ) -> dict[str, str]:
+            """ Build a new header with authentication parameters
+
+            :param headers: The header fields
+            :return: The new header fileds
+            """
+            headers = dict(**headers)
+            match self.__apikey_type:
+                case XsiamAPIKeyType.STANDARD:
+                    headers['x-xdr-auth-id'] = self.__apikey_id
+                    headers['Authorization'] = self.__apikey_value
+
+                case XsiamAPIKeyType.ADVANCED:
+                    nonce = ''.join(
+                        [secrets.choice(string.ascii_letters + string.digits)
+                        for _ in range(XsiamClient.API_NONCE_LENGTH)]
+                    )
+                    timestamp = str(
+                        int(datetime.now(timezone.utc).timestamp() * 1000)
+                    )
+                    key_hash = hashlib.sha256(
+                        (self.__apikey_value + nonce + timestamp).encode()
+                    ).hexdigest()
+
+                    headers['x-xdr-auth-id'] = self.__apikey_id
+                    headers['x-xdr-timestamp'] = timestamp
+                    headers['x-xdr-nonce'] = nonce
+                    headers['Authorization'] = key_hash
+
+                case _:
+                    raise DemistoException(f'Invalid API key type - {self.__apikey_type.name}')
+
+            return headers
+
+        def request(
+            self,
+            method: str,
+            path: str,
+            body: dict[str, Any],
+        ) -> dict[str, Any]:
+            """ Request something to the API endpoint
+
+            :param method: The HTTP request method
+            :param path: The relative path of the API endpoint from the base URL
+            :param body: The request data given to the API endpoint
+            :return: The response data retrieved from the API endpoint.
+            """
+            resp = self._http_request(
+                method=method,
+                url_suffix=path,
+                headers=self.__set_auth_headers({}),
+                json_data=body
+            )
+            return resp
+
+        def insert_parsed_alerts_by_templates(
+            self,
+            templates: list[AlertsTemplate]
+        ) -> list[dict[str, Any]]:
+            """ Build and insert parsed alerts
+
+            :param templates: List of parsed alerts templates
+            :return: List of alerts inserted.
+            """
+            if not templates:
+                raise DemistoException('Alerts templates are required.')
+
+            def _enum_alerts(
+                templates: list[AlertsTemplate]
+            ) -> Iterator[list[dict[str, Any]]]:
+                alerts = []
+                for template in templates:
+                    for alert in template.build_alerts():
+                        event_timestamp = alert.get('event_timestamp') or 0
+                        number_of_clones = template.generate_number_of_clones()
+                        for i in range(0, number_of_clones):
+                            alerts.append(dict(alert, event_timestamp=event_timestamp + i))
+                            if len(alerts) >= NUMBER_OF_ALERTS_IN_INSERT_PARSED_ALERTS_API:
+                                yield alerts
+                                alerts = []
+                if alerts:
+                    yield alerts
+
+            alerts = []
+            for request_alerts in _enum_alerts(templates):
+                self.request(
+                    method='POST',
+                    path='/public_api/v1/alerts/insert_parsed_alerts',
+                    body={
+                        'request_data': {
+                            'alerts': request_alerts
+                        }
+                    }
+                )
+                alerts += request_alerts
+            return alerts
+
+
+    ''' HELPER FUNCTIONS '''
+
+
+    def multiple_replace(
+        text: str,
+        rep_dict: dict[str, str]
+    ) -> str:
+        if not rep_dict:
+            return text
+
+        pattern = re.compile(
+            '|'.join(
+                [re.escape(k) for k in sorted(rep_dict, key=len, reverse=True)]
+            ),
+            flags=re.DOTALL
+        )
+        return pattern.sub(lambda x: rep_dict[x.group(0)], text)
+
+
+    def get_parsed_alert_templates(
+        params: dict[str, Any]
+    ) -> list[AlertsTemplate]:
+        """ Get the list of parsed alert templates
+
+        :param params: Instance configuration parameters
+        :return: List of parsed alert templates.
+        """
+        templates = params.get('templates') or []
+        if isinstance(templates, str):
+            templates = json.loads(templates)
+        if isinstance(templates, dict):
+            templates = [templates]
+
+        if not isinstance(templates, list):
+            raise DemistoException('Parsed alert templates must be a dict or list of dicts.')
+
+        return [AlertsTemplate(template) for template in templates]
+
+
+    def read_templates(
+        templates: list[AlertsTemplate],
+        number_of_templates: int,
+        start_index: int
+    ) -> list[AlertsTemplate]:
+        """ Build list of templates from the templates given
+
+        :param templates: List of templates
+        :param number_of_templates: Number of templates you want to create
+        :param start_index: Index to read templates from templates
+        :return: List of templates created.
+        """
+        start_index = min(0, start_index) % len(templates)
+        templates = templates * ((number_of_templates // len(templates)) + 1)
+        return templates[start_index:start_index + number_of_templates]
+
+
+    ''' COMMANDS '''
+
+    def test_module(
+        args: dict[str, str],
+        params: dict[str, str],
+    ) -> str:
+        """
+        Validates:
+        """
+        get_parsed_alert_templates(params)
+
+        # Test to connect to XSIAM
+        xc = XsiamClient(params)
+        resp = xc.request(
+            method='POST',
+            path='/public_api/v1/incidents/get_incidents',
+            body={
+                'request_data': {
+                    'search_from': 0,
+                    'search_to': 1
+                }
+            }
+        )
+        if not resp.get('reply'):
+            raise DemistoException(f'Invalid XSIAM API response - {json.dumps(resp)}')
+
+        return 'ok'
+
+
+    def fetch_incidents(
+        args: dict[str, str],
+        params: dict[str, str],
+    ):
+        if templates := get_parsed_alert_templates(params):
+            client = XsiamClient(params)
+            number_of_templates = arg_to_number(params.get('number_of_templates'))
+            if not number_of_templates:
+                number_of_templates = len(templates)
+
+            if random_choices := params.get('random_choices', False):
+                alerts = client.insert_parsed_alerts_by_templates(
+                    random.choices(templates, k=number_of_templates)
+                )
+            else:
+                last_index = int(demisto.getLastRun().get('last_index', -1))
+                next_index = 0 if last_index < 0 else (last_index + 1) % len(templates)
+
+                alerts = client.insert_parsed_alerts_by_templates(
+                    read_templates(
+                        templates=templates,
+                        number_of_templates=number_of_templates,
+                        start_index=next_index
+                    )
+                )
+                demisto.setLastRun({
+                    'last_index': (next_index + number_of_templates - 1) % len(templates)
+                })
+
+        demisto.incidents([])
+
+
+    def xsiam_alert_feed_run(
+        args: dict[str, str],
+        params: dict[str, str],
+    ) -> str:
+        if templates := args.get('templates'):
+            templates = get_parsed_alert_templates({'templates': templates})
+        else:
+            templates = get_parsed_alert_templates(params)
+
+        if not templates:
+            raise DemistoException('Alert templates was not found.')
+
+        alerts = XsiamClient(params).insert_parsed_alerts_by_templates(
+            read_templates(
+                templates=templates,
+                number_of_templates=len(templates),
+                start_index=0
+            )
+        )
+        return f'{len(alerts)} alerts have been inserted.'
+
+
+    def main():  # pragma: no cover
+        try:
+            args = demisto.args()
+            params = demisto.params()
+            command = demisto.command()
+            LOG(f'Command being called is: {command}')
+
+            commands = {
+                'test-module': test_module,
+                'fetch-incidents': fetch_incidents,
+                'xsiam-alert-feed-run': xsiam_alert_feed_run
+            }
+            if function := commands.get(command):
+                try:
+                    return_results(function(assign_params(**args), params))
+                except Exception as e:
+                    raise
+                    raise DemistoException(f'Failed to execute {command} command.\nError:\n{str(e)}')
+            else:
+                raise NotImplementedError(f'Command {command} is not implemented.')
+        except Exception as err:
+            return_error(str(err), error=traceback.format_exc())
+
+        finally:
+            LOG.print_log()
+
+
+    if __name__ in ('__builtin__', 'builtins', '__main__'):
+        main()
+
+    register_module_line('XSIAM Alert Feed', 'end', __line__())
+  type: python
+  commands:
+  - name: xsiam-alert-feed-run
+    arguments:
+    - name: templates
+      description: Alert templates
+    description: Feed alerts to XSIAM/XDR
+  dockerimage: demisto/python3:3.10.13.89009
+  isfetch: true
+  runonce: false
+  subtype: python3
+sourcemoduleid: Panorama
