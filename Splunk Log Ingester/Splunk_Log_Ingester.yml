@@ -1,0 +1,1072 @@
+commonfields:
+  id: Splunk Log Ingester
+  version: -1
+vcShouldKeepItemLegacyProdMachine: false
+name: Splunk Log Ingester
+display: Splunk Log Ingester
+category: Analytics & SIEM
+image: data:image/png;base64,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
+description: This ingestration forwards logs from Splunk to XSIAM HTTP Collector
+detaileddescription: |
+  ### How to configure an instance.
+
+  #### 1. Create an instance
+  Enter required parameters to connect to XSIAM and Splunk.
+  In addition to make sure that `Long running instance` is enabled.
+    - Long running instance: [enabled]
+
+  #### 2. Check the forwarding process running
+  Run !splunkli-get-last-run to make sure that the process is running.
+configuration:
+- section: Connect
+  display: XSIAM API endpoints
+  name: xsiam_api_url
+  type: 0
+  required: true
+- section: Connect
+  display: XSIAM HTTP Collector API Key Type
+  name: xsiam_hc_api_key_type
+  defaultvalue: CEF
+  type: 15
+  required: false
+  options:
+  - CEF
+  - JSON
+- section: Connect
+  display: XSIAM API key for HTTP Collector
+  name: xsiam_hc_api_key
+  type: 4
+  required: true
+  additionalinfo: The api key is for HTTP Collector to ingest JSON logs
+- section: Connect
+  display: Enable compression in gzip to upload events to XSIAM HTTP Collector
+  name: compression
+  defaultvalue: "true"
+  type: 8
+  required: false
+- section: Connect
+  advanced: true
+  display: Dataset Product (Only for CEF)
+  name: dataset_product
+  defaultvalue: unknown
+  type: 0
+  required: false
+- section: Connect
+  advanced: true
+  display: Dataset Vendor (Only for CEF)
+  name: dataset_vendor
+  defaultvalue: unknown
+  type: 0
+  required: false
+- section: Connect
+  advanced: true
+  display: Trust any certificate (not secure)
+  name: insecure
+  type: 8
+  required: false
+- section: Connect
+  advanced: true
+  display: Use system proxy settings
+  name: proxy
+  type: 8
+  required: false
+- section: Connect
+  display: Splunk Server Host
+  name: splunk_host
+  type: 0
+  required: true
+- section: Connect
+  display: Splunk Username
+  displaypassword: Splunk Password
+  name: splunk_creds
+  type: 9
+  required: true
+- section: Connect
+  display: Splunk Port
+  name: splunk_port
+  defaultvalue: "8089"
+  type: 0
+  required: true
+  additionalinfo: The port in Splunk server which is open to the REST API calls.
+- section: Connect
+  display: Incident type
+  name: incidentType
+  type: 13
+  required: false
+- section: Collect
+  display: Fetch events query
+  name: fetch_query
+  defaultvalue: search * | fields *
+  type: 0
+  required: false
+- section: Collect
+  advanced: true
+  display: Use Splunk Clock Time For Fetch
+  name: use_splunk_time
+  defaultvalue: "true"
+  type: 8
+  required: false
+  additionalinfo: Whether to use the Splunk clock time from the Splunk server for
+    fetch, or not.
+- section: Collect
+  advanced: true
+  display: Timezone of the Splunk server, in minutes. For example, if GMT is gmt +3,
+    set timezone to +180. For UTC, set the timezone to 0. This is relevant only for
+    fetching and mirroring notable events. It must be specified when mirroring is
+    enabled.
+  name: timezone
+  type: 0
+  required: false
+- section: Collect
+  display: First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days, 3
+    months, 1 year)
+  name: first_fetch_offset
+  defaultvalue: 10 minutes
+  type: 0
+  required: false
+  additionalinfo: The amount of time to go back when performing the first fetch, or
+    when creating a mapping using the Select Schema option.
+- section: Collect
+  advanced: true
+  display: The app context of the namespace
+  name: splunk_app
+  type: 0
+  required: false
+- section: Collect
+  advanced: true
+  display: CSV fields that will be parsed out of _raw events
+  name: extract_fields
+  type: 12
+  required: false
+- display: Long running instance
+  name: longRunning
+  type: 8
+  required: false
+- display: Fetch logs in chunk
+  name: chunk_mode
+  defaultvalue: "false"
+  type: 8
+  required: false
+- section: Collect
+  advanced: true
+  display: Upload Rate Limit (Mbps)
+  name: upload_rate_limit
+  type: 0
+  required: false
+  additionalinfo: 0 = unlimited
+script:
+  script: |
+    import io
+    import json
+    import time
+    import re
+    import gzip
+    import datetime
+    import dateparser
+    import requests
+    import splunklib.client
+    import splunklib.results
+    from typing import Tuple
+
+
+    XSIAM_HTTP_COLLECTOR_UPLOAD_SIZE_THRESHOLD = 1 * 1024 * 1024
+    SPLUNK_FETCH_INTERVAL_TIME = 60
+
+
+    def load_integration_context(
+    ) -> Tuple[dict[str, Any], int]:
+        """ Get the integration context with the current version
+
+        :return: The integration context, with the current version.
+        """
+        x, version = get_integration_context_with_version()
+        return x or {}, version
+
+
+    def save_integration_context(
+        context: dict | None,
+        version: int
+    ) -> None:
+        """ Save the integration context
+
+        :param context: The integration context
+        :param version: The version number
+        """
+        set_integration_context(context, version=version)
+
+
+    class Settings:
+        def __init__(
+            self,
+            params: Dict[str, Any]
+        ) -> None:
+            params = assign_params(**params)
+            self.__params = params
+            self.__insecure = argToBoolean(params.get('insecure', False))
+            self.__proxy = argToBoolean(params.get('proxy', False))
+
+            self.__xsiam_api_url = params.get('xsiam_api_url')
+            self.__xsiam_hc_api_key_type = params.get('xsiam_hc_api_key_type')
+            self.__xsiam_hc_api_key_value = params.get('xsiam_hc_api_key')
+            self.__compression = argToBoolean(params.get('compression', True))
+            self.__upload_rate_limit = max(float(params.get('upload_rate_limit') or 0.0), 0.0)
+            self.__dataset_product = params.get('dataset_product') or 'unknown'
+            self.__dataset_vendor = params.get('dataset_vendor') or 'unknown'
+
+            self.__splunk_host = params.get('splunk_host')
+            self.__splunk_port = int(params.get('splunk_port'))
+            self.__splunk_app = params.get('splunk_app')
+            self.__splunk_creds_identifier = demisto.get(params, 'splunk_creds.identifier')
+            self.__splunk_creds_password = demisto.get(params, 'splunk_creds.password')
+            self.__use_splunk_time = argToBoolean(params.get('use_splunk_time', True))
+            self.__time_diff = datetime.timedelta(minutes=int(params.get('timezone') or 0))
+
+            first_fetch_offset = (params.get('first_fetch_offset') or '10 minutes').strip()
+            if not re.fullmatch('\d+\s*\S+', first_fetch_offset):
+                raise DemistoException(f'Invalid parameter in the first fetch time - {first_fetch_offset}')
+
+            self.__first_fetch_offset = datetime.datetime.fromtimestamp(0) - dateparser.parse(
+                first_fetch_offset + ' ago',
+                settings={'RELATIVE_BASE': datetime.datetime.fromtimestamp(0)}
+            )
+            self.__fetch_limit = min(max(int(params.get('fetch_limit') or 1000), 1), 100000)
+            self.__fetch_query = params.get('fetch_query')
+            self.__extract_fields = list(
+                filter(
+                    None,
+                    (params.get('extract_fields') or '').split(',')
+                )
+            )
+            self.__chunk_mode = argToBoolean(params.get('chunk_mode', False))
+
+        @property
+        def xsiam_api_url(
+            self
+        ) -> str:
+            return self.__xsiam_api_url
+
+        @property
+        def xsiam_hc_api_key_type(
+            self
+        ) -> str:
+            return self.__xsiam_hc_api_key_type
+
+        @property
+        def xsiam_hc_api_key_value(
+            self
+        ) -> str:
+            return self.__xsiam_hc_api_key_value
+
+        @property
+        def compression(
+            self
+        ) -> bool:
+            return self.__compression
+
+        @property
+        def upload_rate_limit(
+            self
+        ) -> float:
+            return self.__upload_rate_limit
+
+        @property
+        def dataset_product(
+            self
+        ) -> str:
+            return self.__dataset_product
+
+        @property
+        def dataset_vendor(
+            self
+        ) -> str:
+            return self.__dataset_vendor
+
+        @property
+        def splunk_host(
+            self
+        ) -> str:
+            return self.__splunk_host
+
+        @property
+        def splunk_port(
+            self
+        ) -> int:
+            return self.__splunk_port
+
+        @property
+        def splunk_app(
+            self
+        ) -> str:
+            return self.__splunk_app
+
+        @property
+        def insecure(
+            self
+        ) -> bool:
+            return self.__insecure
+
+        @property
+        def proxy(
+            self
+        ) -> bool:
+            return self.__proxy
+
+        @property
+        def splunk_creds_identifier(
+            self
+        ) -> str:
+            return self.__splunk_creds_identifier
+
+        @property
+        def splunk_creds_password(
+            self
+        ) -> str:
+            return self.__splunk_creds_password
+
+        @property
+        def time_diff(
+            self
+        ) -> datetime.timedelta:
+            return self.__time_diff
+
+        @property
+        def use_splunk_time(
+            self
+        ) -> bool:
+            return self.__use_splunk_time
+
+        @property
+        def first_fetch_offset(
+            self
+        ) -> datetime.datetime:
+            return self.__first_fetch_offset
+
+        @property
+        def fetch_limit(
+            self
+        ) -> int:
+            return self.__fetch_limit
+
+        @property
+        def fetch_query(
+            self
+        ) -> str:
+            return self.__fetch_query
+
+        @property
+        def extract_fields(
+            self
+        ) -> list[str]:
+            return self.__extract_fields
+
+        @property
+        def chunk_mode(
+            self
+        ) -> bool:
+            return self.__chunk_mode
+
+
+    class SplunkClient:
+        """ Splunk Client
+        """
+        SPLUNK_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+        def __requests_handler(
+            self,
+            url: str,
+            message: dict[str, str],
+            **kwargs
+        ) -> dict:
+            method = message.get('method', '').lower()
+            data = message.get('body', '') if method == 'post' else None
+            headers = dict(message.get('headers', []))
+            try:
+                response = requests.request(
+                    method,
+                    url,
+                    data=data,
+                    headers=headers,
+                    verify=not self.__settings.insecure,
+                    **kwargs
+                )
+            except requests.exceptions.HTTPError as e:
+                # Propagate HTTP errors via the returned response message
+                response = e.response
+                demisto.debug(f'Got exception while using requests handler - {str(e)}')
+            return {
+                'status': response.status_code,
+                'reason': response.reason,
+                'headers': list(response.headers.items()),
+                'body': io.BytesIO(response.content)
+            }
+
+        def __handle_message(
+            self,
+            item: splunklib.results.Message | dict
+        ) -> bool:
+            """ Checks if the response from JSONResultsReader is a message object.
+                The message can be info etc.
+                such as: "the test table is empty"
+
+            :param item: The item to be checked.
+            :return: Returns `True` if the item is an instance of `results.Message`, `False` otherwise.
+            """
+            if isinstance(item, splunklib.results.Message):
+                demisto.info(f'Splunk-SDK message: {item.message}')
+                return True
+            return False
+
+        def __init__(
+            self,
+            settings: Settings
+        ) -> None:
+            """ Initialize the instance
+
+            :param settings: The instance settings.
+            """
+            self.__settings = settings
+
+            connection_args = assign_params(
+                host=settings.splunk_host,
+                port=settings.splunk_port,
+                app=settings.splunk_app or '-',
+                verify=not settings.insecure,
+                handler=self.__requests_handler
+            )
+            username = settings.splunk_creds_identifier
+            password = settings.splunk_creds_password
+            if username == '_token':
+                connection_args['splunkToken'] = password
+            else:
+                if '@_basic' in username:
+                    username = username.split('@_basic')[0]
+                    connection_args['basic'] = True
+                connection_args['username'] = username
+                connection_args['password'] = password
+                connection_args['autologin'] = True
+
+            self.__client = splunklib.client.connect(**connection_args)
+
+        def get_current_time(
+            self
+        ) -> datetime.datetime:
+            """ Get the current time in Splunk
+
+            :return: The current time in Splunk.
+            """
+            t = datetime.datetime.utcnow() - datetime.timedelta(days=3)
+            res = self.__client.jobs.oneshot(
+                (
+                    '| gentimes start=-1'
+                    ' | eval clock = strftime(time(), "%Y-%m-%dT%H:%M:%S")'
+                    ' | sort 1 -_time'
+                    ' | table clock'
+                ),
+                **{
+                    'count': 1,
+                    'earliest_time': t.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'output_mode': 'json'
+                }
+            )
+            for item in splunklib.results.JSONResultsReader(res):
+                if isinstance(item, dict):
+                    return datetime.datetime.strptime(
+                        item['clock'],
+                        SplunkClient.SPLUNK_TIME_FORMAT
+                    )
+                self.__handle_message(item)
+
+            raise ValueError('Error: Could not fetch Splunk time')
+
+        def query_oneshot(
+            self,
+            query_string: str,
+            query_params: dict[str, Any]
+        ) -> splunklib.results.JSONResultsReader:
+            """ Get the results by querying
+
+            :param query_string: The query string.
+            :param query_params: The parameter to be ginve to jobs.oneshot
+            :return: The reader to get the results.
+            """
+            return splunklib.results.JSONResultsReader(
+                self.__client.jobs.oneshot(
+                    query_string,
+                    **dict(query_params, output_mode='json')
+                )
+            )
+
+        def export(
+            self,
+            query_string: str,
+            query_params: dict[str, Any]
+        ) -> splunklib.results.JSONResultsReader:
+            """ Export the results by querying
+
+            :param query_string: The query string.
+            :param query_params: The parameter to be ginve to jobs.oneshot
+            :return: The reader to get the results.
+            """
+            return splunklib.results.JSONResultsReader(
+                self.__client.jobs.export(
+                    query_string,
+                    **dict(query_params, output_mode='json')
+                )
+            )
+
+
+    class LogForwarder:
+        """ Fetch logs from Splunk, and send them to XDR/XSIAM HTTP Collector
+        """
+        class LogSender:
+            """ Log sender for XDR/XSIAM HTTP Collector
+            """
+            def __init__(
+                self,
+                settings: Settings,
+                client: BaseClient
+            ) -> None:
+                """ Initialize the instance
+
+                :param settings: The instance settings.
+                :param client: The basic HTTP client for XDR/XSIAM HTTP Collector
+                """
+                self.__settings = settings
+                self.__client = client
+                self.__last_upload_time = None
+                self.__buffer = io.BytesIO()
+                self.__buffered_nlogs = 0
+                self.__total_upload_bytes = 0
+                if settings.compression:
+                    self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+                    self.__content_type = 'application/gzip'
+                else:
+                    self.__log_writer = self.__buffer
+                    if self.__settings.xsiam_hc_api_key_type == 'CEF':
+                        self.__content_type = 'text/plain'
+                    elif self.__settings.xsiam_hc_api_key_type == 'JSON':
+                        self.__content_type = 'application/json'
+                    else:
+                        self.__content_type = 'application/octet-stream'
+
+            def send_log(
+                self,
+                log: str,
+            ) -> int:
+                """ Send an event log
+
+                :param log: An event log
+                :return: The number of log entries flushed.
+                """
+                self.__log_writer.write((log + '\n').encode())
+                self.__buffered_nlogs += 1
+
+                if self.__buffer.getbuffer().nbytes > XSIAM_HTTP_COLLECTOR_UPLOAD_SIZE_THRESHOLD:
+                    return self.flush()
+                else:
+                    return 0
+
+            def flush(
+                self
+            ) -> int:
+                """ Finish writing logs
+
+                :return: The number of log entries flushed.
+                """
+                if self.__settings.compression:
+                    self.__log_writer.close()
+
+                now = datetime.datetime.now()
+                if self.__last_upload_time is not None and self.__settings.upload_rate_limit:
+                    t = ((self.__total_upload_bytes * 8) / (self.__settings.upload_rate_limit * 1024 * 1024))
+                    t = t - (now.timestamp() - self.__last_upload_time.timestamp())
+                    if t > 0:
+                        time.sleep(t)
+
+                data = self.__buffer.getvalue()
+                _ = self.__client._http_request(
+                    method='POST',
+                    url_suffix='/logs/v1/event',
+                    headers={
+                        'Authorization': self.__settings.xsiam_hc_api_key_value,
+                        'Content-Type': self.__content_type,
+                    },
+                    data=data
+                )
+                self.__last_upload_time = now
+                self.__total_upload_bytes += len(data)
+                nlogs = self.__buffered_nlogs
+
+                self.__buffer = io.BytesIO()
+                self.__buffered_nlogs = 0
+                if self.__settings.compression:
+                    self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+                else:
+                    self.__log_writer = self.__buffer
+
+                return nlogs
+
+            def test(
+                self
+            ) -> None:
+                """ Test connectivity
+                """
+                # Test to connect to XSIAM
+                body = io.BytesIO()
+                if self.__settings.compression:
+                    gzip.GzipFile(mode='wb', fileobj=body).close()
+
+                _ = self.__client._http_request(
+                    method='POST',
+                    url_suffix='/logs/v1/event',
+                    headers={
+                        'Authorization': self.__settings.xsiam_hc_api_key_value,
+                        'Content-Type': self.__content_type,
+                    },
+                    data=body.getvalue()
+                )
+
+        @staticmethod
+        def __escape_cef_value(
+            val: Any
+        ) -> str:
+            if isinstance(val, (list, dict)):
+                val = json.dumps(val)
+            else:
+                val = str(val)
+
+            if not re.search('[=\\\r\n]', val):
+                return val
+            else:
+                return val.replace('\\', '\\\\').replace('=', '\\=').replace('\r', '\\r').replace('\n', '\\n')
+
+        def __init__(
+            self,
+            settings: Settings
+        ) -> None:
+            """ Initialize the instance
+
+            :param settings: The instance settings.
+            """
+            self.__settings = settings
+            self.__splunk = SplunkClient(settings)
+            self.__xsiam = LogForwarder.LogSender(
+                settings,
+                BaseClient(
+                    settings.xsiam_api_url,
+                    not settings.insecure,
+                    settings.proxy
+                )
+            )
+
+        def __get_fetch_start_times(
+            self,
+            last_run_earliest_time: datetime.datetime | None
+        ) -> Tuple[datetime.datetime, datetime.datetime]:
+            """ Get the start time in the query time range with the current time
+
+            :param last_run_earliest_time: The earliest time of the query time rage in the last run.
+            :return: The start time in the query time range, and the current time.
+            """
+            if self.__settings.use_splunk_time:
+                now = self.__splunk.get_current_time()
+            else:
+                now = datetime.datetime.utcnow() + self.__settings.time_diff
+
+            if not last_run_earliest_time:
+                last_run_earliest_time = now - self.__settings.first_fetch_offset
+
+            return last_run_earliest_time, now
+
+        def __build_fetch_query(
+            self
+        ) -> str:
+            """ Build the query string to fetch
+
+            :return: The query string to fetch.
+            """
+            query = self.__settings.fetch_query
+            for field in self.__settings.extract_fields:
+                query += f' | eval {field}={field}'
+            return query
+
+        def __send_logs(
+            self,
+            logs: list[dict[str, Any]],
+            flush: bool = True
+        ) -> int:
+            """ Send logs to XSIAM
+
+            :param logs: The list of log entries
+            :param flush: Set True to flush logs in sending, otherwise False.
+            :return: The number of log entries flushed.
+            """
+            nlogs = 0
+            match self.__settings.xsiam_hc_api_key_type:
+                case 'JSON':
+                    for log in logs:
+                        ent = {k: v for k, v in log.items() if not k.startswith('_')}
+                        ent['_raw_log'] = log.get('_raw')
+                        ent['_raw_json'] = json.dumps(log)
+                        ent['__splunk'] = {
+                            k: v for k, v in log.items() if k.startswith('_') and k != '_raw'
+                        }
+                        nlogs += self.__xsiam.send_log(json.dumps(ent))
+
+                case 'CEF':
+                    cef_vendor = self.__settings.dataset_vendor
+                    dev_product = self.__settings.dataset_product
+                    dev_version = '-'
+                    dev_event_class_id = '-'
+                    name = 'Splunk'
+                    severity = 'unknown'
+
+                    for log in logs:
+                        extensions = ' '.join([
+                            f'{LogForwarder.__escape_cef_value(k)}={LogForwarder.__escape_cef_value(v)}' for k, v in log.items()
+                        ])
+                        cef = f'CEF:0|{cef_vendor}|{dev_product}|{dev_version}|{dev_event_class_id}|{name}|{severity}|{extensions}'
+                        nlogs += self.__xsiam.send_log(cef)
+
+                case _:
+                    raise DemistoException(f'Invalid HTTP Collector API Key Type - {self.__settings.xsiam_hc_api_key_type}')
+
+            if flush:
+                nlogs += self.__xsiam.flush()
+            return nlogs
+
+        def __flush_logs(
+            self
+        ) -> int:
+            """ Flush logs in sending to XSIAM
+
+            :return: The number of log entries flushed.
+            """
+            return self.__xsiam.flush()
+
+        def test_connect(
+            self
+        ) -> None:
+            """ Test to connect to Splunk and XSIAM
+            """
+            # Test to connect to Splunk
+            self.__splunk.get_current_time()
+
+            # Test to connect to XSIAM
+            self.__xsiam.test()
+
+        def forward_once(
+            self,
+            test: bool = False
+        ) -> None:
+            """ Forward logs
+
+            :param test: Set True not to send logs to XSIAM, otherwise False.
+            """
+            # Load the last run data
+            x, xversion = load_integration_context()
+            last_run = x.get('last_run') or {}
+            if last_run_earliest_time := last_run.get('earliest_time'):
+                last_run_earliest_time = datetime.datetime.strptime(last_run_earliest_time, SplunkClient.SPLUNK_TIME_FORMAT)
+            if last_run_latest_time := last_run.get('latest_time'):
+                last_run_latest_time = datetime.datetime.strptime(last_run_latest_time, SplunkClient.SPLUNK_TIME_FORMAT)
+            search_offset = int(last_run.get('offset') or 0)
+
+            # Make the query time range
+            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time)
+            latest_time = last_run_latest_time or now
+
+            last_run = {
+                'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'offset': search_offset,
+                'status': 'Starting to query logs',
+                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+            }
+            save_integration_context({'last_run': last_run}, xversion)
+            _, xversion = load_integration_context()
+
+            # Fetch logs
+            fetch_query = self.__build_fetch_query()
+            if test:
+                fetch_query += ' | head 1'
+            else:
+                fetch_query += ' | sort _time'
+
+            reader = self.__splunk.query_oneshot(
+                fetch_query,
+                {
+                    'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'count': self.__settings.fetch_limit,
+                    'offset': search_offset,
+                }
+            )
+
+            # Read log entries from the results
+            ents = []
+            error_message = None
+            for ent in reader:
+                if isinstance(ent, splunklib.results.Message):
+                    demisto.info(f'Splunk-SDK message: {ent.message}')
+                    if 'Error' in str(ent.message) or 'error' in str(ent.message):
+                        error_message = f'{error_message}\n{ent.message}'
+                else:
+                    ents.append(ent)
+
+            if error_message and not ents:
+                raise DemistoException(
+                    f'Failed to fetch incidents, check the provided query in Splunk web search - {error_message}'
+                )
+
+            if test:
+                return
+
+            # Send logs to XSIAM
+            self.__send_logs(ents)
+
+            # Save the last run data for the next fetch
+            if len(ents) < self.__settings.fetch_limit:
+                demisto.debug(
+                    f'Number of fetched log entries = {len(ents)}.'
+                    f' Sum is less than {self.__settings.fetch_limit=}. Starting new fetch'
+                )
+                last_run = {
+                    'earliest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'latest_time': None,
+                    'offset': 0,
+                    'last_entries': len(ents),
+                    'status': 'Finished forwarding',
+                    'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                }
+            else:
+                demisto.debug(
+                    f'Number of fetched incidents = {len(ents)}.'
+                    f' Sum is equal/greater than {self.__settings.fetch_limit=}. Continue pagination'
+                )
+                last_run = {
+                    'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'offset': search_offset + self.__settings.fetch_limit,
+                    'last_entries': len(ents),
+                    'status': 'Finished forwarding',
+                    'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                }
+            save_integration_context({'last_run': last_run}, xversion)
+
+        def forward(
+            self
+        ) -> None:
+            """ Forward logs
+            """
+            # Load the last run data
+            x, xversion = load_integration_context()
+            last_run = x.get('last_run') or {}
+            if last_run_earliest_time := last_run.get('earliest_time'):
+                last_run_earliest_time = datetime.datetime.strptime(last_run_earliest_time, SplunkClient.SPLUNK_TIME_FORMAT)
+            if last_run_latest_time := last_run.get('latest_time'):
+                last_run_latest_time = datetime.datetime.strptime(last_run_latest_time, SplunkClient.SPLUNK_TIME_FORMAT)
+            search_offset = int(last_run.get('offset') or 0)
+
+            # Make the query time range
+            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time)
+            latest_time = last_run_latest_time or now
+
+            last_run = {
+                'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'offset': search_offset,
+                'status': 'Starting to export logs',
+                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+            }
+            save_integration_context({'last_run': last_run}, xversion)
+            _, xversion = load_integration_context()
+
+            # Export logs
+            reader = self.__splunk.export(
+                self.__build_fetch_query(),
+                {
+                    'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                }
+            )
+
+            # Forward log entries from the results
+            start_offset = search_offset
+            for ent in reader:
+                if isinstance(ent, splunklib.results.Message):
+                    demisto.info(f'Splunk-SDK message: {ent.message}')
+                    if 'Error' in str(ent.message) or 'error' in str(ent.message):
+                        raise DemistoException(
+                            f'Failed to fetch incidents, check the provided query in Splunk web search - {error_message}\n{ent.message}'
+                        )
+                else:
+                    if n := self.__send_logs([ent], flush=False):
+                        search_offset += n
+
+                        # Save the last run data for the next fetch
+                        last_run = {
+                            'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                            'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                            'offset': search_offset,
+                            'last_entries': search_offset - start_offset,
+                            'status': 'Forwarding logs',
+                            'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                        }
+                        save_integration_context({'last_run': last_run}, xversion)
+                        _, xversion = load_integration_context()
+
+            search_offset += self.__flush_logs()
+
+            # Save the last run data for the next fetch
+            last_run = {
+                'earliest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'latest_time': None,
+                'offset': 0,
+                'last_entries': search_offset - start_offset,
+                'status': 'Finished forwarding',
+                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+            }
+            save_integration_context({'last_run': last_run}, xversion)
+
+
+    def test_module(
+        settings: Settings
+    ) -> None:
+        """ Validates server settings
+
+        :param settings: The instance settings.
+        """
+        lf = LogForwarder(settings)
+        lf.test_connect()
+        lf.forward_once(test=True)
+
+
+    def fetch_incidents(
+        settings: Settings
+    ) -> None:
+        """ Forward logs from Splunk to XSIAM
+
+        :param settings: The instance settings.
+        """
+        lf = LogForwarder(settings)
+        lf.forward_once()
+        demisto.incidents([])
+
+
+    def run_long_running(
+        settings: Settings
+    ) -> None:
+        """ Forward logs from Splunk to XSIAM
+
+        :param settings: The instance settings.
+        """
+        lf = LogForwarder(settings)
+        while True:
+            try:
+                if settings.chunk_mode:
+                    while True:
+                        lf.forward_once()
+                else:
+                    lf.forward()
+            except Exception as e:
+                x, xversion = load_integration_context()
+                if last_run := x.get('last_run'):
+                    last_run['status'] = str(e)
+                    x['last_run'] = last_run
+                    save_integration_context(x, version=xversion)
+            time.sleep(SPLUNK_FETCH_INTERVAL_TIME)
+
+
+    def get_last_run_command(
+        args: Dict[str, Any],
+        settings: Settings
+    ) -> Tuple[
+            str,
+            Dict[str, Any],
+            Dict[str, Any]
+        ]:
+        """ Get the last run information
+
+        :param args: The argument parameters
+        :param settings: The instance settings.
+        :return: readable_output, outputs, raw_outputs
+        """
+        x, _ = load_integration_context()
+        last_run = x.get('last_run') or {}
+        return (
+            tblToMd('Last Run', last_run),
+            {
+                'SplunkLogIngester.LastRun': last_run
+            },
+            last_run
+        )
+
+
+    def reset_last_run_command(
+        args: Dict[str, Any],
+        settings: Settings
+    ) -> Tuple[
+            str,
+            Dict[str, Any],
+            Dict[str, Any]
+        ]:
+        """ Reset the last run information
+
+        :param args: The argument parameters
+        :param settings: The instance settings.
+        :return: readable_output, outputs, raw_outputs
+        """
+        x, xversion = load_integration_context()
+        x.pop('last_run', None)
+        save_integration_context(x, version=xversion)
+        return 'The last run status has been reset.', {}, {}
+
+
+    def main():  # pragma: no cover
+        command = demisto.command()
+        demisto.debug(f'Command being called is {command}')
+
+        settings = Settings(demisto.params())
+        if settings.proxy:
+            handle_proxy()
+
+        commands = {
+            'splunkli-get-last-run': get_last_run_command,
+            'splunkli-reset-last-run': reset_last_run_command,
+        }
+        if command == 'test-module':
+            test_module(settings)
+            return_results('ok')
+        elif command == 'long-running-execution':
+            run_long_running(settings)
+        elif command == 'fetch-incidents':
+            fetch_incidents(settings)
+        elif command not in commands:
+            raise NotImplementedError(f'Command not implemented: {command}')
+        else:
+            args = assign_params(**demisto.args())
+            readable_output, outputs, raw_response = commands[command](args, settings)
+            return_outputs(readable_output, outputs, raw_response)
+
+
+    if __name__ in ('__main__', '__builtin__', 'builtins'):
+        main()
+  type: python
+  commands:
+  - name: splunkli-get-last-run
+    arguments: []
+    outputs:
+    - contextPath: SplunkLogIngester.LastRun
+      description: The last run information
+      type: Unknown
+    description: Get the last run information
+    polling: true
+  - name: splunkli-reset-last-run
+    arguments: []
+    description: Get the last run status
+  dockerimage: demisto/splunksdk-py3:1.0.0.104156
+  runonce: false
+  longRunning: true
+  subtype: python3
+sourcemoduleid: SplunkPy
