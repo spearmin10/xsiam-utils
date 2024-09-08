@@ -9,7 +9,7 @@ Installing
 1. Upload Splunk_Log_Ingester.yml onto your integration screen on your XSIAM.
 
 2. Make sure that `Splunk Log Ingester` is shown on the list of your integrations.
-3. 
+
 
 How to configure an instance
 ----------
