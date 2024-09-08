@@ -21,3 +21,6 @@ In addition to make sure that `Long running instance` is enabled.
 
 #### 2. Check the forwarding process running
 Run !splunkli-get-last-run to make sure that the process is running.
+
+### NOTE:
+ - !splunkli-reset-last-run allows you to restart the log forwarding from the first fetch timestamp.
