@@ -466,6 +466,40 @@ script:
 
             raise ValueError('Error: Could not fetch Splunk time')
 
+        def get_first_log_time(
+            self,
+            earliest_time: datetime.datetime,
+            latest_time: datetime.datetime,
+        ) -> datetime.datetime:
+            """ Get the time of the first log in Splunk
+
+            :param earliest_time: `earliest_time` in the query time range.
+            :param latest_time: `latest_time` in the query time range.
+            :return: The time of the first log in Splunk.
+            """
+            res = self.__client.jobs.oneshot(
+                self.__settings.fetch_query + (
+                    ' | stats earliest(_time) as _time'
+                    ' | eval _time = strftime(_time, "%Y-%m-%dT%H:%M:%S")'
+                ),
+                **{
+                    'count': 1,
+                    'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'output_mode': 'json'
+                }
+            )
+            for item in splunklib.results.JSONResultsReader(res):
+                if isinstance(item, dict):
+                    return datetime.datetime.strptime(
+                        item['_time'],
+                        SplunkClient.SPLUNK_TIME_FORMAT
+                    )
+                if isinstance(item, splunklib.results.Message):
+                    demisto.info(f'Splunk-SDK message: {item.message}')
+
+            raise ValueError('Error: Could not fetch the first log time')
+
         def query_oneshot(
             self,
             query_string: str,
@@ -663,7 +697,9 @@ script:
                 now = datetime.datetime.utcnow() + self.__settings.time_diff
 
             if not last_run_earliest_time:
-                last_run_earliest_time = now - self.__settings.first_fetch_offset
+                last_run_earliest_time = self.__splunk.get_first_log_time(
+                    now - self.__settings.first_fetch_offset, now
+                )
 
             return last_run_earliest_time, now
 
@@ -754,10 +790,12 @@ script:
 
         def forward_once(
             self,
+            max_time_window: int | None,
             test: bool = False
         ) -> None:
             """ Forward logs
 
+            :param max_time_window: The maximum time window in second.
             :param test: Set True not to send logs to XSIAM, otherwise False.
             """
             # Load the last run data
@@ -772,6 +810,10 @@ script:
             # Make the query time range
             earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time)
             latest_time = last_run_latest_time or now
+            if max_time_window:
+                max_time_window = datetime.timedelta(seconds=max(max_time_window or 0, 0))
+                if latest_time - earliest_time > max_time_window:
+                    latest_time = earliest_time + max_time_window
 
             last_run = {
                 'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
@@ -936,7 +978,7 @@ script:
         """
         lf = LogForwarder(settings)
         lf.test_connect()
-        lf.forward_once(test=True)
+        lf.forward_once(max_time_window=None, test=True)
 
 
     def fetch_incidents(
@@ -947,7 +989,7 @@ script:
         :param settings: The instance settings.
         """
         lf = LogForwarder(settings)
-        lf.forward_once()
+        lf.forward_once(max_time_window=None)
         demisto.incidents([])
 
 
@@ -964,7 +1006,7 @@ script:
             try:
                 if settings.chunk_mode:
                     while True:
-                        lf.forward_once()
+                        lf.forward_once(max_time_window=3600)
                 else:
                     lf.forward()
             except Exception as e:
