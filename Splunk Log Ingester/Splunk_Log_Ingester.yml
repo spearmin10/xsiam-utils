@@ -792,11 +792,12 @@ script:
             self,
             max_time_window: int | None,
             test: bool = False
-        ) -> None:
+        ) -> int:
             """ Forward logs
 
             :param max_time_window: The maximum time window in second.
             :param test: Set True not to send logs to XSIAM, otherwise False.
+            :return: The number of log entities forwarded.
             """
             # Load the last run data
             x, xversion = load_integration_context()
@@ -859,7 +860,7 @@ script:
                 )
 
             if test:
-                return
+                return 0
 
             # Send logs to XSIAM
             self.__send_logs(ents)
@@ -893,10 +894,14 @@ script:
                 }
             save_integration_context({'last_run': last_run}, xversion)
 
+            return len(ents)
+
         def forward(
             self
-        ) -> None:
+        ) -> int:
             """ Forward logs
+
+            :return: The number of log entities forwarded.
             """
             # Load the last run data
             x, xversion = load_integration_context()
@@ -931,6 +936,7 @@ script:
             )
 
             # Forward log entries from the results
+            num_of_entities = 0
             start_offset = search_offset
             for ent in reader:
                 if isinstance(ent, splunklib.results.Message):
@@ -940,6 +946,7 @@ script:
                             f'Failed to fetch incidents, check the provided query in Splunk web search - {error_message}\n{ent.message}'
                         )
                 else:
+                    num_of_entities += 1
                     if n := self.__send_logs([ent], flush=False):
                         search_offset += n
 
@@ -968,6 +975,7 @@ script:
             }
             save_integration_context({'last_run': last_run}, xversion)
 
+            return num_of_entities
 
     def test_module(
         settings: Settings
@@ -1005,8 +1013,8 @@ script:
             start_time = datetime.datetime.now().timestamp()
             try:
                 if settings.chunk_mode:
-                    while True:
-                        lf.forward_once(max_time_window=3600)
+                    while lf.forward_once(max_time_window=3600):
+                        pass
                 else:
                     lf.forward()
             except Exception as e:
