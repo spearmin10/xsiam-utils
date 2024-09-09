@@ -157,6 +157,15 @@ configuration:
   type: 0
   required: false
   additionalinfo: 0 = unlimited
+- section: Collect
+  advanced: true
+  display: Add syslog header for _raw_log (Only for JSON)
+  name: prepend_syslog_header
+  type: 15
+  required: false
+  options:
+  - RFC 3164
+  - RFC 5424
 script:
   script: |
     import io
@@ -223,6 +232,7 @@ script:
             self.__upload_rate_limit = max(float(params.get('upload_rate_limit') or 0.0), 0.0)
             self.__dataset_product = params.get('dataset_product') or 'unknown'
             self.__dataset_vendor = params.get('dataset_vendor') or 'unknown'
+            self.__prepend_syslog_header = params.get('prepend_syslog_header') or ''
 
             self.__splunk_host = params.get('splunk_host')
             self.__splunk_port = int(params.get('splunk_port'))
@@ -291,6 +301,12 @@ script:
             self
         ) -> str:
             return self.__dataset_vendor
+
+        @property
+        def prepend_syslog_header(
+            self
+        ) -> str:
+            return self.__prepend_syslog_header
 
         @property
         def splunk_host(
@@ -615,6 +631,7 @@ script:
                 if self.__settings.compression:
                     self.__log_writer.close()
 
+                # bandwidth control
                 now = datetime.datetime.now()
                 if self.__last_upload_time is not None and self.__settings.upload_rate_limit:
                     t = ((self.__total_upload_bytes * 8) / (self.__settings.upload_rate_limit * 1024 * 1024))
@@ -622,6 +639,7 @@ script:
                     if t > 0:
                         time.sleep(t)
 
+                # Flush the cache
                 data = self.__buffer.getvalue()
                 _ = self.__client._http_request(
                     method='POST',
@@ -636,6 +654,7 @@ script:
                 self.__total_upload_bytes += len(data)
                 nlogs = self.__buffered_nlogs
 
+                # Re-initialize the cache
                 self.__buffer = io.BytesIO()
                 self.__buffered_nlogs = 0
                 if self.__settings.compression:
@@ -748,13 +767,24 @@ script:
                 case 'JSON':
                     for log in logs:
                         ent = {k: v for k, v in log.items() if not k.startswith('_')}
-                        ent['_raw_log'] = log.get('_raw')
                         ent['_raw_json'] = json.dumps(log)
                         ent['__splunk'] = {
                             k: v for k, v in log.items() if k.startswith('_') and k != '_raw'
                         }
                         if t := log.get('_time'):
-                            ent['_time'] = dateparser.parse(t, settings={'RETURN_AS_TIMEZONE_AWARE': True}).isoformat(timespec='milliseconds')
+                            t = dateparser.parse(t, settings={'RETURN_AS_TIMEZONE_AWARE': True})
+                            ent['_time'] = t.isoformat(timespec='milliseconds')
+                        else:
+                            t = utc_now()
+
+                        raw_log = log.get('_raw') or ''
+                        if self.__settings.prepend_syslog_header == 'RFC 3164':
+                            raw_log = f'<0>{t.strftime("%b %d %H:%M:%S")} splunk {raw_log}'
+                        elif self.__settings.prepend_syslog_header == 'RFC 5424':
+                            t = t.astimezone(tz=datetime.timezone.utc)
+                            raw_log = f'<0>1 {t.strftime("%Y-%m-%dT%H:%M:%SZ")} splunk - - - - {raw_log}'
+                        ent['_raw_log'] = raw_log
+
                         nlogs += self.__xsiam.send_log(json.dumps(ent))
 
                 case 'CEF':
