@@ -700,6 +700,8 @@ script:
                         ent['__splunk'] = {
                             k: v for k, v in log.items() if k.startswith('_') and k != '_raw'
                         }
+                        if t := log.get('_time'):
+                            ent['_time'] = dateparser.parse(t, settings={'RETURN_AS_TIMEZONE_AWARE': True}).isoformat(timespec='milliseconds')
                         nlogs += self.__xsiam.send_log(json.dumps(ent))
 
                 case 'CEF':
