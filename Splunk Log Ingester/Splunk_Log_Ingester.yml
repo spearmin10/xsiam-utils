@@ -598,6 +598,9 @@ script:
 
                 :return: The number of log entries flushed.
                 """
+                if not self.__buffered_nlogs:
+                    return 0
+
                 if self.__settings.compression:
                     self.__log_writer.close()
 
