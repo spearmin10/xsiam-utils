@@ -687,11 +687,14 @@ script:
 
         def __get_fetch_start_times(
             self,
-            last_run_earliest_time: datetime.datetime | None
+            last_run_earliest_time: datetime.datetime | None,
+            first_fetch_is_from_earliest: bool
         ) -> Tuple[datetime.datetime, datetime.datetime]:
             """ Get the start time in the query time range with the current time
 
             :param last_run_earliest_time: The earliest time of the query time rage in the last run.
+            :param first_fetch_is_from_earliest: Set True to fetch from the time of the first log
+                                                 if last_run_earliest_time is not given, otherwise False.
             :return: The start time in the query time range, and the current time.
             """
             if self.__settings.use_splunk_time:
@@ -700,9 +703,9 @@ script:
                 now = datetime.datetime.utcnow() + self.__settings.time_diff
 
             if not last_run_earliest_time:
-                last_run_earliest_time = self.__splunk.get_first_log_time(
-                    now - self.__settings.first_fetch_offset, now
-                )
+                last_run_earliest_time = now - self.__settings.first_fetch_offset
+                if first_fetch_is_from_earliest:
+                    last_run_earliest_time = self.__splunk.get_first_log_time(last_run_earliest_time, now)
 
             return last_run_earliest_time, now
 
@@ -812,7 +815,7 @@ script:
             search_offset = int(last_run.get('offset') or 0)
 
             # Make the query time range
-            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time)
+            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time, True)
             latest_time = last_run_latest_time or now
             if max_time_window:
                 max_time_window = datetime.timedelta(seconds=max(max_time_window or 0, 0))
@@ -916,7 +919,7 @@ script:
             search_offset = int(last_run.get('offset') or 0)
 
             # Make the query time range
-            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time)
+            earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time, False)
             latest_time = last_run_latest_time or now
 
             last_run = {
