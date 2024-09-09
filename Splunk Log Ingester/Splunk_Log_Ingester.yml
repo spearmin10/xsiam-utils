@@ -175,6 +175,14 @@ script:
     XSIAM_HTTP_COLLECTOR_UPLOAD_SIZE_THRESHOLD = 1 * 1024 * 1024
     SPLUNK_FETCH_INTERVAL_TIME = 60
 
+    def utc_now(
+    ) -> datetime.datetime:
+        """ Get the current time in UTC of timezone-aware datatime object
+
+        :return: Get the current time.
+        """
+        return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+
 
     def load_integration_context(
     ) -> Tuple[dict[str, Any], int]:
@@ -372,7 +380,8 @@ script:
     class SplunkClient:
         """ Splunk Client
         """
-        SPLUNK_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+        SPLUNK_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
+
 
         def __requests_handler(
             self,
@@ -441,18 +450,19 @@ script:
 
             :return: The current time in Splunk.
             """
-            t = datetime.datetime.utcnow() - datetime.timedelta(days=3)
+            t = utc_now() - datetime.timedelta(days=3)
             res = self.__client.jobs.oneshot(
                 (
                     '| gentimes start=-1'
-                    ' | eval clock = strftime(time(), "%Y-%m-%dT%H:%M:%S")'
+                    f' | eval clock = strftime(time(), "{SplunkClient.SPLUNK_TIME_FORMAT}")'
                     ' | sort 1 -_time'
                     ' | table clock'
                 ),
                 **{
                     'count': 1,
                     'earliest_time': t.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
-                    'output_mode': 'json'
+                    'output_mode': 'json',
+                    'time_format': SplunkClient.SPLUNK_TIME_FORMAT,
                 }
             )
             for item in splunklib.results.JSONResultsReader(res):
@@ -480,13 +490,14 @@ script:
             res = self.__client.jobs.oneshot(
                 self.__settings.fetch_query + (
                     ' | stats earliest(_time) as _time'
-                    ' | eval _time = strftime(_time, "%Y-%m-%dT%H:%M:%S")'
+                    f' | eval _time = strftime(_time, "{SplunkClient.SPLUNK_TIME_FORMAT}")'
                 ),
                 **{
                     'count': 1,
                     'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                     'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
-                    'output_mode': 'json'
+                    'output_mode': 'json',
+                    'time_format': SplunkClient.SPLUNK_TIME_FORMAT
                 }
             )
             for item in splunklib.results.JSONResultsReader(res):
@@ -700,7 +711,7 @@ script:
             if self.__settings.use_splunk_time:
                 now = self.__splunk.get_current_time()
             else:
-                now = datetime.datetime.utcnow() + self.__settings.time_diff
+                now = utc_now() + self.__settings.time_diff
 
             if not last_run_earliest_time:
                 last_run_earliest_time = now - self.__settings.first_fetch_offset
@@ -827,7 +838,7 @@ script:
                 'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 'offset': search_offset,
                 'status': 'Starting to query logs',
-                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
             save_integration_context({'last_run': last_run}, xversion)
             _, xversion = load_integration_context()
@@ -845,7 +856,8 @@ script:
                     'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                     'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                     'count': self.__settings.fetch_limit,
-                    'offset': search_offset
+                    'offset': search_offset,
+                    'time_format': SplunkClient.SPLUNK_TIME_FORMAT
                 }
             )
 
@@ -883,7 +895,7 @@ script:
                     'offset': 0,
                     'last_entries': len(ents),
                     'status': 'Finished forwarding',
-                    'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 }
             else:
                 demisto.debug(
@@ -896,7 +908,7 @@ script:
                     'offset': search_offset + self.__settings.fetch_limit,
                     'last_entries': len(ents),
                     'status': 'Finished forwarding',
-                    'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 }
             save_integration_context({'last_run': last_run}, xversion)
 
@@ -927,7 +939,7 @@ script:
                 'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 'offset': search_offset,
                 'status': 'Starting to export logs',
-                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
             save_integration_context({'last_run': last_run}, xversion)
             _, xversion = load_integration_context()
@@ -938,6 +950,7 @@ script:
                 {
                     'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                     'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                    'time_format': SplunkClient.SPLUNK_TIME_FORMAT,
                 }
             )
 
@@ -963,7 +976,7 @@ script:
                             'offset': search_offset,
                             'last_entries': search_offset - start_offset,
                             'status': 'Forwarding logs',
-                            'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                            'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                         }
                         save_integration_context({'last_run': last_run}, xversion)
                         _, xversion = load_integration_context()
@@ -977,7 +990,7 @@ script:
                 'offset': 0,
                 'last_entries': search_offset - start_offset,
                 'status': 'Finished forwarding',
-                'time': datetime.datetime.now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
+                'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
             save_integration_context({'last_run': last_run}, xversion)
 
