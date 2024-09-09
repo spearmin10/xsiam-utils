@@ -707,7 +707,7 @@ script:
                 if first_fetch_is_from_earliest:
                     last_run_earliest_time = self.__splunk.get_first_log_time(last_run_earliest_time, now)
 
-            return last_run_earliest_time, now
+            return min(last_run_earliest_time, now - datetime.timedelta(seconds=1)), now
 
         def __build_fetch_query(
             self
@@ -819,8 +819,8 @@ script:
             latest_time = last_run_latest_time or now
             if max_time_window:
                 max_time_window = datetime.timedelta(seconds=max(max_time_window or 0, 0))
-                if latest_time - earliest_time > max_time_window:
-                    latest_time = earliest_time + max_time_window
+                latest_time = min(latest_time, earliest_time + max_time_window)
+            latest_time = min(latest_time, now)
 
             last_run = {
                 'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
@@ -920,7 +920,7 @@ script:
 
             # Make the query time range
             earliest_time, now = self.__get_fetch_start_times(last_run_earliest_time, False)
-            latest_time = last_run_latest_time or now
+            latest_time = min(last_run_latest_time or now, now)
 
             last_run = {
                 'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
