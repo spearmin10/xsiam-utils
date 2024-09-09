@@ -1016,7 +1016,7 @@ script:
             start_time = datetime.datetime.now().timestamp()
             try:
                 if settings.chunk_mode:
-                    while lf.forward_once(max_time_window=3600):
+                    while lf.forward_once(max_time_window=24 * 60 *60):
                         pass
                 else:
                     lf.forward()
