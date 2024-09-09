@@ -19,7 +19,7 @@ detaileddescription: |-
   Run !splunkli-get-last-run to make sure that the process is running.
 
   ### NOTE:
-   - !splunkli-reset-last-run allows you to restart the log forwarding from the first fetch timestamp.
+   - !splunk-reset-last-run allows you to restart the log forwarding in a minute from the first fetch timestamp.
 configuration:
 - section: Connect
   display: XSIAM API endpoints
