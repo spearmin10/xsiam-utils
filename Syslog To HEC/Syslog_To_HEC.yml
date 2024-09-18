@@ -1,0 +1,604 @@
+commonfields:
+  id: Syslog To HEC
+  version: -1
+vcShouldKeepItemLegacyProdMachine: false
+name: Syslog To HEC
+display: Syslog To HEC
+category: Utilities
+image: data:image/png;base64,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
+description: This integration forwards syslog messages to XDR/XSIAM HTTP Collector.
+detaileddescription: |-
+  ### How to configure an instance.
+
+  #### 1. Create an instance
+  Select an engine instance on which you want to run the syslog server.
+  - **Important**: The server only runs on an engine.
+
+  Enter required parameters for the server and to connect to XSIAM.
+
+  ### NOTE:
+  - **Important**: Only TCP is supported. UDP is not supported.
+configuration:
+- advanced: true
+  display: Long Running Instance
+  name: longRunning
+  defaultvalue: "true"
+  type: 8
+  required: false
+- display: Listen Port
+  name: longRunningPort
+  defaultvalue: "514"
+  type: 0
+  required: true
+  additionalinfo: The port number on which the syslog server runs
+- advanced: true
+  display: Trust any certificate (not secure)
+  name: insecure
+  defaultvalue: "false"
+  type: 8
+  required: false
+- advanced: true
+  display: Use system proxy settings
+  name: proxy
+  defaultvalue: "false"
+  type: 8
+  required: false
+- display: XSIAM API endpoints
+  name: xsiam_api_url
+  type: 0
+  required: true
+- display: XSIAM HTTP Collector API Key for RAW log
+  name: xsiam_hc_api_key_raw
+  type: 4
+  required: false
+- display: XSIAM HTTP Collector API Key for CEF log
+  name: xsiam_hc_api_key_cef
+  type: 4
+  required: false
+- display: Enable compression in gzip to upload events to XSIAM HTTP Collector
+  name: compression
+  defaultvalue: "true"
+  type: 8
+  required: false
+- display: Alert type
+  name: alertType
+  type: 13
+  required: false
+script:
+  script: |
+    import os
+    import io
+    import re
+    import time
+    import socket
+    import traceback
+    import threading
+    from socketserver import BaseServer, BaseRequestHandler, ThreadingTCPServer
+    from typing import Tuple, Any
+
+
+    DEFAULT_SOCKET_TIMEOUT = 30
+    DEFAULT_LOG_FLUSH_INTERVAL = 10
+    XSIAM_HTTP_COLLECTOR_UPLOAD_SIZE_THRESHOLD = 1 * 1024 * 1024
+    INTEGRATION_NAME = 'Syslog To HEC'
+
+
+    class Settings:
+        def __init__(
+            self,
+            params: dict[str, Any]
+        ) -> None:
+            params = assign_params(**params)
+            self.__params = params
+
+            host_port, _, docker_port = (params.get('longRunningPort') or '').partition(':')
+            self.__host_port = int(host_port or docker_port or 0)
+            self.__docker_port = int(docker_port or host_port or 0)
+            self.__xsiam_api_url = params.get('xsiam_api_url')
+            self.__xsiam_hc_api_key_raw = params.get('xsiam_hc_api_key_raw') or None
+            self.__xsiam_hc_api_key_cef = params.get('xsiam_hc_api_key_cef') or None
+            self.__compression = argToBoolean(params.get('compression', True))
+            self.__insecure = argToBoolean(params.get('insecure', 'false'))
+            self.__proxy = argToBoolean(params.get('proxy', 'false'))
+            self.__socket_timeout = DEFAULT_SOCKET_TIMEOUT
+
+        @property
+        def xsiam_api_url(
+            self
+        ) -> str:
+            return self.__xsiam_api_url
+
+        @property
+        def xsiam_hc_api_key_raw(
+            self
+        ) -> str | None:
+            return self.__xsiam_hc_api_key_raw
+
+        @property
+        def xsiam_hc_api_key_cef(
+            self
+        ) -> str | None:
+            return self.__xsiam_hc_api_key_cef
+
+        @property
+        def compression(
+            self
+        ) -> bool:
+            return self.__compression
+
+        @property
+        def host_port(
+            self
+        ) -> int:
+            return self.__host_port
+
+        @property
+        def docker_port(
+            self
+        ) -> int:
+            return self.__docker_port
+
+        @property
+        def insecure(
+            self
+        ) -> bool:
+            return self.__insecure
+
+        @property
+        def is_proxy(
+            self
+        ) -> bool:
+            return self.__proxy
+
+        @property
+        def socket_timeout(
+            self
+        ) -> int:
+            return self.__socket_timeout
+
+
+    class LogSender:
+        """ Log sender for XDR/XSIAM HTTP Collector
+        """
+        class BufferredSender:
+            """ Buffered Log sender for XDR/XSIAM HTTP Collector
+            """
+            def __init__(
+                self,
+                client: BaseClient,
+                api_key: str,
+                compression: bool
+            ) -> None:
+                """ Initialize the instance
+
+                :param settings: The instance settings.
+                :param client: The basic HTTP client for XDR/XSIAM HTTP Collector
+                :param api_key: An API Key for XDR/XSIAM HTTP Collector
+                :param compression: Set to True to compress logs by gzip, otherwise False.
+                """
+                self.__client = client
+                self.__api_key = api_key
+                self.__compression = compression
+                self.__buffer = io.BytesIO()
+                self.__buffered_nlogs = 0
+                if compression:
+                    self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+                    self.__content_type = 'application/gzip'
+                else:
+                    self.__log_writer = self.__buffer
+                    self.__content_type = 'text/plain'
+
+            def send_log(
+                self,
+                log: str,
+            ) -> int:
+                """ Send an event log
+
+                :param log: An event log
+                :return: The number of log entries flushed.
+                """
+                self.__log_writer.write((log + '\n').encode())
+                self.__buffered_nlogs += 1
+
+                if self.__buffer.getbuffer().nbytes > XSIAM_HTTP_COLLECTOR_UPLOAD_SIZE_THRESHOLD:
+                    return self.flush()
+                else:
+                    return 0
+
+            def flush(
+                self
+            ) -> int:
+                """ Finish writing logs
+
+                :return: The number of log entries flushed.
+                """
+                if not self.__buffered_nlogs:
+                    return 0
+
+                if self.__compression:
+                    self.__log_writer.close()
+
+                # Flush the cache
+                data = self.__buffer.getvalue()
+                _ = self.__client._http_request(
+                    method='POST',
+                    url_suffix='/logs/v1/event',
+                    headers={
+                        'Authorization': self.__api_key,
+                        'Content-Type': self.__content_type,
+                    },
+                    data=data
+                )
+                nlogs = self.__buffered_nlogs
+
+                # Re-initialize the cache
+                self.__buffer = io.BytesIO()
+                self.__buffered_nlogs = 0
+                if self.__compression:
+                    self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+                else:
+                    self.__log_writer = self.__buffer
+
+                return nlogs
+
+            def test(
+                self
+            ) -> None:
+                """ Test connectivity
+                """
+                # Test to connect to XSIAM
+                body = io.BytesIO()
+                if self.__compression:
+                    gzip.GzipFile(mode='wb', fileobj=body).close()
+
+                _ = self.__client._http_request(
+                    method='POST',
+                    url_suffix='/logs/v1/event',
+                    headers={
+                        'Authorization': self.__api_key,
+                        'Content-Type': self.__content_type,
+                    },
+                    data=body.getvalue()
+                )
+
+        def __init__(
+            self,
+            client: BaseClient,
+            api_key: str,
+            compression: bool
+        ) -> None:
+            """ Initialize the instance
+
+            :param settings: The instance settings.
+            :param client: The basic HTTP client for XDR/XSIAM HTTP Collector
+            :param api_key: An API Key for XDR/XSIAM HTTP Collector
+            :param compression: Set to True to compress logs by gzip, otherwise False.
+            """
+            self.__sender = LogSender.BufferredSender(
+                client, api_key, compression
+            )
+            self.__lock = threading.Lock()
+            self.__cond = threading.Condition(self.__lock)
+            self.__done = False
+            self.__flusher = threading.Thread(
+                target=self.__periodic_flush,
+                args=(),
+                daemon=False
+            )
+            self.__flusher.start()
+
+        def __periodic_flush(
+            self
+        ) -> None:
+            """ Flush the send buffer at intervals
+            """
+            with self.__lock:
+                while not self.__cond.wait_for(
+                    lambda: self.__done,
+                    timeout=DEFAULT_LOG_FLUSH_INTERVAL
+                ):
+                    self.__sender.flush()
+
+        def send_log(
+            self,
+            log: str,
+        ) -> int:
+            """ Send an event log
+
+            :param log: An event log
+            :return: The number of log entries flushed.
+            """
+            with self.__lock:
+                return self.__sender.send_log(log)
+
+        def flush(
+            self
+        ) -> int:
+            """ Finish writing logs
+
+            :return: The number of log entries flushed.
+            """
+            with self.__lock:
+                return self.__sender.flush()
+
+        def finish(
+            self
+        ) -> None:
+            """ Finish sending logs
+            """
+            done = False
+            with self.__lock:
+                if not done:
+                    done = self.__done = True
+                    self.__cond.notify()
+
+            if done:
+                self.__flusher.join()
+                self.__sender.flush()
+
+        def test(
+            self
+        ) -> None:
+            """ Test connectivity
+            """
+            with self.__lock:
+                return self.__sender.test()
+
+
+    class LogForwardingHandler(BaseRequestHandler):
+        """ Log Forwarding Handler
+        """
+        def __init__(
+            self,
+            request,
+            client_address,
+            server
+        ) -> None:
+            self.__hc_raw: LogSender | None = None
+            self.__hc_cef: LogSender | None = None
+            self.__syslog_pattern = re.compile(
+                (
+                    r'^(?:<(?:\d{1,3})>)(?:(:?(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))'
+                    r' +(?:\d{1,2}) (?:\d{2}:\d{2}:\d{2})) (?:\S+)'
+                    r' (?:(?:[^:\[]{1,32})(?:\[(?:\d*)\])?: )?(?P<msg_3164>.*)'
+                    r'|'
+                    r'(?:\d{1,2}) (?:-|(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})))'
+                    r' (?:-|(?:\S{1,255})) (?:-|(?:\S{1,48})) (?:-|(?:\S{1,128})) (?:-|(?:\S{1,32}))'
+                    r' (?:-|\[(?:(?:[^ =\]]+) (?:(?:[^\]\\]|\\.)*))\])(?: (?P<msg_5424>.*))?)'
+                )
+            )
+            BaseRequestHandler.__init__(self, request, client_address, server)
+
+        def __send_log(
+            self,
+            log: str
+        ) -> None:
+            """ Send a log message
+
+            :param log: An log message
+            """
+            if self.__hc_cef:
+                if m := self.__syslog_pattern.match(log):
+                    msg = m.group('msg_3164') or m.group('msg_5424') or ''
+                    if msg.startswith('CEF:'):
+                        self.__hc_cef.send_log(log)
+                        return
+
+            if self.__hc_raw:
+                self.__hc_raw.send_log(log)
+
+        def __flush(
+            self
+        ) -> None:
+            """ Flush log messages in the cache
+            """
+            if self.__hc_raw:
+                self.__hc_raw.flush()
+            if self.__hc_cef:
+                self.__hc_cef.flush()
+
+        def setup(
+            self
+        ) -> None:
+            self.__settings = self.server.settings
+            if self.__settings.xsiam_hc_api_key_raw:
+                self.__hc_raw = LogSender(
+                    BaseClient(
+                        self.__settings.xsiam_api_url,
+                        not self.__settings.insecure,
+                        self.__settings.is_proxy
+                    ),
+                    self.__settings.xsiam_hc_api_key_raw,
+                    self.__settings.compression
+                )
+
+            if self.__settings.xsiam_hc_api_key_cef:
+                self.__hc_cef = LogSender(
+                    BaseClient(
+                        self.__settings.xsiam_api_url,
+                        not self.__settings.insecure,
+                        self.__settings.is_proxy
+                    ),
+                    self.__settings.xsiam_hc_api_key_cef,
+                    self.__settings.compression
+                )
+
+        def finish(
+            self
+        ) -> None:
+            if self.__hc_raw:
+                self.__hc_raw.finish()
+            if self.__hc_cef:
+                self.__hc_cef.finish()
+
+        def handle(
+            self
+        ) -> None:
+            try:
+                ss = self.request.makefile('r', encoding='utf-8')
+                while True:
+                    log = ss.readline()
+                    if len(log) == 0:
+                        break
+
+                    if log := log.rstrip('\r\n'):
+                        self.__send_log(log)
+
+            except Exception:
+                demisto.debug(traceback.format_exc())
+            finally:
+                self.request.close()
+                self.__flush()
+
+
+    class Service:
+        def __init__(
+            self,
+            settings: Settings
+        ) -> None:
+            self.__settings = settings
+
+        def __prepare_server(
+            self
+        ) -> BaseServer:
+            """ Prepare a server instance to be run
+
+            :return: The server instance ready to be run.
+            """
+            try:
+                ThreadingTCPServer.allow_reuse_address = True
+                server = ThreadingTCPServer(
+                    ('', self.__settings.docker_port),
+                    LogForwardingHandler
+                )
+            except Exception as e:
+                if 'Permission denied' in str(e):
+                    raise DemistoException(f'{str(e)} - you must run the server on an engine.')
+
+            server.timeout = self.__settings.socket_timeout
+            server.settings = self.__settings
+            return server
+
+        def run_local_server(
+            self
+        ) -> None:
+            """ Run the long running server
+            """
+            with self.__prepare_server() as server:
+                server.serve_forever()
+
+        def test_local_server(
+            self
+        ) -> None:
+            """ Test to run the local server
+            """
+            with self.__prepare_server() as server:
+                try:
+                    thr = threading.Thread(
+                        target=server.serve_forever,
+                        args=(server,),
+                        daemon=False
+                    )
+                    thr.start()
+
+                    time.sleep(3)
+                    server.shutdown()
+                    thr.join()
+                except Exception as e:
+                    if 'Address in use' not in str(e):
+                        raise
+
+
+    ''' COMMAND FUNCTIONS '''
+
+
+    def test_module(
+        args: dict[str, Any]
+    ) -> Tuple[str, dict[str, Any], dict[str, Any]]:
+        """ Validates server settings
+
+        :param args: The argument parameters
+        """
+        settings = Settings(demisto.params())
+        run_long_running(is_test=True, settings=settings)
+
+        if settings.xsiam_hc_api_key_raw:
+            client = LogSender(
+                BaseClient(
+                    settings.xsiam_api_url,
+                    not settings.insecure,
+                    settings.is_proxy
+                ),
+                settings.xsiam_hc_api_key_raw,
+                settings.compression
+            )
+            client.test()
+
+        if settings.xsiam_hc_api_key_cef:
+            client = LogSender(
+                BaseClient(
+                    settings.xsiam_api_url,
+                    not settings.insecure,
+                    settings.is_proxy
+                ),
+                settings.xsiam_hc_api_key_cef,
+                settings.compression
+            )
+            client.test()
+
+        return 'ok', {}, {}
+
+
+    def run_long_running(
+        is_test: bool,
+        settings: Settings
+    ) -> None:
+        """ Start the long running server
+
+        :param is_test: Indicates whether it's test-module run or regular run
+        :param settings: The instance settings
+        """
+        try:
+            if settings.is_proxy:
+                handle_proxy()
+
+            service = Service(settings=settings)
+            if is_test:
+                service.test_local_server()
+            else:
+                service.run_local_server()
+
+        except Exception as e:
+            demisto.error(f'An error occurred in long running loop: {str(e)}')
+            raise DemistoException(str(e))
+
+
+    def main():
+        """ Main
+        """
+        command = demisto.command()
+        demisto.debug('Command being called is {}'.format(command))
+        commands = {
+            'test-module': test_module,
+        }
+        try:
+            if command == 'long-running-execution':
+                run_long_running(is_test=False, settings=Settings(demisto.params()))
+            else:
+                args = assign_params(**demisto.args())
+                readable_output, outputs, raw_response = commands[command](args)
+                return_outputs(readable_output, outputs, raw_response)
+        except Exception as e:
+            err_msg = f'Error in {INTEGRATION_NAME} Integration [{e}]'
+            return_error(err_msg)
+
+
+    if __name__ in ('__main__', '__builtin__', 'builtins'):
+        main()
+  type: python
+  dockerimage: demisto/python3:3.11.9.104657
+  runonce: false
+  longRunning: true
+  longRunningPort: true
+  subtype: python3
+sourcemoduleid: ExportIndicators
