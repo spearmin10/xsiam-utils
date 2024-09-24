@@ -960,9 +960,57 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
             "timestamp", if(
                 _x->datetime_5424 = "",
                 // time params - RFC 3164
-                parse_timestamp(
-                  "%Y %b %d %H:%M:%S",
-                  format_string("%d %s", extract_time(current_time(), "YEAR"), _x->datetime_3164)
+                arrayindex(
+                    arraymap(
+                        arraymap(
+                            arraymap(
+                                arraycreate(
+                                    object_create("now", current_time())
+                                ),
+                                object_create(
+                                    "now_time", to_epoch("@element"->now, "SECONDS"),
+                                    "log_time", to_epoch(
+                                        parse_timestamp(
+                                            "%Y %b %d %H:%M:%S",
+                                            format_string("%d %s", extract_time("@element"->now, "YEAR"), _x->datetime_3164)
+                                        ),
+                                        "SECONDS"
+                                    )
+                                )
+                            ),
+                            object_create(
+                                "log_time", "@element"->log_time,
+                                "diff", subtract(to_integer("@element"->now_time), to_integer("@element"->log_time))
+                            )
+                        ),
+                        timestamp_seconds(
+                            add(
+                                to_integer("@element"->log_time),
+                                if(
+                                    to_integer("@element"->diff) >= 50400 or to_integer("@element"->diff) <= -43200, // +14:00/-12:00
+                                    0,
+                                    if(
+                                        to_integer("@element"->diff) >= 0,
+                                        subtract(
+                                            add(to_integer("@element"->diff), 15),
+                                            subtract(
+                                                add(to_integer("@element"->diff), 15),
+                                                multiply(floor(divide(add(to_integer("@element"->diff), 15), 30)), 30)
+                                            )
+                                        ),
+                                        add(
+                                            subtract(to_integer("@element"->diff), 15),
+                                            subtract(
+                                                subtract(multiply(to_integer("@element"->diff), -1), 15),
+                                                multiply(floor(divide(subtract(multiply(to_integer("@element"->diff), -1), 15), 30)), 30)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    0
                 ),
                 // time params - RFC 5424
                 parse_timestamp(
@@ -1077,9 +1125,57 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
             "timestamp", if(
                 _x->datetime_5424 = "",
                 // time params - RFC 3164
-                parse_timestamp(
-                  "%Y %b %d %H:%M:%S",
-                  format_string("%d %s", extract_time(current_time(), "YEAR"), _x->datetime_3164)
+                arrayindex(
+                    arraymap(
+                        arraymap(
+                            arraymap(
+                                arraycreate(
+                                    object_create("now", current_time())
+                                ),
+                                object_create(
+                                    "now_time", to_epoch("@element"->now, "SECONDS"),
+                                    "log_time", to_epoch(
+                                        parse_timestamp(
+                                            "%Y %b %d %H:%M:%S",
+                                            format_string("%d %s", extract_time("@element"->now, "YEAR"), _x->datetime_3164)
+                                        ),
+                                        "SECONDS"
+                                    )
+                                )
+                            ),
+                            object_create(
+                                "log_time", "@element"->log_time,
+                                "diff", subtract(to_integer("@element"->now_time), to_integer("@element"->log_time))
+                            )
+                        ),
+                        timestamp_seconds(
+                            add(
+                                to_integer("@element"->log_time),
+                                if(
+                                    to_integer("@element"->diff) >= 50400 or to_integer("@element"->diff) <= -43200, // +14:00/-12:00
+                                    0,
+                                    if(
+                                        to_integer("@element"->diff) >= 0,
+                                        subtract(
+                                            add(to_integer("@element"->diff), 15),
+                                            subtract(
+                                                add(to_integer("@element"->diff), 15),
+                                                multiply(floor(divide(add(to_integer("@element"->diff), 15), 30)), 30)
+                                            )
+                                        ),
+                                        add(
+                                            subtract(to_integer("@element"->diff), 15),
+                                            subtract(
+                                                subtract(multiply(to_integer("@element"->diff), -1), 15),
+                                                multiply(floor(divide(subtract(multiply(to_integer("@element"->diff), -1), 15), 30)), 30)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    0
                 ),
                 // time params - RFC 5424
                 parse_timestamp(
