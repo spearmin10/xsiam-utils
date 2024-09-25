@@ -972,7 +972,27 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                                     "log_time", to_epoch(
                                         parse_timestamp(
                                             "%Y %b %d %H:%M:%S",
-                                            format_string("%d %s", extract_time("@element"->now, "YEAR"), _x->datetime_3164)
+                                            format_string("%d %s",
+                                                add(
+                                                    extract_time("@element"->now, "YEAR"),
+                                                    if(
+                                                        _x->mon = "Dec" and
+                                                        _x->day = "31" and
+                                                        extract_time("@element"->now, "MONTH") = 1 and
+                                                        extract_time("@element"->now, "DAY") = 1,
+                                                        -1,
+                                                        if(
+                                                            _x->mon = "Jan" and
+                                                            _x->day = "1" and
+                                                            extract_time("@element"->now, "MONTH") = 12 and
+                                                            extract_time("@element"->now, "DAY") = 31,
+                                                            1,
+                                                            0
+                                                        )
+                                                    )
+                                                ),
+                                                _x->datetime_3164
+                                            )
                                         ),
                                         "SECONDS"
                                     )
@@ -1137,7 +1157,27 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                                     "log_time", to_epoch(
                                         parse_timestamp(
                                             "%Y %b %d %H:%M:%S",
-                                            format_string("%d %s", extract_time("@element"->now, "YEAR"), _x->datetime_3164)
+                                            format_string("%d %s",
+                                                add(
+                                                    extract_time("@element"->now, "YEAR"),
+                                                    if(
+                                                        _x->mon = "Dec" and
+                                                        _x->day = "31" and
+                                                        extract_time("@element"->now, "MONTH") = 1 and
+                                                        extract_time("@element"->now, "DAY") = 1,
+                                                        -1,
+                                                        if(
+                                                            _x->mon = "Jan" and
+                                                            _x->day = "1" and
+                                                            extract_time("@element"->now, "MONTH") = 12 and
+                                                            extract_time("@element"->now, "DAY") = 31,
+                                                            1,
+                                                            0
+                                                        )
+                                                    )
+                                                ),
+                                                _x->datetime_3164
+                                            )
                                         ),
                                         "SECONDS"
                                     )
