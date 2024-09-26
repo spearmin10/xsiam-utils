@@ -72,12 +72,15 @@ configuration:
   required: false
   additionalinfo: Don't forwaqrd messages if they don't start with a syslog header
 - advanced: true
-  display: Remove syslog header
-  name: remove_syslog_header
-  defaultvalue: "false"
-  type: 8
+  display: New syslog header
+  name: new_syslog_header
+  type: 15
   required: false
-  additionalinfo: Remove syslog header before sending logs to HEC
+  options:
+  - RFC 3164
+  - RFC 5424
+  additionalinfo: Add or Replace syslog header of log messages before sending them
+    to HEC
 script:
   script: |
     import os
@@ -85,6 +88,7 @@ script:
     import re
     import time
     import socket
+    import datetime
     import traceback
     import threading
     from socketserver import BaseServer, BaseRequestHandler, ThreadingTCPServer
@@ -115,7 +119,7 @@ script:
             self.__insecure = argToBoolean(params.get('insecure', 'false'))
             self.__proxy = argToBoolean(params.get('proxy', 'false'))
             self.__ignore_non_syslog_message = argToBoolean(params.get('ignore_non_syslog_message', False))
-            self.__remove_syslog_header = argToBoolean(params.get('remove_syslog_header', False))
+            self.__new_syslog_header = params.get('new_syslog_header')
             self.__socket_timeout = DEFAULT_SOCKET_TIMEOUT
 
         @property
@@ -179,10 +183,10 @@ script:
             return self.__ignore_non_syslog_message
 
         @property
-        def remove_syslog_header(
+        def new_syslog_header(
             self
         ) -> bool:
-            return self.__remove_syslog_header
+            return self.__new_syslog_header
 
 
     class LogSender:
@@ -386,13 +390,15 @@ script:
             self.__hc_cef: LogSender | None = None
             self.__syslog_pattern = re.compile(
                 (
-                    r'^(?:<(?:\d{1,3})>)(?:(:?(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))'
-                    r' +(?:\d{1,2}) (?:\d{2}:\d{2}:\d{2})) (?:\S+)'
-                    r' (?:(?:[^:\[]{1,32})(?:\[(?:\d*)\])?: )?(?P<msg_3164>.*)'
+                    r'^(?:<(?P<pri>\d{1,3})>)(?:(:?(?P<datetime_3164>(?P<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))'
+                    r' +(?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})) (?P<host_3164>\S+)'
+                    r' (?:(?P<tag>[^:\[]{1,32})(?:\[(?P<pid>\d*)\])?: )?(?P<msg_3164>.*)'
                     r'|'
-                    r'(?:\d{1,2}) (?:-|(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})))'
-                    r' (?:-|(?:\S{1,255})) (?:-|(?:\S{1,48})) (?:-|(?:\S{1,128})) (?:-|(?:\S{1,32}))'
-                    r' (?:-|\[(?:(?:[^ =\]]+) (?:(?:[^\]\\]|\\.)*))\])(?: (?P<msg_5424>.*))?)'
+                    r'(?P<version>\d{1,2})'
+                    r' (?:-|(?P<datetime_5424>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})))'
+                    r' (?:-|(?P<host_5424>\S{1,255})) (?:-|(?P<app>\S{1,48})) (?:-|(?P<proc_id>\S{1,128}))'
+                    r' (?:-|(?P<msg_id>\S{1,32})) (?:-|(?P<structured_data>\[(?:[^ =\]]+)'
+                    r' (?:(?:[^\]\\]|\\.)*)\]))(?: (?P<msg_5424>.*))?)'
                 )
             )
             BaseRequestHandler.__init__(self, request, client_address, server)
@@ -408,23 +414,34 @@ script:
             syslog_message = None
             if (
                 self.__settings.ignore_non_syslog_message or
-                self.__settings.remove_syslog_header or
+                self.__settings.new_syslog_header in ('RFC 3164', 'RFC 5424') or
                 self.__hc_cef
             ):
-                if m := self.__syslog_pattern.match(log):
-                    syslog_message = m.group('msg_3164') or m.group('msg_5424') or ''
+                if syslog_params := self.__syslog_pattern.match(log):
+                    syslog_message = syslog_params.group('msg_3164') or syslog_params.group('msg_5424') or ''
                 elif self.__settings.ignore_non_syslog_message:
                     return
+
+            if self.__settings.new_syslog_header in ('RFC 3164', 'RFC 5424'):
+                t = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+                pri = syslog_params.group('pri') or '0'
+                host = syslog_params.group('host_3164') or syslog_params.group('host_5424') or socket.gethostname()
+                msg = log if syslog_message is None else syslog_message
+                if self.__settings.new_syslog_header == 'RFC 3164':
+                    log = f'<{pri}>{t.strftime("%b %d %H:%M:%S")} {host} {msg}'
+                else:
+                    app = syslog_params.group('tag') or syslog_params.group('app') or '-'
+                    proc_id = syslog_params.group('pid') or syslog_params.group('proc_id') or '-'
+                    msg_id = syslog_params.group('msg_id') or '-'
+                    structured_data = syslog_params.group('structured_data') or '-'
+                    log = f'<{pri}>1 {t.strftime("%Y-%m-%dT%H:%M:%SZ")} {host} {app} {proc_id} {msg_id} {structured_data} {msg}'
 
             if self.__hc_cef and (syslog_message or '').startswith('CEF:'):
                 self.__hc_cef.send_log(log)
                 return
 
             if self.__hc_raw:
-                if syslog_message is not None and self.__settings.remove_syslog_header:
-                    self.__hc_raw.send_log(syslog_message)
-                else:
-                    self.__hc_raw.send_log(log)
+                self.__hc_raw.send_log(log)
 
         def __flush(
             self
