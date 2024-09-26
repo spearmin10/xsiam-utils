@@ -185,7 +185,7 @@ script:
         @property
         def new_syslog_header(
             self
-        ) -> bool:
+        ) -> str | None:
             return self.__new_syslog_header
 
 
@@ -414,7 +414,7 @@ script:
             syslog_message = None
             if (
                 self.__settings.ignore_non_syslog_message or
-                self.__settings.new_syslog_header in ('RFC 3164', 'RFC 5424') or
+                (self.__settings.new_syslog_header or '') in ('RFC 3164', 'RFC 5424') or
                 self.__hc_cef
             ):
                 if syslog_params := self.__syslog_pattern.match(log):
@@ -422,7 +422,7 @@ script:
                 elif self.__settings.ignore_non_syslog_message:
                     return
 
-            if self.__settings.new_syslog_header in ('RFC 3164', 'RFC 5424'):
+            if (self.__settings.new_syslog_header or '') in ('RFC 3164', 'RFC 5424'):
                 t = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
                 pri = syslog_params.group('pri') or '0'
                 host = syslog_params.group('host_3164') or syslog_params.group('host_5424') or socket.gethostname()
