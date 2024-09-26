@@ -56,7 +56,7 @@ configuration:
   type: 4
   required: false
 - display: Enable compression in gzip to upload events to XSIAM HTTP Collector
-  name: compression
+  name: xsiam_hc_compression
   defaultvalue: "true"
   type: 8
   required: false
@@ -64,6 +64,20 @@ configuration:
   name: alertType
   type: 13
   required: false
+- advanced: true
+  display: Ignore non-syslog messages
+  name: ignore_non_syslog_message
+  defaultvalue: "false"
+  type: 8
+  required: false
+  additionalinfo: Don't forwaqrd messages if they don't start with a syslog header
+- advanced: true
+  display: Remove syslog header
+  name: remove_syslog_header
+  defaultvalue: "false"
+  type: 8
+  required: false
+  additionalinfo: Remove syslog header before sending logs to HEC
 script:
   script: |
     import os
@@ -97,9 +111,11 @@ script:
             self.__xsiam_api_url = params.get('xsiam_api_url')
             self.__xsiam_hc_api_key_raw = params.get('xsiam_hc_api_key_raw') or None
             self.__xsiam_hc_api_key_cef = params.get('xsiam_hc_api_key_cef') or None
-            self.__compression = argToBoolean(params.get('compression', True))
+            self.__xsiam_hc_compression = argToBoolean(params.get('xsiam_hc_compression', True))
             self.__insecure = argToBoolean(params.get('insecure', 'false'))
             self.__proxy = argToBoolean(params.get('proxy', 'false'))
+            self.__ignore_non_syslog_message = argToBoolean(params.get('ignore_non_syslog_message', False))
+            self.__remove_syslog_header = argToBoolean(params.get('remove_syslog_header', False))
             self.__socket_timeout = DEFAULT_SOCKET_TIMEOUT
 
         @property
@@ -121,10 +137,10 @@ script:
             return self.__xsiam_hc_api_key_cef
 
         @property
-        def compression(
+        def xsiam_hc_compression(
             self
         ) -> bool:
-            return self.__compression
+            return self.__xsiam_hc_compression
 
         @property
         def host_port(
@@ -155,6 +171,18 @@ script:
             self
         ) -> int:
             return self.__socket_timeout
+
+        @property
+        def ignore_non_syslog_message(
+            self
+        ) -> bool:
+            return self.__ignore_non_syslog_message
+
+        @property
+        def remove_syslog_header(
+            self
+        ) -> bool:
+            return self.__remove_syslog_header
 
 
     class LogSender:
@@ -377,15 +405,26 @@ script:
 
             :param log: An log message
             """
-            if self.__hc_cef:
+            syslog_message = None
+            if (
+                self.__settings.ignore_non_syslog_message or
+                self.__settings.remove_syslog_header or
+                self.__hc_cef
+            ):
                 if m := self.__syslog_pattern.match(log):
-                    msg = m.group('msg_3164') or m.group('msg_5424') or ''
-                    if msg.startswith('CEF:'):
-                        self.__hc_cef.send_log(log)
-                        return
+                    syslog_message = m.group('msg_3164') or m.group('msg_5424') or ''
+                elif self.__settings.ignore_non_syslog_message:
+                    return
+
+            if self.__hc_cef and (syslog_message or '').startswith('CEF:'):
+                self.__hc_cef.send_log(log)
+                return
 
             if self.__hc_raw:
-                self.__hc_raw.send_log(log)
+                if syslog_message is not None and self.__settings.remove_syslog_header:
+                    self.__hc_raw.send_log(syslog_message)
+                else:
+                    self.__hc_raw.send_log(log)
 
         def __flush(
             self
@@ -409,7 +448,7 @@ script:
                         self.__settings.is_proxy
                     ),
                     self.__settings.xsiam_hc_api_key_raw,
-                    self.__settings.compression
+                    self.__settings.xsiam_hc_compression
                 )
 
             if self.__settings.xsiam_hc_api_key_cef:
@@ -420,7 +459,7 @@ script:
                         self.__settings.is_proxy
                     ),
                     self.__settings.xsiam_hc_api_key_cef,
-                    self.__settings.compression
+                    self.__settings.xsiam_hc_compression
                 )
 
         def finish(
@@ -530,7 +569,7 @@ script:
                     settings.is_proxy
                 ),
                 settings.xsiam_hc_api_key_raw,
-                settings.compression
+                settings.xsiam_hc_compression
             )
             client.test()
 
@@ -542,7 +581,7 @@ script:
                     settings.is_proxy
                 ),
                 settings.xsiam_hc_api_key_cef,
-                settings.compression
+                settings.xsiam_hc_compression
             )
             client.test()
 
