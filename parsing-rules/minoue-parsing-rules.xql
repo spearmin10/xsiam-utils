@@ -1003,12 +1003,12 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                                 "diff", subtract(to_integer("@element"->now_time), to_integer("@element"->log_time))
                             )
                         ),
-                        timestamp_seconds(
-                            add(
-                                to_integer("@element"->log_time),
-                                if(
-                                    to_integer("@element"->diff) >= 50400 or to_integer("@element"->diff) <= -43200, // +14:00/-12:00
-                                    0,
+                        if(
+                            to_integer("@element"->diff) >= 50400 or to_integer("@element"->diff) <= -43200, // +14:00/-12:00
+                            null,
+                            timestamp_seconds(
+                                add(
+                                    to_integer("@element"->log_time),
                                     if(
                                         to_integer("@element"->diff) >= 0,
                                         subtract(
