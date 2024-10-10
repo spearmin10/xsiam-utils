@@ -26,6 +26,7 @@ configuration:
   name: xsiam_api_url
   type: 0
   required: true
+  additionalinfo: e.g. https://api-xsiam.xxx.jp.paloaltonetworks.com/
 - section: Connect
   display: XSIAM HTTP Collector API Key Type
   name: xsiam_hc_api_key_type
