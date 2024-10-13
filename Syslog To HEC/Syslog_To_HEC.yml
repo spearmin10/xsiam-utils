@@ -324,10 +324,11 @@ script:
         ) -> None:
             """ Flush the send buffer at intervals
             """
+            timeout = DEFAULT_LOG_FLUSH_INTERVAL
             with self.__lock:
                 while not self.__cond.wait_for(
                     lambda: self.__done,
-                    timeout=DEFAULT_LOG_FLUSH_INTERVAL
+                    timeout=timeout
                 ):
                     self.__sender.flush()
 
