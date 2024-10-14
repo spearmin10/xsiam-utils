@@ -869,6 +869,8 @@ script:
                 'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 'offset': search_offset,
                 'status': 'Starting to query logs',
+                'last_entries': int(last_run.get('last_entries') or 0),
+                'total_sent': int(last_run.get('total_sent') or 0),
                 'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
             save_integration_context({'last_run': last_run}, xversion)
@@ -925,6 +927,7 @@ script:
                     'latest_time': None,
                     'offset': 0,
                     'last_entries': len(ents),
+                    'total_sent': int(last_run.get('total_sent') or 0) + len(ents),
                     'status': 'Finished forwarding',
                     'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 }
@@ -938,6 +941,7 @@ script:
                     'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                     'offset': search_offset + self.__settings.fetch_limit,
                     'last_entries': len(ents),
+                    'total_sent': int(last_run.get('total_sent') or 0) + len(ents),
                     'status': 'Finished forwarding',
                     'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 }
@@ -969,6 +973,8 @@ script:
                 'earliest_time': earliest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                 'offset': search_offset,
+                'last_entries': int(last_run.get('last_entries') or 0),
+                'total_sent': int(last_run.get('total_sent') or 0),
                 'status': 'Starting to export logs',
                 'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
@@ -1006,6 +1012,7 @@ script:
                             'latest_time': latest_time.strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                             'offset': search_offset,
                             'last_entries': search_offset - start_offset,
+                            'total_sent': int(last_run.get('total_sent') or 0) + search_offset - start_offset,
                             'status': 'Forwarding logs',
                             'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
                         }
@@ -1020,6 +1027,7 @@ script:
                 'latest_time': None,
                 'offset': 0,
                 'last_entries': search_offset - start_offset,
+                'total_sent': int(last_run.get('total_sent') or 0) + search_offset - start_offset,
                 'status': 'Finished forwarding',
                 'time': utc_now().strftime(SplunkClient.SPLUNK_TIME_FORMAT),
             }
