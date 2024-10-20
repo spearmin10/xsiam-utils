@@ -314,7 +314,7 @@ script:
             self.__done = False
             self.__flusher = threading.Thread(
                 target=self.__periodic_flush,
-                args=(),
+                args=(self,),
                 daemon=False
             )
             self.__flusher.start()
