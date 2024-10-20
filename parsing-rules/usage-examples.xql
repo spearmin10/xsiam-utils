@@ -147,11 +147,11 @@ alter __log = _raw_log
 | alter _time = if(
     x->epoch_time not in (null, ""),
     to_timestamp(
-        add(multiply(to_integer(x->epoch_time), 1000), to_integer(x->epoch_time_f)), "MILLIS"
+        add(multiply(to_integer(x->epoch_time), 1000), to_integer(x->epoch_time_f), "MILLIS")
     ),
     parse_timestamp(
         "%Y %b %d %H:%M:%S",
-        format_string(""%s %s %s %s:%s:%s"", x->year, x->mon, x->day, x->hour, x->minute, x->second)
+        format_string("%s %s %s %s:%s:%s", x->year, x->mon, x->day, x->hour, x->minute, x->second)
     )
 )
 
