@@ -143,11 +143,11 @@ alter __log = _raw_log
     )
 )
 | filter x->client_ip not in (null, "")
-
 | alter _time = if(
     x->epoch_time not in (null, ""),
     to_timestamp(
-        add(multiply(to_integer(x->epoch_time), 1000), to_integer(x->epoch_time_f), "MILLIS")
+        add(multiply(to_integer(x->epoch_time), 1000), to_integer(x->epoch_time_f)),
+        "MILLIS"
     ),
     parse_timestamp(
         "%Y %b %d %H:%M:%S",
