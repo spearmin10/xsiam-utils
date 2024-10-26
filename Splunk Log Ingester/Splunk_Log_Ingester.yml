@@ -394,6 +394,51 @@ script:
             return self.__chunk_mode
 
 
+    class RateLimiter:
+        """ Rate Limiter
+        """
+        def __init__(
+            self,
+            rate_limit: float | None = None
+        ) -> None:
+            """ Initialize the instance
+
+            :param rate_limit: The rate limit in Mbps.
+            """
+            self.__rate_limit = max(rate_limit, 0) if rate_limit else rate_limit
+            self.__last_rating_time = 0
+            self.__next_rating_time = 0
+            self.__total_bytes_in_window = 0
+
+        def wait(
+            self,
+        ) -> None:
+            """ Wait until the next transmission available in the bandwidth
+            """
+            if self.__rate_limit:
+                now = datetime.datetime.utcnow().timestamp()
+                if now >= self.__next_rating_time:
+                    # bandwidth control
+                    t = ((self.__total_bytes_in_window * 8) / (self.__rate_limit * 1024 * 1024))
+                    t = t - (now - self.__last_rating_time)
+                    if t >= 0:
+                        time.sleep(t)
+
+                    self.__last_rating_time = now
+                    self.__next_rating_time = now + 60
+                    self.__total_bytes_in_window = 0
+
+        def transmit(
+            self,
+            size: int
+        ) -> None:
+            """ Report the size in bytes transmitted to limit the bandwidth
+
+            :param size: The size in bytes transmitted
+            """
+            self.__total_bytes_in_window += size
+
+
     class SplunkClient:
         """ Splunk Client
         """
@@ -586,10 +631,9 @@ script:
                 """
                 self.__settings = settings
                 self.__client = client
-                self.__last_upload_time = None
                 self.__buffer = io.BytesIO()
                 self.__buffered_nlogs = 0
-                self.__total_upload_bytes = 0
+                self.__rate_limiter = RateLimiter(self.__settings.upload_rate_limit)
                 if settings.compression:
                     self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
                     self.__content_type = 'application/gzip'
@@ -633,12 +677,7 @@ script:
                     self.__log_writer.close()
 
                 # bandwidth control
-                now = datetime.datetime.now()
-                if self.__last_upload_time is not None and self.__settings.upload_rate_limit:
-                    t = ((self.__total_upload_bytes * 8) / (self.__settings.upload_rate_limit * 1024 * 1024))
-                    t = t - (now.timestamp() - self.__last_upload_time.timestamp())
-                    if t > 0:
-                        time.sleep(t)
+                self.__rate_limiter.wait()
 
                 # Flush the cache
                 data = self.__buffer.getvalue()
@@ -651,8 +690,7 @@ script:
                     },
                     data=data
                 )
-                self.__last_upload_time = now
-                self.__total_upload_bytes += len(data)
+                self.__rate_limiter.transmit(len(data))
                 nlogs = self.__buffered_nlogs
 
                 # Re-initialize the cache
