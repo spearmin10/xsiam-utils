@@ -410,33 +410,27 @@ script:
             self.__next_rating_time = 0
             self.__total_bytes_in_window = 0
 
-        def wait(
-            self,
-        ) -> None:
-            """ Wait until the next transmission available in the bandwidth
-            """
-            if self.__rate_limit:
-                now = datetime.datetime.utcnow().timestamp()
-                if now >= self.__next_rating_time:
-                    # bandwidth control
-                    t = ((self.__total_bytes_in_window * 8) / (self.__rate_limit * 1024 * 1024))
-                    t = t - (now - self.__last_rating_time)
-                    if t >= 0:
-                        time.sleep(t)
-
-                    self.__last_rating_time = now
-                    self.__next_rating_time = now + 60
-                    self.__total_bytes_in_window = 0
-
         def transmit(
             self,
             size: int
         ) -> None:
-            """ Report the size in bytes transmitted to limit the bandwidth
+            """ Wait until the data transmitted in the bandwidth
 
             :param size: The size in bytes transmitted
             """
             self.__total_bytes_in_window += size
+            if self.__rate_limit:
+                now = datetime.datetime.utcnow().timestamp()
+                if now >= self.__next_rating_time:
+                    if self.__last_rating_time:
+                        t = ((self.__total_bytes_in_window * 8) / (self.__rate_limit * 1024 * 1024))
+                        t = t - (now - self.__last_rating_time)
+                        if t >= 0:
+                            time.sleep(t)
+                        self.__total_bytes_in_window = 0
+
+                    self.__last_rating_time = now
+                    self.__next_rating_time = now + 60
 
 
     class SplunkClient:
@@ -675,9 +669,6 @@ script:
 
                 if self.__settings.compression:
                     self.__log_writer.close()
-
-                # bandwidth control
-                self.__rate_limiter.wait()
 
                 # Flush the cache
                 data = self.__buffer.getvalue()
