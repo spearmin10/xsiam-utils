@@ -150,8 +150,8 @@ alter __log = _raw_log
         "MILLIS"
     ),
     parse_timestamp(
-        "%Y %b %d %H:%M:%S",
-        format_string("%s %s %s %s:%s:%s", x->year, x->mon, x->day, x->hour, x->minute, x->second)
+        "%Y %b %d %H:%M:%S%Z",
+        format_string("%s %s %s %s:%s:%s%s", x->year, x->mon, x->day, x->hour, x->minute, x->second, x->tz)
     )
 )
 
