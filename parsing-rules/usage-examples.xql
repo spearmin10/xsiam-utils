@@ -139,7 +139,7 @@ alter __log = _raw_log
     // logformat=squid
     regexcapture(
         _syslog->message,
-        "^\s*(?P<epoch_time>\d+)\.(?P<epoch_time_f>\d{1,3})\s+(?P<resp_time>\d+)\s+(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<req_status>\w+)/(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+(?P<user_name>\S+)\s+(?P<hierarchy_status>\w+)/(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<content_type>\w+/[\w-]+)\s*$"
+        "^\s*(?P<epoch_time>\d+)\.(?P<epoch_time_f>\d{1,3})\s+(?P<resp_time>\d+)\s+(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<req_status>\w+)/(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+(?P<user_name>\S+)\s+(?P<hierarchy_status>\w+)/(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<content_type>\w+/[\w-]+|-)\s*$"
     )
 )
 | filter x->client_ip not in (null, "")
