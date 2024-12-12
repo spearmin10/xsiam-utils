@@ -1,6 +1,6 @@
 /***
  * This expression transforms a space separated key=value text to a json object.
- * This is compatible with the `minoue_nqsskv2kvobj` rule.
+ * This is compatible with the `minoue_xnqsskv2kvobj` rule.
  *
  * The standard pattern is:
  *    key=value[ key=value]*
