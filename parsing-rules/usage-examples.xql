@@ -33,9 +33,7 @@ alter __log = _raw_log
 [INGEST:vendor="syslog", product="syslog", target_dataset="syslog_csv", no_hit=drop]
 alter __log = _raw_log
 | call minoue_syslog
-| filter _syslog != null
-
-| alter __text = trim(_syslog->message) 
+| alter __text = trim(if(_syslog = null, _raw_log, _syslog->message))
 | filter __text ~= $PATTERN_CSV
 | call minoue_csv2array
 | alter params = to_json_string(_columns)
@@ -61,14 +59,14 @@ alter __log = _raw_log
 [INGEST:vendor="sendmail", product="sendmail", target_dataset="sendmail_sendmail", no_hit=drop]
 alter __log = _raw_log
 | call minoue_syslog
-| filter _syslog != null
+| alter __log = if (_syslog = null, _raw_log, _syslog->message)
 
-| alter x = regexcapture(_syslog->message, "^\s*(?P<queue_id>\w+):\s+(?P<params>.+)$")
+| alter x = regexcapture(__log, "^\s*(?P<queue_id>\w+):\s+(?P<params>.+)$")
 | filter x->queue_id not in (null, "")
 | alter queue_id = x->queue_id
 
 | alter __kvtext = x->params
-| call minoue_nqcskv2kvobj
+| call minoue_xnqcskv2kvobj
 | alter params = _raw_kvobj->{},
     from = _raw_kvobj->from,
     delay = _raw_kvobj->delay,
@@ -117,11 +115,11 @@ alter __log = _raw_log
 [INGEST:vendor="squid", product="squid", target_dataset="squid_squid", no_hit=drop]
 alter __log = _raw_log
 | call minoue_syslog
-| filter _syslog != null
+| alter __log = if (_syslog = null, _raw_log, _syslog->message)
 
 // logformat=combined
 | alter x = regexcapture(
-    _syslog->message,
+    __log,
     "^\s*(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+\"(?P<referer>[^\"]*)\"\s+\"(?P<user_agent>[^\"]*)\"\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
 )
 | alter x = if(
@@ -129,7 +127,7 @@ alter __log = _raw_log
     x,
     // logformat=common
     regexcapture(
-        _syslog->message,
+        __log,
         "^\s*(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+-\s+(?P<user_name>\S+)\s+\[(?P<day>\d{1,2})/(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/(?P<year>\d{4}):(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<tz>[+-]\d{4})]\s+\"(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+HTTP/(?P<req_version>\d+\.\d+)\"\s+(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_status>\w+):(?P<hierarchy_status>\w+)\s*$"
     )
 )
@@ -138,7 +136,7 @@ alter __log = _raw_log
     x,
     // logformat=squid
     regexcapture(
-        _syslog->message,
+        __log,
         "^\s*(?P<epoch_time>\d+)\.(?P<epoch_time_f>\d{1,3})\s+(?P<resp_time>\d+)\s+(?P<client_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<req_status>\w+)/(?P<resp_status>\d{1,3})\s+(?P<resp_size>\d+)\s+(?P<req_method>\w+)\s+(?P<req_url>\S+)\s+(?P<user_name>\S+)\s+(?P<hierarchy_status>\w+)/(?P<server_ip>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+(?P<content_type>\w+/[\w-]+|-)\s*$"
     )
 )
@@ -184,10 +182,10 @@ alter __log = _raw_log
 [INGEST:vendor="checkpoint", product="vpn1fw1", target_dataset="checkpoint_vpn1fw1", no_hit=drop]
 alter __log = _raw_log
 | call minoue_syslog
-| filter _syslog != null
+| alter __log = if (_syslog = null, _raw_log, _syslog->message)
 
 | alter x = regexcapture(
-    _syslog->message,
+    __log,
     "^\s*(?P<day>\d{1,2})(?P<mon>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))(?P<year>\d{4})\s+(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<action>\w+)\s+(?P<origin>(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\s+>(?P<ifname>\w+)\s+(?P<params>.*)$"
 )
 | alter __ent_separator = ";"
