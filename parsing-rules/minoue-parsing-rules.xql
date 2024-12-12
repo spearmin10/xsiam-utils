@@ -335,7 +335,7 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_nqskv2kvobj]
+[RULE: minoue_xnqskv2kvobj]
 /***
  * This rule transforms a separated keyed-value text to a json object.
  * Any of a charactor can be usable except for backslash and double quotation as the separator.
@@ -482,7 +482,115 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_nqcskv2kvobj]
+[RULE: minoue_nqsskv2kvobj]
+/***
+ * This rule transforms a space separated key=value text to a json object.
+ * The standard pattern is:
+ *    key=value[ key=value]*
+ *
+ *  e.g.
+ *    key1=val1 key2=val2 key3=val3
+ *
+ * ### Supported Syntax/Formats
+ *  - A backslash charator escapes a following charactor.
+ *  - 'value' can contain spaces.
+ *  - 'value' starts at immediately after a '=' sign to separate key and value.
+ *  - all spaces but the last space are treated as trailing spaces in the prior value in the key.
+ *  - 'key' can contain any spaces only when it's escaped.
+ *  - Trailing spaces between a key and a '=' sign are ignored.
+ *  - The following escape sequences are treated as control codes.
+ *      * \b : backspace
+ *      * \f : form feed
+ *      * \n : line feed
+ *      * \r : carriage return
+ *      * \t : tab
+ *
+ *   e.g.
+ *    - key1=val1 key2=val2
+ *    - key1=val\=1 key2=val\=2
+ *    - key1=v a l 1 key2=v a l 2
+ *    - key1=val\=1 key2=val\=2
+ *    - key1= key2= key3=
+ *
+ * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
+ * It's responsible for you to ensure the text in the correct format before giving it,
+ * however you wouldn't be able to check the pattern only with RE2.
+ * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ *
+ * :param __kvtext: A space separated key=value text
+ * :return _raw_kvobj: JSON object text
+ *
+ * @auther Masahiko Inoue
+ * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
+ ***/
+alter _raw_kvobj = format_string(
+    "{%s}",
+    arraystring(
+        arraymap(
+            regextract(
+                replace(to_string(coalesce(__kvtext, "")), "=", "=="),
+                "=(?:\\==|\\[^=]|[^=\\])+?=|^(?:\\==|\\[^=]|[^=\\])*?=|=(?:\\==|\\[^=]|[^=\\])*?$"
+            ),
+            arrayindex(
+                arraymap(
+                    arraymap(
+                        arraycreate(
+                            regexcapture(to_string("@element"), "^(?:=(?P<vkv>(?:\\==|\\[^=]|[^\\=])*?)\s?(?P<vkk>(?:\\==|\\[^=]|[^\\=\s])+?)\s*=|\s*(?P<fk>(?:\\==|\\[^=]|[^\\=])+?)\s*=|=(?P<lv>(?:\\==|\\[^=]|[^\\=])*?))$")
+                        ),
+                        object_create(
+                            "x",
+                            arraymap(
+                                arraymap(
+                                    if(
+                                        "@element"->vkk != "",
+                                        arraycreate("@element"->vkv, "@element"->vkk),
+                                        if("@element"->fk != "", arraycreate("@element"->fk), arraycreate("@element"->lv))
+                                    ),
+                                    replace("@element", "==", "=")
+                                ),
+                                // Encode to JSON string
+                                replace(replace(replace(replace(replace(replace(replace(replace(
+                                    arraystring(
+                                        arraymap(
+                                            split("@element", """\\\\"""),
+                                            replace(replace(replace(replace(replace(replace("@element",
+                                                "\n", convert_from_base_64("Cg==")),
+                                                "\r", convert_from_base_64("DQ==")),
+                                                "\t", convert_from_base_64("CQ==")),
+                                                "\b", convert_from_base_64("CA==")),
+                                                "\f", convert_from_base_64("DA==")),
+                                                """\\""", ""
+                                            )
+                                        ),
+                                        """\\"""
+                                    ),
+                                    convert_from_base_64("Cg=="), "\n"),
+                                    convert_from_base_64("DQ=="), "\r"),
+                                    convert_from_base_64("CQ=="), "\t"),
+                                    convert_from_base_64("CA=="), "\b"),
+                                    convert_from_base_64("DA=="), "\f"),
+                                    """\\""", """\\\\"""),
+                                    """\"""", """\\\""""),
+                                    "/", """\\/"""
+                                )
+                            )
+                        )
+                    ),
+                    if(
+                        array_length("@element"->x[]) = 2,
+                        format_string("\"%s\",\"%s\"", "@element"->x[0], "@element"->x[1]),
+                        format_string("\"%s\"", "@element"->x[0])
+                    )
+                ),
+                0
+            )
+        ),
+        ":"
+    )
+)
+;
+
+[RULE: minoue_xnqcskv2kvobj]
 /***
  * This rule transforms a comma separated key=value text to a json object.
  * The standard pattern is:
@@ -603,7 +711,7 @@ alter _raw_kvobj = format_string(
 )
 ;
 
-[RULE: minoue_nqsskv2kvobj]
+[RULE: minoue_xnqsskv2kvobj]
 /***
  * This rule transforms a space separated key=value text to a json object.
  * The standard pattern is:
@@ -799,7 +907,7 @@ alter _columns = arraymap(
 )
 ;
 
-[RULE: minoue_ssv2array]
+[RULE: minoue_xssv2array]
 /***
  * This rule transforms a space separated value to an array.
  * The standard pattern is:
