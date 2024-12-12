@@ -4008,7 +4008,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             pass
 
 
@@ -4032,7 +4032,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             if self.__format_type == 'traffic':
                 exts = assign_params(
                     act={
@@ -4046,7 +4046,7 @@ script:
                     app=props.get('app_protocol'),
                     proto=(props.get('ip_protocol') or '').upper()
                 )
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4083,7 +4083,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             if self.__format_type == 'traffic':
                 proto = {
                     'udp': 17,
@@ -4147,7 +4147,7 @@ script:
                 )
                 exts['in'] = in_bytes
 
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4190,7 +4190,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             utcnow, now = self.__settings.log_now2()
             local_TZ = now.strftime('%z')
             local_tz = f'{local_TZ[:3]}:{local_TZ[3:]}'
@@ -4328,7 +4328,7 @@ script:
                     'vsys_name': '',
                     'xff_ip': '',
                 }
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4431,7 +4431,7 @@ script:
                     'xff': None,
                     'xff_ip': None
                 })
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4507,7 +4507,7 @@ script:
                         'xff_ip': '',
                     }.items()
                 }
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4547,7 +4547,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             utcnow, now = self.__settings.log_now2()
             if self.__log_type == 'web':
                 app = props.get('app_protocol')
@@ -4644,7 +4644,7 @@ script:
                     'unscannabletype': 'None',
                     'dlpdict': 'None',
                 }
-                return LogEncoder(
+                yield LogEncoder(
                     settings=self.__settings,
                     preferred_log_format='cef',
                     preferred_syslog_header=self.__preferred_syslog_header,
@@ -4683,7 +4683,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             if self.__format_type == 'squid':
                 template = '%ts.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %[un %Sh/%<a %mt'
             elif self.__format_type == 'common':
@@ -4742,7 +4742,7 @@ script:
             regex = '|'.join([re.escape(x) for x in m.keys()])
             log = re.sub(regex, lambda x: str(m[x[0]]), template)
 
-            return LogEncoder(
+            yield LogEncoder(
                 settings=self.__settings,
                 preferred_log_format='raw',
                 preferred_syslog_header=self.__preferred_syslog_header,
@@ -4779,7 +4779,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             if self.__format_type == 'common':
                 template = '%h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"'
             elif self.__format_type == 'combined':
@@ -4802,7 +4802,7 @@ script:
             regex = '|'.join([re.escape(x) for x in m.keys()])
             log = re.sub(regex, lambda x: str(m[x[0]]), template)
 
-            return LogEncoder(
+            yield LogEncoder(
                 settings=self.__settings,
                 preferred_log_format='raw',
                 preferred_syslog_header=self.__preferred_syslog_header,
@@ -4836,7 +4836,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             server_ip = props.get('dst_ip')
             client_ip = props.get('src_ip')
             client_port = props.get('src_port') or random.randint(10000, 65534)
@@ -4849,7 +4849,7 @@ script:
                 f'{log_time} queries: info: client @0x{client_id} {client_ip}#{client_port}'
                 f' ({dns_name}): query: {dns_name} {dns_class} {dns_type} +E(0) ({server_ip})'
             )
-            return LogEncoder(
+            yield LogEncoder(
                 settings=self.__settings,
                 preferred_log_format='raw',
                 preferred_syslog_header=self.__preferred_syslog_header,
@@ -4889,7 +4889,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             action = props.get('action')
             exts = {
                 'assign': {
@@ -4944,7 +4944,7 @@ script:
                 # Metadata for filebeat collections
                 exts['fb_host'] = fb_host
 
-            return LogEncoder(
+            yield LogEncoder(
                 settings=self.__settings,
                 preferred_log_format='cef',
                 preferred_syslog_header=self.__preferred_syslog_header,
@@ -4982,7 +4982,7 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             utcnow = datetime.datetime.now(datetime.UTC)
 
             if self.__log_type == 'ad':
@@ -5128,7 +5128,7 @@ script:
                             params['event_data'].update(event_data)
                         params.update(event)
 
-                        return LogEncoder(
+                        yield LogEncoder(
                             settings=self.__settings,
                             preferred_log_format='microsoft-windows-json',
                             preferred_syslog_header=(
@@ -5168,32 +5168,35 @@ script:
         def generate(
             self,
             props: dict[str, Any]
-        ) -> LogEncoder | None:
+        ) -> Iterator[LogEncoder]:
             log_format = (props.get('log_format') or 'cef').lower()
-            log_params = props.get('log_params') or {}
             if log_format not in ('raw', 'cef', 'json'):
                 raise DemistoException(f'Invalid log format - {log_format}')
 
-            if log_format == 'raw':
-                log_params = props.get('log_params') or ''
-                if not isinstance(log_params, str):
-                    log_params = json.dumps(log_params)
-            else:
-                log_params = props.get('log_params') or {}
-
-            return LogEncoder(
-                settings=self.__settings,
-                preferred_log_format=log_format,
-                preferred_syslog_header=self.__preferred_syslog_header,
-                cef_version=props.get('cef_version') or '0',
-                cef_vendor=props.get('cef_vendor') or 'unknown',
-                cef_product=props.get('cef_product') or 'unknown',
-                cef_device_version=props.get('cef_device_version') or '1.0',
-                cef_device_event_class_id=props.get('cef_device_event_class_id') or 'unknown',
-                cef_name=props.get('cef_name') or 'unknown',
-                cef_severity=props.get('cef_severity') or '0',
-                log_params=log_params
+            log_params_list = props.get('log_params') or (
+                '' if log_format == 'raw' else {}
             )
+            if not isinstance(log_params_list, list):
+                log_params_list = [log_params_list]
+
+            for log_params in log_params_list:
+                if log_format == 'raw':
+                    if not isinstance(log_params, str):
+                        log_params = json.dumps(log_params)
+
+                yield LogEncoder(
+                    settings=self.__settings,
+                    preferred_log_format=log_format,
+                    preferred_syslog_header=self.__preferred_syslog_header,
+                    cef_version=props.get('cef_version') or '0',
+                    cef_vendor=props.get('cef_vendor') or 'unknown',
+                    cef_product=props.get('cef_product') or 'unknown',
+                    cef_device_version=props.get('cef_device_version') or '1.0',
+                    cef_device_event_class_id=props.get('cef_device_event_class_id') or 'unknown',
+                    cef_name=props.get('cef_name') or 'unknown',
+                    cef_severity=props.get('cef_severity') or '0',
+                    log_params=log_params
+                )
 
 
     class LogPropertiesGenerator:
@@ -7984,17 +7987,20 @@ script:
             :param props: Source properties to generate logs.
             """
             for generator in generators:
-                try:
-                    log_encoder = generator.generate(props)
-                except Exception as e:
-                    demisto.error(f'Failed to generate log parameters - {e}')
-                    IntegrationContextUtils.update_status({
-                        'message': f'{e}\n\n{traceback.format_exc()}',
-                        'status': IntegrationContextUtils.Status.ERROR,
-                    }, sync=True)
-                    continue
+                log_encoder_iter = generator.generate(props)
+                while True:
+                    try:
+                        log_encoder = next(log_encoder_iter)
+                    except StopIteration:
+                        break
+                    except Exception as e:
+                        demisto.error(f'Failed to generate log parameters - {e}')
+                        IntegrationContextUtils.update_status({
+                            'message': f'{e}\n\n{traceback.format_exc()}',
+                            'status': IntegrationContextUtils.Status.ERROR,
+                        }, sync=True)
+                        break
 
-                if log_encoder:
                     await self.__log_sender.send_log(log_encoder)
 
         async def __process_dns_query(
@@ -8897,6 +8903,124 @@ script:
         return fileResult(res['name'], json.dumps(out, indent=2))
 
 
+    def build_scenario_from_logs_command(
+        args: dict[str, Any],
+        settings: Settings,
+    ) -> dict[str, Any]:
+        """ Build a scenario template from a log file.
+
+        :param args: The argument parameters
+        :param settings: The instance settings
+        """
+        def __is_zip_file(
+            file_path: str,
+        ) -> bool:
+            with open(file_path, 'rb') as f:
+                return all(c == f.read(1) for c in b'PK\x03\x04')
+
+        def __build_scenario(
+            log_format: str,
+            log_reader: io.RawIOBase,
+            individual: bool,
+            var_datetime: bool,
+            cef_vendor: str,
+            cef_product: str,
+        ) -> dict[str, Any]:
+            def __enum_log_params(
+                log_format: str,
+                log_reader: io.RawIOBase,
+                individual: bool,
+                var_datetime: bool,
+            ) -> Iterator[
+                str |
+                dict[str, Any] |
+                list[str] |
+                list[dict[str, Any]]
+            ]:
+                log_params = log_reader.read().splitlines()
+                if log_format == 'json':
+                    log_params = [json.loads(x) for x in log_params]
+
+                if var_datetime:
+                    log_params = replace_datetime_with_utcnowvar(log_params)
+
+                if individual:
+                    for x in log_params:
+                        yield x
+                else:
+                    yield log_params
+
+            return {
+                'sources': [
+                    {
+                        'operation': 'log',
+                        'type': 'custom',
+                        'cef_version': '0',
+                        'cef_vendor': cef_vendor,
+                        'cef_product': cef_product,
+                        'log_format': log_format,
+                        'log_params': log_params
+                    } for log_params in __enum_log_params(
+                        log_format=log_format,
+                        log_reader=log_reader,
+                        individual=individual,
+                        var_datetime=var_datetime,
+                    )
+                ]
+            }
+
+        entry_id = args.get('entry_id')
+        log_format = args.get('log_format') or 'raw'
+        var_datetime = argToBoolean(args.get('var_datetime', 'true'))
+        individual = argToBoolean(args.get('individual', 'true'))
+        cef_vendor = args.get('cef_vendor') or 'unknown'
+        cef_product = args.get('cef_product') or 'unknown'
+        save_as = args.get('save_as')
+
+        res = demisto.getFilePath(entry_id)
+        if zipfile.is_zipfile(res['path']):
+            with zipfile.ZipFile(res['path'], 'r') as zfin:
+                zout = io.BytesIO()
+                with zipfile.ZipFile(zout, 'w', compression=zipfile.ZIP_DEFLATED) as zfout:
+                    for zname in zfin.namelist():
+                        with zfin.open(zname) as log_reader:
+                            scenario = __build_scenario(
+                                log_format=log_format,
+                                log_reader=log_reader,
+                                individual=individual,
+                                var_datetime=var_datetime,
+                                cef_vendor=cef_vendor,
+                                cef_product=cef_product,
+                            )
+                            name, _ = os.path.splitext(zname)
+                            zfout.writestr(
+                                f'{name}.json',
+                                json.dumps(scenario, indent=2)
+                            )
+                out = zout.getvalue()
+
+            if not save_as:
+                name, _ = os.path.splitext(res['name'])
+                save_as = f'{name}.zip'
+        else:
+            with open(res['path'], 'r') as log_reader:
+                scenario = __build_scenario(
+                    log_format=log_format,
+                    log_reader=log_reader,
+                    individual=individual,
+                    var_datetime=var_datetime,
+                    cef_vendor=cef_vendor,
+                    cef_product=cef_product,
+                )
+                out = json.dumps(scenario, indent=2)
+
+            if not save_as:
+                name, _ = os.path.splitext(res['name'])
+                save_as = f'{name}.json'
+
+        return fileResult(save_as, out)
+
+
     async def run_long_running(
         settings: Settings,
     ) -> None:
@@ -8990,6 +9114,7 @@ script:
             'slp-get-default-scenario': get_default_scenario_command,
             'slp-reset-status': reset_status_command,
             'slp-var-datetime': var_datetime_command,
+            'slp-build-scenario-from-logs': build_scenario_from_logs_command,
         }
         try:
             settings = Settings(demisto.params())
@@ -9035,6 +9160,7 @@ script:
     - name: entry_id
       required: true
       description: The entry ID of a file
+    description: Replace date time values with date time variables
   - name: slp-get-last-error
     arguments:
     - name: show_only
@@ -9081,6 +9207,44 @@ script:
       description: The name to give the file to save
       defaultValue: default-scenario.json
     description: Get the default scenario template
+  - name: slp-build-scenario-from-logs
+    arguments:
+    - name: entry_id
+      required: true
+      description: The entry ID of a log file
+    - name: var_datetime
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      description: Set true to replace date time values with date time variables,
+        otherwise set false.
+      defaultValue: "true"
+    - name: individual
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      description: Set to true to make an individual entry for each log, otherwise
+        set to false.
+      defaultValue: "true"
+    - name: log_format
+      auto: PREDEFINED
+      predefined:
+      - raw
+      - cef
+      - json
+      description: Log Format
+      defaultValue: raw
+    - name: cef_vendor
+      description: Preferred CEF vendor
+      defaultValue: unknown
+    - name: cef_product
+      description: Preferred CEF product
+      defaultValue: unknown
+    - name: save_as
+      description: The name to give the scenario template file to save.
+    description: Build a scenario template from a log file
   dockerimage: demisto/py3-tools:1.0.0.116158
   runonce: false
   longRunning: true
