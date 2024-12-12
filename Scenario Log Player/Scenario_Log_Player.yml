@@ -177,12 +177,12 @@ configuration:
   advanced: true
   display: Default Scenario List
   name: default_scenario_list
-  defaultvalue: normal,irregular
+  defaultvalue: normal,anomaly
   type: 16
   required: false
   options:
   - normal
-  - irregular
+  - anomaly
   additionalinfo: Choose the default scenarios to use
 - section: Default Scenario
   advanced: true
@@ -7006,7 +7006,7 @@ script:
     }
     '''
 
-        SCENARIO_IRREGULAR = r'''
+        SCENARIO_ANOMALY = r'''
     {
         ".variables": {
         },
@@ -7369,8 +7369,8 @@ script:
             if 'normal' in settings.default_scenario_list:
                 scenario.set_normal_scenario()
 
-            if 'irregular' in settings.default_scenario_list:
-                scenario.set_irregular_scenario()
+            if 'anomaly' in settings.default_scenario_list:
+                scenario.set_anomaly_scenario()
 
             scenario.set_internal_tap(
                 settings.default_scenario_internal_tap_products
@@ -7407,7 +7407,7 @@ script:
             self.__external_tap: list[dict[str, Any]] | None = None
             self.__external_proxy_nssweb: dict[str, Any] | None = None
             self.__normal_scenario: dict[str, Any] | None = None
-            self.__irregular_scenario: dict[str, Any] | None = None
+            self.__anomaly_scenario: dict[str, Any] | None = None
 
         def set_normal_scenario(
             self,
@@ -7416,12 +7416,12 @@ script:
             """
             self.__normal_scenario = json.loads(self.SCENARIO_NORMAL)
 
-        def set_irregular_scenario(
+        def set_anomaly_scenario(
             self,
         ) -> None:
-            """ Set the default irregular scenario
+            """ Set the default anomaly scenario
             """
-            self.__irregular_scenario = json.loads(self.SCENARIO_IRREGULAR)
+            self.__anomaly_scenario = json.loads(self.SCENARIO_ANOMALY)
 
         def set_internal_tap(
             self,
@@ -7576,7 +7576,7 @@ script:
             scenario.update({'.variables': {}})
             scenario.update({'ip_entries': self.__build_ip_entries()})
             scenario.update(self.__normal_scenario or {})
-            scenario.update(self.__irregular_scenario or {})
+            scenario.update(self.__anomaly_scenario or {})
             scenario.update({
                 'services': assign_params(
                     internal=assign_params(
