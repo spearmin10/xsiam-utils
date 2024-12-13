@@ -37,6 +37,7 @@ detaileddescription: |-
     - dataset = zscaler_nssweblog_raw
     - dataset = microsoft_windows_raw
     - dataset = microsoft_dhcp_raw
+    - dataset = isc_bind_raw
     - dataset = squid_squid_raw
     - dataset = apache_httpd_raw
 configuration:
@@ -3875,6 +3876,8 @@ script:
             if self.__syslog_sender:
                 await self.__send_log_syslog(log)
 
+            await asyncio.sleep(0)   # Context switch
+
         async def flush(
             self
         ) -> None:
@@ -7132,21 +7135,24 @@ script:
             },
             {
                 "#": "DNS tunneling",
-                ".interval": "{random.randint(0, 7200)}",
+                ".interval": "{random.randint(43200, 86400)}",
                 "sources": {
                     ".variables": {
-                        "domain": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}"
+                        "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
+                        "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
+                        "src_ip": "172.16.77.{datetime.datetime.now().day}",
+                        "dst_ip": "172.16.78.2"
                     },
                     ".next": {
                         "mode": "sequential",
                         "sources": {
                             "operation": "internal.outbound",
                             "type": "network",
-                            "src": "172.16.77.{datetime.datetime.now().day}",
+                            "src": "{src_ip}",
                             "src_user": null,
                             "src_host": null,
                             "src_domain": null,
-                            "dst": "172.16.78.2",
+                            "dst": "{dst_ip}",
                             "dst_port": 53,
                             "ip_protocol": "udp",
                             "app_protocol": "dns",
@@ -7154,12 +7160,37 @@ script:
                             "dns": {
                                 "queries": [
                                     {
-                                        "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain}",
+                                        "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
                                         "type": "A"
                                     }
                                 ]
                             },
-                            ".repeat": 10000
+                            ".repeat": 10000,
+                            ".next": {
+                                "mode": "sequential",
+                                "sources": {
+                                    "operation": "internal.outbound",
+                                    "type": "network",
+                                    "src": "{src_ip}",
+                                    "src_user": null,
+                                    "src_host": null,
+                                    "src_domain": null,
+                                    "dst": "{dst_ip}",
+                                    "dst_port": 53,
+                                    "ip_protocol": "udp",
+                                    "app_protocol": "dns",
+                                    "fw_action": "allow",
+                                    "dns": {
+                                        "queries": [
+                                            {
+                                                "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
+                                                "type": "TXT"
+                                            }
+                                        ]
+                                    },
+                                    ".repeat": 10000
+                                }
+                            }
                         }
                     }
                 }
@@ -9128,7 +9159,6 @@ script:
                 case 'fetch-incidents':
                     demisto.setLastRun({})
                     demisto.incidents([])
-                    pass
 
                 case _:
                     args = assign_params(**demisto.args())
