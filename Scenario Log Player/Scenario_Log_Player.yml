@@ -154,6 +154,7 @@ configuration:
   options:
   - UDP
   - TCP
+  - SSL
 - section: Syslog Collector
   advanced: true
   display: Syslog Format
@@ -398,6 +399,7 @@ script:
     import io
     import re
     import sys
+    import ssl
     import gzip
     import time
     import copy
@@ -3549,39 +3551,43 @@ script:
         """
         def __init__(
             self,
-            ip_proto: str,
+            protocol: str,
             host: str,
             port: int,
             timeout: int | None = None,
+            insecure: bool = False,
             rate_limit: float | None = None
         ) -> None:
             """ Initialize the instance
 
-            :param ip_proto: The IP protocol (UDP or TCP).
+            :param protocol: The syslog protocol (UDP, TCP or SSL).
             :param host: The host name of the syslog server.
             :param port: The port number of the syslog server.
             :param timeout: The socket timeout in second.
+            :param insecure: Set true to accept untrusted SSL server certificates, otherwise false.
             :param rate_limit: The rate limit in Mbps.
             """
             self.__rate_limiter = RateLimiter(rate_limit)
             self.__alock = asyncio.Lock()
             self.__timeout = timeout
+            self.__insecure = insecure
             self.__remote_addr = (host, port)
-            self.__udp = None
-            self.__tcp = None
+            self.__dtgram = None
+            self.__stream = None
             self.__init, self.__send_log = {
-                'udp': (self.__init_udp, self.__send_log_udp),
-                'tcp': (self.__init_tcp, self.__send_log_tcp),
-            }.get(ip_proto.lower()) or (None, None)
+                'udp': (self.__init_udp, self.__send_log_dtgram),
+                'tcp': (self.__init_tcp, self.__send_log_stream),
+                'ssl': (self.__init_ssl, self.__send_log_stream),
+            }.get(protocol.lower()) or (None, None)
 
             if not self.__send_log:
-                raise DemistoException(f'Invalid IP protocol - {ip_proto}')
+                raise DemistoException(f'Invalid IP protocol - {protocol}')
 
         async def __init_udp(
             self,
         ) -> None:
-            self.__udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.__udp.setblocking(False)
+            self.__dtgram = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.__dtgram.setblocking(False)
 
         async def __init_tcp(
             self,
@@ -3590,9 +3596,31 @@ script:
                 asyncio.open_connection(*self.__remote_addr),
                 timeout=self.__timeout
             )
-            self.__tcp = w
+            self.__stream = w
 
-        async def __send_log_udp(
+        async def __init_ssl(
+            self,
+        ) -> None:
+            ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            ssl_ctx.load_default_certs()
+            if self.__insecure:
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+            else:
+                ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+
+            r, w = await asyncio.wait_for(
+                asyncio.open_connection(
+                    *self.__remote_addr,
+                    ssl=ssl_ctx,
+                    ssl_handshake_timeout=self.__timeout,
+                    ssl_shutdown_timeout=self.__timeout,
+                ),
+                timeout=self.__timeout,
+            )
+            self.__stream = w
+
+        async def __send_log_dtgram(
             self,
             log: str,
         ) -> int:
@@ -3601,34 +3629,34 @@ script:
             :param log: A log message.
             :return: The length of the log message written.
             """
-            if not self.__udp:
+            if not self.__dtgram:
                 raise DemistoException('This sender has already been closed.');
 
             data = log.encode()
             loop = asyncio.get_running_loop()
             await asyncio.wait_for(
-                loop.sock_sendto(self.__udp, data, self.__remote_addr),
+                loop.sock_sendto(self.__dtgram, data, self.__remote_addr),
                 timeout=self.__timeout
             )
             return len(data)
 
-        async def __send_log_tcp(
+        async def __send_log_stream(
             self,
             log: str,
         ) -> None:
-            """ Send an log message over TCP
+            """ Send an log message over TCP or SSL
 
             :param log: A log message.
             :return: The length of the log message written.
             """
-            if not self.__tcp:
+            if not self.__stream:
                 raise DemistoException('This sender has already been closed.');
 
             payload = log.encode()
             data = f'{len(payload)} '.encode() + payload
-            self.__tcp.write(data)
+            self.__stream.write(data)
             await asyncio.wait_for(
-                self.__tcp.drain(),
+                self.__stream.drain(),
                 timeout=self.__timeout
             )
             return len(data)
@@ -3667,15 +3695,15 @@ script:
             """ Finish sending logs
             """
             async with self.__alock:
-                if self.__udp:
-                    self.__udp = self.__udp.close()
-                if self.__tcp:
-                    self.__tcp.close()
+                if self.__dtgram:
+                    self.__dtgram = self.__dtgram.close()
+                if self.__stream:
+                    self.__stream.close()
                     await asyncio.wait_for(
-                        self.__tcp.wait_closed(),
+                        self.__stream.wait_closed(),
                         timeout=self.__timeout
                     )
-                    self.__tcp = None
+                    self.__stream = None
 
 
     class LogSender:
@@ -3726,10 +3754,11 @@ script:
 
                 syslog_host, syslog_port = settings.syslog_transport_address
                 self.__syslog_sender = SyslogLogSender(
-                    ip_proto=settings.syslog_transport_protocol,
+                    protocol=settings.syslog_transport_protocol,
                     host=syslog_host,
                     port=syslog_port,
                     timeout=settings.socket_timeout,
+                    insecure=settings.insecure,
                     rate_limit=settings.rate_limit
                 )
             else:
@@ -6870,67 +6899,61 @@ script:
             {
                 "#": "Windows Executable Download - Windows Update",
                 ".interval": "{random.randint(3600, 7200)}",
-                "sources": {
-                    ".variables": {
-                        "src_ip": "172.16.77.{random.randint(10, 14)}",
-                        "src_port": "{random.randint(10000, 65534)}",
-                        "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
-                        "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
-                    },
-                    ".next": {
-                        "mode": "sequential",
-                        "sources": {
-                            "operation": "internal.outbound",
-                            "type": "network",
-                            "src": "{src_ip}",
-                            "src_port": "{src_port}",
-                            "src_user": null,
-                            "src_host": null,
-                            "src_domain": null,
-                            "dst": "{dst_ip}",
-                            "dst_port": 80,
-                            "ip_protocol": "tcp",
-                            "app_protocol": "http",
-                            "fw_action": "allow",
-                            "http": {
-                                "default": {
-                                    "user_agent": "Windows-Update-Agent/923.614.111.0 Client-Protocol/2.71",
-                                    "req_method": "GET",
-                                    "req_version": "HTTP/1.1",
-                                    "resp_status": 200,
-                                    "resp_bytes": "{random.randint(1024 * 1024, 10 * 1024 * 1024)}"
-                                },
-                                "dst": [
-                                    "http://au.download.windowsupdate.com/{dst_path}"
-                                ]
+                ".variables": {
+                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_port": "{random.randint(10000, 65534)}",
+                    "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 80,
+                        "ip_protocol": "tcp",
+                        "app_protocol": "http",
+                        "fw_action": "allow",
+                        "http": {
+                            "default": {
+                                "user_agent": "Windows-Update-Agent/923.614.111.0 Client-Protocol/2.71",
+                                "req_method": "GET",
+                                "req_version": "HTTP/1.1",
+                                "resp_status": 200,
+                                "resp_bytes": "{random.randint(1024 * 1024, 10 * 1024 * 1024)}"
                             },
-                            ".wait": 10,
-                            ".next": {
-                                "mode": "sequential",
-                                "sources": {
-                                    "operation": "log",
-                                    "type": "ngfw-threat",
-                                    "params": {
-                                        "subtype": "wildfire",
-                                        "source_ip": "{src_ip}",
-                                        "source_user": null,
-                                        "source_port": "{src_port}",
-                                        "dest_ip": "{dst_ip}",
-                                        "dest_port": 80,
-                                        "protocol": "tcp",
-                                        "app": "web-browsing",
-                                        "app_category": "general-internet",
-                                        "app_sub_category": "internet-utility",
-                                        "threat_name": "Windows Executable (EXE)",
-                                        "threat_category": "unknown",
-                                        "direction": "server to client",
-                                        "misc": "{dst_ip}/{dst_path}"
-                                    }
-                                }
-                            }
+                            "dst": [
+                                "http://au.download.windowsupdate.com/{dst_path}"
+                            ]
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "wildfire",
+                            "source_ip": "{src_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{dst_ip}",
+                            "dest_port": 80,
+                            "protocol": "tcp",
+                            "app": "web-browsing",
+                            "app_category": "general-internet",
+                            "app_sub_category": "internet-utility",
+                            "threat_name": "Windows Executable (EXE)",
+                            "threat_category": "unknown",
+                            "direction": "server to client",
+                            "misc": "{dst_ip}/{dst_path}"
                         }
                     }
-                }
+                ]
             },
             {
                 "#": "AD Authentication - Success",
@@ -6950,39 +6973,36 @@ script:
             {
                 "#": "DHCP address renewal",
                 ".interval": "{random.randint(0, 800)}",
-                "sources": [
-                    {
-                        ".variables": {
-                            "x": {
-                                "type": "eval",
-                                "value": "random.randint(1, 199)"
-                            }
-                        },
-                        ".next": {
-                            "mode": "sequential",
-                            "sources": {
+                "sources": {
+                    ".variables": {
+                        "x": {
+                            "type": "eval",
+                            "value": "random.randint(1, 199)"
+                        }
+                    },
+                    ".next": {
+                        "mode": "sequential",
+                        "sources": [
+                            {
                                 "operation": "internal.log",
                                 "type": "dhcp",
                                 "src_ip": "172.16.77.{x}",
                                 "src_user": null,
                                 "src_mac": "00:0c:29:dd:22:{x:02x}",
-                                "action": "update-request",
-                                ".next": {
-                                    "mode": "sequential",
-                                    "sources": {
-                                        "operation": "internal.log",
-                                        "type": "dhcp",
-                                        "src_ip": "172.16.77.{x}",
-                                        "src_mac": "00:0c:29:dd:22:{x:02x}",
-                                        "action": "renew"
-                                    }
-                                }
+                                "action": "update-request"
+                            },
+                            {
+                                "operation": "internal.log",
+                                "type": "dhcp",
+                                "src_ip": "172.16.77.{x}",
+                                "src_mac": "00:0c:29:dd:22:{x:02x}",
+                                "action": "renew"
                             }
-                        },
-                        ".wait": "{random.randint(0, 10)}",
-                        ".repeat": 100
-                    }
-                ]
+                        ]
+                    },
+                    ".wait": "{random.randint(0, 10)}",
+                    ".repeat": 100
+                }
             },
             {
                 "#": "Remote Access - Cisco AnyConnect VPN",
@@ -7059,60 +7079,54 @@ script:
             {
                 "#": "DGA - Random Domain Name Queries",
                 ".interval": "{random.randint(7200, 14400)}",
-                "sources": {
-                    ".variables": {
-                        "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
-                        "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}",
-                        "src_ip": "172.16.77.{random.randint(10, 14)}",
-                        "src_port": "{random.randint(10000, 65534)}"
-                    },
-                    ".next": {
-                        "mode": "sequential",
-                        "sources": {
-                            "operation": "internal.outbound",
-                            "type": "network",
-                            "src": "{src_ip}",
-                            "src_port": "{src_port}",
-                            "src_user": null,
-                            "src_host": null,
-                            "src_domain": null,
-                            "dst": "172.16.78.2",
-                            "dst_port": 53,
-                            "ip_protocol": "udp",
-                            "app_protocol": "dns",
-                            "fw_action": "allow",
-                            "dns": {
-                                "queries": {
-                                    "name": "{host}.{domain}",
-                                    "type": "A"
-                                }
-                            },
-                            ".wait": 10,
-                            ".next": {
-                                "mode": "sequential",
-                                "sources": {
-                                    "operation": "log",
-                                    "type": "ngfw-threat",
-                                    "params": {
-                                        "subtype": "spyware",
-                                        "source_ip": "{src_ip}",
-                                        "source_user": null,
-                                        "source_port": "{src_port}",
-                                        "dest_ip": "172.16.78.2",
-                                        "dest_port": 53,
-                                        "protocol": "udp",
-                                        "app": "dns-base",
-                                        "app_category": "networking",
-                                        "app_sub_category": "infrastructure",
-                                        "threat_name": "DGA:{host}.{domain}",
-                                        "threat_category": "dns-c2",
-                                        "direction": "client to server"
-                                    }
-                                }
+                ".variables": {
+                    "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
+                    "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}",
+                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_port": "{random.randint(10000, 65534)}"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "172.16.78.2",
+                        "dst_port": 53,
+                        "ip_protocol": "udp",
+                        "app_protocol": "dns",
+                        "fw_action": "allow",
+                        "dns": {
+                            "queries": {
+                                "name": "{host}.{domain}",
+                                "type": "A"
                             }
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "spyware",
+                            "source_ip": "{src_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "172.16.78.2",
+                            "dest_port": 53,
+                            "protocol": "udp",
+                            "app": "dns-base",
+                            "app_category": "networking",
+                            "app_sub_category": "infrastructure",
+                            "threat_name": "DGA:{host}.{domain}",
+                            "threat_category": "dns-c2",
+                            "direction": "client to server"
                         }
                     }
-                }
+                ]
             },
             {
                 "#": "Uncommon SSH session",
@@ -7136,206 +7150,190 @@ script:
             {
                 "#": "DNS tunneling",
                 ".interval": "{random.randint(43200, 86400)}",
-                "sources": {
-                    ".variables": {
-                        "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
-                        "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
-                        "src_ip": "172.16.77.{datetime.datetime.now().day}",
-                        "dst_ip": "172.16.78.2"
+                ".variables": {
+                    "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
+                    "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
+                    "src_ip": "172.16.77.{datetime.datetime.now().day}",
+                    "dst_ip": "172.16.78.2"
+                },
+                "sources": [
+                    {
+                      "operation": "internal.outbound",
+                      "type": "network",
+                      "src": "{src_ip}",
+                      "src_user": null,
+                      "src_host": null,
+                      "src_domain": null,
+                      "dst": "{dst_ip}",
+                      "dst_port": 53,
+                      "ip_protocol": "udp",
+                      "app_protocol": "dns",
+                      "fw_action": "allow",
+                      "dns": {
+                          "queries": [
+                              {
+                                  "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
+                                  "type": "A"
+                              }
+                          ]
+                      },
+                      ".repeat": 10000
                     },
-                    ".next": {
-                        "mode": "sequential",
-                        "sources": {
-                            "operation": "internal.outbound",
-                            "type": "network",
-                            "src": "{src_ip}",
-                            "src_user": null,
-                            "src_host": null,
-                            "src_domain": null,
-                            "dst": "{dst_ip}",
-                            "dst_port": 53,
-                            "ip_protocol": "udp",
-                            "app_protocol": "dns",
-                            "fw_action": "allow",
-                            "dns": {
-                                "queries": [
-                                    {
-                                        "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
-                                        "type": "A"
-                                    }
-                                ]
-                            },
-                            ".repeat": 10000,
-                            ".next": {
-                                "mode": "sequential",
-                                "sources": {
-                                    "operation": "internal.outbound",
-                                    "type": "network",
-                                    "src": "{src_ip}",
-                                    "src_user": null,
-                                    "src_host": null,
-                                    "src_domain": null,
-                                    "dst": "{dst_ip}",
-                                    "dst_port": 53,
-                                    "ip_protocol": "udp",
-                                    "app_protocol": "dns",
-                                    "fw_action": "allow",
-                                    "dns": {
-                                        "queries": [
-                                            {
-                                                "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
-                                                "type": "TXT"
-                                            }
-                                        ]
-                                    },
-                                    ".repeat": 10000
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 53,
+                        "ip_protocol": "udp",
+                        "app_protocol": "dns",
+                        "fw_action": "allow",
+                        "dns": {
+                            "queries": [
+                                {
+                                    "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
+                                    "type": "TXT"
                                 }
-                            }
-                        }
+                            ]
+                        },
+                        ".repeat": 10000
                     }
-                }
+                ]
             },
             {
                 "#": "Port Scan + SMB: User Password Brute Force Attempt",
                 ".interval": "{random.randint(0, 7200)}",
-                "sources": {
-                    ".variables": {
-                        "src": "172.16.77.{random.randint(10, 14)}"
+                ".variables": {
+                    "src": "172.16.77.{random.randint(10, 14)}"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "172.16.78.{random.randint(1, 199)}",
+                        "dst_port": "{random.randint(1, 65534)}",
+                        "ip_protocol": "tcp",
+                        "app_protocol": "incomplete",
+                        "fw_action": "allow",
+                        ".repeat": 600000
                     },
-                    ".next": {
-                        "mode": "sequential",
-                        "sources": [
-                            {
-                                "operation": "internal.outbound",
-                                "type": "network",
-                                "src": "{src}",
-                                "src_user": null,
-                                "src_host": null,
-                                "src_domain": null,
-                                "dst": "172.16.78.{random.randint(1, 199)}",
-                                "dst_port": "{random.randint(1, 65534)}",
-                                "ip_protocol": "tcp",
-                                "app_protocol": "incomplete",
-                                "fw_action": "allow",
-                                ".repeat": 600000
-                            },
-                            {
-                                ".variables": {
-                                    "source_port": "{random.randint(10000, 65534)}",
-                                    "dst": "172.16.78.{random.randint(1, 199)}"
+                    {
+                        ".variables": {
+                            "source_port": "{random.randint(10000, 65534)}",
+                            "dst": "172.16.78.{random.randint(1, 199)}"
+                        },
+                        ".next": {
+                            "mode": "sequential",
+                            "sources": [
+                                {
+                                    "operation": "internal.outbound",
+                                    "type": "network",
+                                    "src": "{src}",
+                                    "src_user": null,
+                                    "src_host": null,
+                                    "src_domain": null,
+                                    "dst": "{dst}",
+                                    "dst_port": "445",
+                                    "ip_protocol": "tcp",
+                                    "app_protocol": "incomplete",
+                                    "fw_action": "allow"
                                 },
-                                ".next": {
-                                    "mode": "sequential",
-                                    "sources": [
-                                        {
-                                            "operation": "internal.outbound",
-                                            "type": "network",
-                                            "src": "{src}",
-                                            "src_user": null,
-                                            "src_host": null,
-                                            "src_domain": null,
-                                            "dst": "{dst}",
-                                            "dst_port": "445",
-                                            "ip_protocol": "tcp",
-                                            "app_protocol": "incomplete",
-                                            "fw_action": "allow"
-                                        },
-                                        {
-                                            "operation": "log",
-                                            "type": "ngfw-threat",
-                                            "params": {
-                                                "subtype": "vulnerability",
-                                                "source_ip": "{src}",
-                                                "source_user": null,
-                                                "source_port": "{source_port}",
-                                                "dest_ip": "{dst}",
-                                                "dest_port": "445",
-                                                "protocol": "tcp",
-                                                "app": "ms-ds-smbv3",
-                                                "app_category": "business-systems",
-                                                "app_sub_category": "storage-backup",
-                                                "threat_name": "SMB: User Password Brute Force Attempt(40004)",
-                                                "threat_category": "brute-force",
-                                                "direction": "client-to-server",
-                                                ".wait": 10
-                                            }
-                                        },
-                                        {
-                                            "operation": "log",
-                                            "type": "ngfw-threat",
-                                            "params": {
-                                                "subtype": "vulnerability",
-                                                "source_ip": "{src}",
-                                                "source_user": null,
-                                                "source_port": "{source_port}",
-                                                "dest_ip": "{dst}",
-                                                "dest_port": "445",
-                                                "protocol": "tcp",
-                                                "app": "ms-ds-smbv3",
-                                                "app_category": "business-systems",
-                                                "app_sub_category": "storage-backup",
-                                                "threat_name": "Windows SMB Login Attempt",
-                                                "threat_category": "brute-force",
-                                                "direction": "client-to-server"
-                                            }
-                                        }
-                                    ]
+                                {
+                                    "operation": "log",
+                                    "type": "ngfw-threat",
+                                    "params": {
+                                        "subtype": "vulnerability",
+                                        "source_ip": "{src}",
+                                        "source_user": null,
+                                        "source_port": "{source_port}",
+                                        "dest_ip": "{dst}",
+                                        "dest_port": "445",
+                                        "protocol": "tcp",
+                                        "app": "ms-ds-smbv3",
+                                        "app_category": "business-systems",
+                                        "app_sub_category": "storage-backup",
+                                        "threat_name": "SMB: User Password Brute Force Attempt(40004)",
+                                        "threat_category": "brute-force",
+                                        "direction": "client-to-server",
+                                        ".wait": 10
+                                    }
                                 },
-                                ".repeat": {
-                                    "count": "{random.randint(10, 20)}"
+                                {
+                                    "operation": "log",
+                                    "type": "ngfw-threat",
+                                    "params": {
+                                        "subtype": "vulnerability",
+                                        "source_ip": "{src}",
+                                        "source_user": null,
+                                        "source_port": "{source_port}",
+                                        "dest_ip": "{dst}",
+                                        "dest_port": "445",
+                                        "protocol": "tcp",
+                                        "app": "ms-ds-smbv3",
+                                        "app_category": "business-systems",
+                                        "app_sub_category": "storage-backup",
+                                        "threat_name": "Windows SMB Login Attempt",
+                                        "threat_category": "brute-force",
+                                        "direction": "client-to-server"
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        },
+                        ".repeat": {
+                            "count": "{random.randint(10, 20)}"
+                        }
                     }
-                }
+                ]
             },
             {
                 "#": "Malicious PowerShell Script",
                 ".interval": "{random.randint(0, 7200)}",
-                "sources": {
-                    ".variables": {
-                        "src": "172.16.77.{random.randint(1, 199)}",
-                        "dst": "185.199.110.133"
+                ".variables": {
+                    "src": "172.16.77.{random.randint(1, 199)}",
+                    "dst": "185.199.110.133"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst}",
+                        "dst_port": "443",
+                        "ip_protocol": "tcp",
+                        "app_protocol": "github-downloading",
+                        "fw_action": "allow"
                     },
-                    ".next": {
-                        "mode": "sequential",
-                        "sources": [
-                            {
-                                "operation": "internal.outbound",
-                                "type": "network",
-                                "src": "{src}",
-                                "src_user": null,
-                                "src_host": null,
-                                "src_domain": null,
-                                "dst": "{dst}",
-                                "dst_port": "443",
-                                "ip_protocol": "tcp",
-                                "app_protocol": "github-downloading",
-                                "fw_action": "allow"
-                            },
-                            {
-                                "operation": "log",
-                                "type": "ngfw-threat",
-                                "params": {
-                                    "subtype": "ml-virus",
-                                    "source_ip": "{src}",
-                                    "source_user": null,
-                                    "source_port": "{random.randint(10000, 65534)}",
-                                    "dest_ip": "{dst}",
-                                    "dest_port": "443",
-                                    "protocol": "tcp",
-                                    "app": "github-downloading",
-                                    "app_category": "saas",
-                                    "app_sub_category": "management",
-                                    "threat_name": "Malicious PowerShell Script",
-                                    "threat_category": "powershell1",
-                                    "direction": "server to client",
-                                    "misc": "xma.g00g1e.net/xp101t.ps1"
-                                }
-                            }
-                        ]
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "ml-virus",
+                            "source_ip": "{src}",
+                            "source_user": null,
+                            "source_port": "{random.randint(10000, 65534)}",
+                            "dest_ip": "{dst}",
+                            "dest_port": "443",
+                            "protocol": "tcp",
+                            "app": "github-downloading",
+                            "app_category": "saas",
+                            "app_sub_category": "management",
+                            "threat_name": "Malicious PowerShell Script",
+                            "threat_category": "powershell1",
+                            "direction": "server to client",
+                            "misc": "xma.g00g1e.net/xp101t.ps1"
+                        }
                     }
-                }
+                ]
             },
             {
                 "#": "A Successful VPN connection from TOR - Cisco AnyConnect VPN (May require syslog ingestion)",
