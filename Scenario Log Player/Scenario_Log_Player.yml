@@ -9011,7 +9011,7 @@ script:
         return 'ok'
 
 
-    def get_running_status_command(
+    def command_get_running_status(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9034,7 +9034,7 @@ script:
         )
 
 
-    def get_jobs_status_command(
+    def command_get_jobs_status(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9079,7 +9079,7 @@ script:
         )
 
 
-    def get_last_run_command(
+    def command_get_last_run(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9102,7 +9102,7 @@ script:
         )
 
 
-    def get_last_error_command(
+    def command_get_last_error(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9125,7 +9125,7 @@ script:
         )
 
 
-    def get_default_scenario_command(
+    def command_get_default_scenario(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9141,7 +9141,7 @@ script:
         )
 
 
-    def reset_status_command(
+    def command_reset_status(
         args: dict[str, Any],
         settings: Settings,
     ) -> CommandResults:
@@ -9156,7 +9156,7 @@ script:
         )
 
 
-    def var_datetime_command(
+    def command_var_datetime(
         args: dict[str, Any],
         settings: Settings,
     ) -> dict[str, Any]:
@@ -9174,7 +9174,7 @@ script:
         return fileResult(res['name'], json.dumps(out, indent=2))
 
 
-    def build_scenario_from_logs_command(
+    def command_build_scenario_from_logs(
         args: dict[str, Any],
         settings: Settings,
     ) -> dict[str, Any]:
@@ -9307,7 +9307,7 @@ script:
         return fileResult(save_as, out)
 
 
-    async def run_long_running(
+    async def command_long_running_execution(
         settings: Settings,
     ) -> None:
         """ Start the long running server
@@ -9393,14 +9393,14 @@ script:
         demisto.debug('Command being called is {}'.format(command))
         commands = {
             'test-module': test_module,
-            'slp-get-running-status': get_running_status_command,
-            'slp-get-jobs-status': get_jobs_status_command,
-            'slp-get-last-run': get_last_run_command,
-            'slp-get-last-error': get_last_error_command,
-            'slp-get-default-scenario': get_default_scenario_command,
-            'slp-reset-status': reset_status_command,
-            'slp-var-datetime': var_datetime_command,
-            'slp-build-scenario-from-logs': build_scenario_from_logs_command,
+            'slp-get-running-status': command_get_running_status,
+            'slp-get-jobs-status': command_get_jobs_status,
+            'slp-get-last-run': command_get_last_run,
+            'slp-get-last-error': command_get_last_error,
+            'slp-get-default-scenario': command_get_default_scenario,
+            'slp-reset-status': command_reset_status,
+            'slp-var-datetime': command_var_datetime,
+            'slp-build-scenario-from-logs': command_build_scenario_from_logs,
         }
         try:
             settings = Settings(demisto.params())
@@ -9409,7 +9409,7 @@ script:
             )
             match command:
                 case 'long-running-execution':
-                    asyncio.run(run_long_running(settings=settings))
+                    asyncio.run(command_long_running_execution(settings=settings))
 
                 case 'fetch-incidents':
                     demisto.setLastRun({})
