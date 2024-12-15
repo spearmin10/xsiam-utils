@@ -7078,7 +7078,7 @@ script:
                             "direction": "server to client",
                             "misc": "{proxy_ip}/{dst_path}"
                         }
-                    }
+                    },
                     {
                         "operation": "log",
                         "type": "ngfw-threat",
