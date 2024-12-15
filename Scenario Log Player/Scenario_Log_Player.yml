@@ -2153,28 +2153,25 @@ script:
             def __replace(
                 m: re.Match,
             ) -> str:
-                val = m[0]
-                if m := re.fullmatch(
-                    (
-                        r'(?:20[0-4]\d|19[7-9]\d)-(?:0[1-9]|1[012])-(?:0[1-9]|[12]\d|3[01])'
-                        r'(?P<t>[T ])'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?P<fraction>.\d{1,9})?'
-                        r'(?P<tz>Z|(?P<tz_leading> )?[+-]\d\d:?\d\d)'
-                    ),
-                    val
-                ):
-                    out = "{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d" + m["t"] + "%H:%M:%S"
-                    if fraction := m['fraction']:
+                def __build_hyphen_separeted_datetime(
+                    m: dict[str, Any],
+                ) -> str:
+                    out = (
+                        "{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d" +
+                        (m.get('hyphen_separeted_datetime_t') or '') +
+                        "%H:%M:%S"
+                    )
+                    if fraction := m.get('hyphen_separeted_datetime_fraction'):
                         if len(fraction) < 6:
-                            out += ".%f')[:" + str(len(fraction)) + "]"
+                            out += ".%f')[:" + str(len(fraction)) + ']'
                         else:
                             out += ".%f')"
                     else:
                         out += "')"
 
-                    if tz := m['tz']:
+                    if tz := m.get('hyphen_separeted_datetime_tz'):
                         tz = tz.lstrip()
-                        tz_leading = m['tz_leading'] or ''
+                        tz_leading = m.get('hyphen_separeted_datetime_tz_leading') or ''
                         if tz == 'Z':
                             out += f"+'{tz_leading}Z'"
                         elif ':' in tz:
@@ -2182,28 +2179,27 @@ script:
                         else:
                             out += f"+'{tz_leading}+0000'"
                     out += '}'
+                    return out
 
-                elif m := re.fullmatch(
-                    (
-                        r'(?:20[0-4]\d|19[7-9]\d)/(?:0[1-9]|1[012])/(?:0[1-9]|[12]\d|3[01])'
-                        r'(?P<t>[T ])'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?P<fraction>.\d{1,9})?'
-                        r'(?P<tz>Z|(?P<tz_leading> )?[+-]\d\d:?\d\d)'
-                    ),
-                    val
-                ):
-                    out = "{datetime.datetime.now(datetime.UTC).strftime('%Y/%m/%d" + m["t"] + "%H:%M:%S"
-                    if fraction := m['fraction']:
+                def __build_slash_separeted_datetime(
+                    m: dict[str, Any],
+                ) -> str:
+                    out = (
+                        "{datetime.datetime.now(datetime.UTC).strftime('%Y/%m/%d" +
+                        (m.get('slash_separeted_datetime_t') or '') +
+                        "%H:%M:%S"
+                    )
+                    if fraction := m.get('slash_separeted_datetime_fraction'):
                         if len(fraction) < 6:
-                            out += ".%f')[:" + str(len(fraction)) + "]"
+                            out += ".%f')[:" + str(len(fraction)) + ']'
                         else:
                             out += ".%f')"
                     else:
                         out += "')"
 
-                    if tz := m['tz']:
+                    if tz := m.get('slash_separeted_datetime_tz'):
                         tz = tz.lstrip()
-                        tz_leading = m['tz_leading'] or ''
+                        tz_leading = m.get('slash_separeted_datetime_tz_leading') or ''
                         if tz == 'Z':
                             out += f"+'{tz_leading}Z'"
                         elif ':' in tz:
@@ -2211,22 +2207,18 @@ script:
                         else:
                             out += f"+'{tz_leading}+0000'"
                     out += '}'
+                    return out
 
-                elif m := re.fullmatch(
-                    (
-                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                        r' '
-                        r'(?:0[1-9]|[12]\d|3[01])'
-                        r' '
-                        r'(?P<year>(?:20[0-4]\d|19[7-9]\d) )?'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                        r'(?:(?P<tz_leading> )?(?P<tz>GMT|[+-]\d\d:?\d\d))?'
-                    ),
-                    val
-                ):
-                    out = "{datetime.datetime.now(datetime.UTC).strftime('%b %d " + ('%Y ' if m['year'] else '') + '%H:%M:%S'
-                    if tz := m['tz']:
-                        tz_leading = m['tz_leading'] or ''
+                def __build_abbreviated_english_datetime(
+                    m: dict[str, Any],
+                ) -> str:
+                    out = (
+                        "{datetime.datetime.now(datetime.UTC).strftime('%b %d " +
+                        ('%Y ' if m.get('abbreviated_english_datetime_year') else '') +
+                        '%H:%M:%S'
+                    )
+                    if tz := m.get('abbreviated_english_datetime_tz'):
+                        tz_leading = m.get('abbreviated_english_datetime_tz_leading') or ''
                         if tz == 'GMT':
                             out += tz_leading + 'GMT'
                         elif ':' in tz:
@@ -2234,23 +2226,14 @@ script:
                         else:
                             out += tz_leading + '+0000'
                     out += "')}"
+                    return out
 
-                elif m := re.fullmatch(
-                    (
-                        r'(?:0[1-9]|[12]\d|3[01])'
-                        r'/'
-                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                        r'/'
-                        r'(?:20[0-4]\d|19[7-9]\d)'
-                        r':'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                        r'(?:(?P<tz_leading> )?(?P<tz>GMT|[+-]\d\d:?\d\d))?'
-                    ),
-                    val
-                ):
+                def __build_unix_log_datetime(
+                    m: dict[str, Any],
+                ) -> str:
                     out = "{datetime.datetime.now(datetime.UTC).strftime('%d/%b/%Y:%H:%M:%S"
-                    if tz := m['tz']:
-                        tz_leading = m['tz_leading'] or ''
+                    if tz := m.get('unix_log_datetime_tz'):
+                        tz_leading = m.get('unix_log_datetime_tz_leading') or ''
                         if tz == 'GMT':
                             out += tz_leading + 'GMT'
                         elif ':' in tz:
@@ -2258,16 +2241,32 @@ script:
                         else:
                             out += tz_leading + '+0000'
                     out += "')}"
-                elif m := re.fullmatch(r'(?:1[6-9](?:\d{8}|\d{11}|\d{14}))', val):
-                    if len(m[0]) == 10:
-                        out = '{int(datetime.datetime.now(datetime.UTC).timestamp())}'
-                    elif len(m[0]) == 13:
-                        out = '{int(datetime.datetime.now(datetime.UTC).timestamp() * 1000)}'
-                    else:
-                        out = '{int(datetime.datetime.now(datetime.UTC).timestamp() * 1000000)}'
+                    return out
+
+                def __build_epoch_timestamp(
+                    val: str,
+                ) -> str:
+                    if len(val) == 10:
+                        return '{int(datetime.datetime.now(datetime.UTC).timestamp())}'
+                    elif len(val) == 13:
+                        return '{int(datetime.datetime.now(datetime.UTC).timestamp() * 1000)}'
+                    elif len(val) == 16:
+                        return '{int(datetime.datetime.now(datetime.UTC).timestamp() * 1000000)}'
+                    return val
+
+                d = m.groupdict()
+                if d.get('hyphen_separeted_datetime'):
+                    return __build_hyphen_separeted_datetime(d)
+                elif d.get('slash_separeted_datetime'):
+                    return __build_slash_separeted_datetime(d)
+                elif d.get('abbreviated_english_datetime'):
+                    return __build_abbreviated_english_datetime(d)
+                elif d.get('unix_log_datetime'):
+                    return __build_unix_log_datetime(d)
+                elif d.get('epoch_timestamp'):
+                    return __build_timestamp(m[0])
                 else:
-                    out = val
-                return out
+                    return ''
 
             if isinstance(val, dict):
                 return {
@@ -2293,40 +2292,56 @@ script:
         pattern = re.compile(
             r'\b(?:' + '|'.join(
                 [
-                    (
-                        r'(?:20[0-4]\d|19[7-9]\d)-(?:0[1-9]|1[012])-(?:0[1-9]|[12]\d|3[01])'
-                        r'[T ]'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:.\d{1,9})?'
-                        r'(?:Z| ?[+-]\d\d:?\d\d)'
-                    ),
-                    (
-                        r'(?:20[0-4]\d|19[7-9]\d)/(?:0[1-9]|1[012])/(?:0[1-9]|[12]\d|3[01])'
-                        r'(?:[T ])'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:.\d{1,9})?'
-                        r'(?:Z| ?[+-]\d\d:?\d\d)'
-                    ),
-                    (
-                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                        r' '
-                        r'(?:0[1-9]|[12]\d|3[01])'
-                        r' '
-                        r'(?:(?:20[0-4]\d|19[7-9]\d) )?'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                        r'(?: ?(?:GMT|[+-]\d\d:?\d\d))?'
-                    ),
-                    (
-                        r'(?:0[1-9]|[12]\d|3[01])'
-                        r'/'
-                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                        r'/'
-                        r'(?:20[0-4]\d|19[7-9]\d)'
-                        r':'
-                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                        r'(?: ?(?:GMT|[+-]\d\d:?\d\d))?'
-                    ),
-                    (
-                        r'(?:1[6-9](?:\d{8}|\d{11}|\d{14}))'
-                    ),
+                    r'(?P<hyphen_separeted_datetime>' +
+                        (
+                            r'(?:20[0-4]\d|19[7-9]\d)-(?:0[1-9]|1[012])-(?:0[1-9]|[12]\d|3[01])'
+                            r'(?P<hyphen_separeted_datetime_t>[T ])'
+                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                            r'(?P<hyphen_separeted_datetime_fraction>.\d{1,9})?'
+                            r'(?P<hyphen_separeted_datetime_tz>Z|'
+                            r'(?P<hyphen_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
+                        ) +
+                    ')',
+                    r'(?P<slash_separeted_datetime>' +
+                        (
+                            r'(?:20[0-4]\d|19[7-9]\d)/(?:0[1-9]|1[012])/(?:0[1-9]|[12]\d|3[01])'
+                            r'(?P<slash_separeted_datetime_t>[T ])'
+                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                            r'(?P<slash_separeted_datetime_fraction>.\d{1,9})?'
+                            r'(?P<slash_separeted_datetime_tz>Z|'
+                            r'(?P<slash_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
+                        ) +
+                    ')',
+                    r'(?P<abbreviated_english_datetime>' +
+                        (
+                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+                            r' '
+                            r'(?:0[1-9]|[12]\d|3[01])'
+                            r' '
+                            r'(?P<abbreviated_english_datetime_year>(?:20[0-4]\d|19[7-9]\d) )?'
+                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                            r'(?:(?P<abbreviated_english_datetime_tz_leading> )?'
+                            r'(?P<abbreviated_english_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
+                        ) +
+                    ')',
+                    r'(?P<unix_log_datetime>' +
+                        (
+                            r'(?:0[1-9]|[12]\d|3[01])'
+                            r'/'
+                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+                            r'/'
+                            r'(?:20[0-4]\d|19[7-9]\d)'
+                            r':'
+                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                            r'(?:(?P<unix_log_datetime_tz_leading> )?'
+                            r'(?P<unix_log_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
+                        ) +
+                    ')',
+                    r'(?P<epoch_timestamp>' +
+                        (
+                            r'(?:1[6-9](?:\d{8}|\d{11}|\d{14}))'
+                        ) +
+                    ')',
                 ]
             ) + r')\b'
         )
@@ -6489,9 +6504,6 @@ script:
                         "https://ace.hawkeye.services-edge.paloaltonetworks.com/",
                         "https://aefd.nelreports.net/",
                         "https://agent-directory-sync.au.apps.paloaltonetworks.com/",
-                        "https://api-xdr20japan.xdr.us.paloaltonetworks.com/",
-                        "https://api-xsiam-sandbox-japac.xdr.au.paloaltonetworks.com/",
-                        "https://api.demisto.com/",
                         "https://api.diagnostics.office.com/",
                         "https://api.github.com/",
                         "https://api.msn.com/",
@@ -6523,13 +6535,9 @@ script:
                         "https://c.msn.com/",
                         "https://canonical-bos01.cdn.snapcraftcontent.com/",
                         "https://canonical-lgw01.cdn.snapcraftcontent.com/",
-                        "https://cc-xdr20japan.traps.paloaltonetworks.com/",
-                        "https://cc-xsiam-sandbox-japac.traps.paloaltonetworks.com/",
                         "https://cdn.fwupd.org/",
                         "https://cdn.splunkbase.splunk.com/",
                         "https://certificatetrusted.paloaltonetworks.com/",
-                        "https://ch-xdr20japan.traps.paloaltonetworks.com/",
-                        "https://ch-xsiam-sandbox-japac.traps.paloaltonetworks.com/",
                         "https://changelogs.ubuntu.com/",
                         "https://checkappexec.microsoft.com/",
                         "https://classify-client.services.mozilla.com/",
@@ -6551,8 +6559,6 @@ script:
                         "https://da.xboxservices.com/",
                         "https://data-edge.smartscreen.microsoft.com/",
                         "https://data.pendo.io/",
-                        "https://dc-xdr20japan.traps.paloaltonetworks.com/",
-                        "https://dc-xsiam-sandbox-japac.traps.paloaltonetworks.com/",
                         "https://default.exp-tas.com/",
                         "https://disc801.prod.do.dsp.mp.microsoft.com/",
                         "https://displaycatalog.mp.microsoft.com/",
@@ -6572,7 +6578,6 @@ script:
                         "https://edge.microsoft.com/",
                         "https://edgeassetservice.azureedge.net/",
                         "https://edgestatic.azureedge.net/",
-                        "https://edl-xdr20japan.xdr.us.paloaltonetworks.com/",
                         "https://encrypted-tbn0.gstatic.com/",
                         "https://encrypted-tbn2.gstatic.com/",
                         "https://enforcer.iot.services-edge.paloaltonetworks.com/",
@@ -6897,10 +6902,10 @@ script:
         ],
         "jobs": [
             {
-                "#": "Windows Executable Download - Windows Update",
+                "#": "Windows Executable Download - Windows Update [No Proxy]",
                 ".interval": "{random.randint(3600, 7200)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                     "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
@@ -6939,6 +6944,147 @@ script:
                         "params": {
                             "subtype": "wildfire",
                             "source_ip": "{src_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{dst_ip}",
+                            "dest_port": 80,
+                            "protocol": "tcp",
+                            "app": "web-browsing",
+                            "app_category": "general-internet",
+                            "app_sub_category": "internet-utility",
+                            "threat_name": "Windows Executable (EXE)",
+                            "threat_category": "unknown",
+                            "direction": "server to client",
+                            "misc": "{dst_ip}/{dst_path}"
+                        }
+                    }
+                ]
+            },
+            {
+                "#": "Windows Executable Download - Windows Update [Outside Proxy]",
+                ".interval": "{random.randint(3600, 7200)}",
+                ".variables": {
+                    "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                    "src_port": "{random.randint(10000, 65534)}",
+                    "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
+                    "proxy_ip": "172.16.77.250"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 80,
+                        "ip_protocol": "tcp",
+                        "app_protocol": "http",
+                        "fw_action": "allow",
+                        "http": {
+                            "default": {
+                                "user_agent": "Windows-Update-Agent/923.614.111.0 Client-Protocol/2.71",
+                                "req_method": "GET",
+                                "req_version": "HTTP/1.1",
+                                "resp_status": 200,
+                                "resp_bytes": "{random.randint(1024 * 1024, 10 * 1024 * 1024)}"
+                            },
+                            "dst": [
+                                "http://au.download.windowsupdate.com/{dst_path}"
+                            ]
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "wildfire",
+                            "source_ip": "{proxy_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{dst_ip}",
+                            "dest_port": 80,
+                            "protocol": "tcp",
+                            "app": "web-browsing",
+                            "app_category": "general-internet",
+                            "app_sub_category": "internet-utility",
+                            "threat_name": "Windows Executable (EXE)",
+                            "threat_category": "unknown",
+                            "direction": "server to client",
+                            "misc": "{dst_ip}/{dst_path}"
+                        }
+                    }
+                ]
+            },
+            {
+                "#": "Windows Executable Download - Windows Update [Outside/Bihind Proxy]",
+                ".interval": "{random.randint(3600, 7200)}",
+                ".variables": {
+                    "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                    "src_port": "{random.randint(10000, 65534)}",
+                    "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
+                    "proxy_ip": "172.16.77.250",
+                    "proxy_port": 8080
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 80,
+                        "ip_protocol": "tcp",
+                        "app_protocol": "http",
+                        "fw_action": "allow",
+                        "http": {
+                            "default": {
+                                "user_agent": "Windows-Update-Agent/923.614.111.0 Client-Protocol/2.71",
+                                "req_method": "GET",
+                                "req_version": "HTTP/1.1",
+                                "resp_status": 200,
+                                "resp_bytes": "{random.randint(1024 * 1024, 10 * 1024 * 1024)}"
+                            },
+                            "dst": [
+                                "http://au.download.windowsupdate.com/{dst_path}"
+                            ]
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "wildfire",
+                            "source_ip": "{src_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{proxy_ip}",
+                            "dest_port": "{proxy_port}",
+                            "protocol": "tcp",
+                            "app": "web-browsing",
+                            "app_category": "general-internet",
+                            "app_sub_category": "internet-utility",
+                            "threat_name": "Windows Executable (EXE)",
+                            "threat_category": "unknown",
+                            "direction": "server to client",
+                            "misc": "{proxy_ip}/{dst_path}"
+                        }
+                    }
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "wildfire",
+                            "source_ip": "{proxy_ip}",
                             "source_user": null,
                             "source_port": "{src_port}",
                             "dest_ip": "{dst_ip}",
@@ -7076,6 +7222,38 @@ script:
             }
         ],
         "jobs": [
+            {
+                "#": "Random-Looking Domain Names - Web Access",
+                ".interval": "{random.randint(7200, 14400)}",
+                ".variables": {
+                    "fqdn1": "www.{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.{random.choice(['com','net','org'])}",
+                    "fqdn2": "{''.join(random.choices(string.ascii_lowercase + '_', k=16))}.{random.choice(['com','net','org'])}",
+                    "fqdn": "{random.choice([fqdn1, fqdn2])}",
+                    "src_ip": "172.16.77.{random.randint(1, 199)}"
+                },
+                "sources": {
+                    "operation": "internal.outbound",
+                    "type": "network",
+                    "src": "{src_ip}",
+                    "src_user": null,
+                    "src_host": null,
+                    "src_domain": null,
+                    "dst": "public",
+                    "dst_port": 443,
+                    "ip_protocol": "tcp",
+                    "app_protocol": "https",
+                    "fw_action": "allow",
+                    "http": {
+                        "default": {
+                            "resp_status": 200,
+                            "resp_bytes": "{random.randint(2048, 1024 * 1024)}"
+                        },
+                        "dst": "https://{fqdn}"
+                    },
+                    ".wait": "{random.randint(0, 10)}",
+                    ".repeat": 50
+                }
+            },
             {
                 "#": "DGA - Random Domain Name Queries",
                 ".interval": "{random.randint(7200, 14400)}",
@@ -7236,6 +7414,7 @@ script:
                                     "operation": "internal.outbound",
                                     "type": "network",
                                     "src": "{src}",
+                                    "src_port": "{source_port}",
                                     "src_user": null,
                                     "src_host": null,
                                     "src_domain": null,
@@ -7293,10 +7472,11 @@ script:
                 ]
             },
             {
-                "#": "Malicious PowerShell Script",
-                ".interval": "{random.randint(0, 7200)}",
+                "#": "Malicious PowerShell Script [No Proxy]",
+                ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src": "172.16.77.{random.randint(1, 199)}",
+                    "src": "172.16.77.{random.randint(32, 36)}",
+                    "src_port": "{random.randint(10000, 65534)}",
                     "dst": "185.199.110.133"
                 },
                 "sources": [
@@ -7304,6 +7484,7 @@ script:
                         "operation": "internal.outbound",
                         "type": "network",
                         "src": "{src}",
+                        "src_port": "{src_port}",
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
@@ -7320,7 +7501,7 @@ script:
                             "subtype": "ml-virus",
                             "source_ip": "{src}",
                             "source_user": null,
-                            "source_port": "{random.randint(10000, 65534)}",
+                            "source_port": "{src_port}",
                             "dest_ip": "{dst}",
                             "dest_port": "443",
                             "protocol": "tcp",
@@ -7331,6 +7512,66 @@ script:
                             "threat_category": "powershell1",
                             "direction": "server to client",
                             "misc": "xma.g00g1e.net/xp101t.ps1"
+                        }
+                    }
+                ]
+            },
+            {
+                "#": "Malicious PowerShell Script [Outside Proxy]",
+                ".interval": "{random.randint(43200, 86400)}",
+                ".variables": {
+                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_port": "{random.randint(10000, 65534)}",
+                    "dst_ip": "{ipaddress.IPv4Address(random.randint(0x01000001, 0x09ffff00))}",
+                    "dst_path": "{''.join(random.choices(string.ascii_lowercase, k=4))}/{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.ps1",
+                    "proxy_ip": "172.16.77.250"
+                },
+                "sources": [
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 80,
+                        "ip_protocol": "tcp",
+                        "app_protocol": "http",
+                        "fw_action": "allow",
+                        "http": {
+                            "default": {
+                                "user_agent": "SLPLoader",
+                                "req_method": "GET",
+                                "req_version": "HTTP/1.1",
+                                "resp_status": 200,
+                                "resp_bytes": "{random.randint(1024 * 1024, 10 * 1024 * 1024)}"
+                            },
+                            "dst": [
+                                "http://{dst_ip}/{dst_path}"
+                            ]
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "ml-virus",
+                            "source_ip": "{proxy_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{dst_ip}",
+                            "dest_port": 80,
+                            "protocol": "tcp",
+                            "app": "web-browsing",
+                            "app_category": "general-internet",
+                            "app_sub_category": "internet-utility",
+                            "threat_name": "Malicious PowerShell Script",
+                            "threat_category": "powershell1",
+                            "direction": "server to client",
+                            "misc": "{dst_ip}/{dst_path}"
                         }
                     }
                 ]
@@ -7938,7 +8179,8 @@ script:
                                 outside=dict(
                                     outside_props,
                                     src_ip=proxy.ip,
-                                    src_port=random.randint(10000, 65534),
+                                    # proxy use the same source port as the client source port for scenarios
+                                    src_port=props.get('src_port') or random.randint(10000, 65534),
                                 ),
                             )
                         )
@@ -8966,9 +9208,24 @@ script:
                 list[str] |
                 list[dict[str, Any]]
             ]:
+                def __escape_for_fstrings(
+                    val: Any,
+                ) -> Any:
+                    if isinstance(val, dict):
+                        return {k: __escape_for_fstrings(v) for k, v in val.items()}
+                    elif isinstance(val, list):
+                        return [__escape_for_fstrings(v) for v in val]
+                    elif isinstance(val, str):
+                        m = {'{': '{{', '}': '}}'}
+                        return re.sub(r'[{}]', lambda x:m[x[0]], val)
+                    else:
+                        return val
+
                 log_params = log_reader.read().splitlines()
                 if log_format == 'json':
                     log_params = [json.loads(x) for x in log_params]
+
+                log_params = __escape_for_fstrings(log_params)
 
                 if var_datetime:
                     log_params = replace_datetime_with_utcnowvar(log_params)
