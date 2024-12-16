@@ -5803,7 +5803,7 @@ script:
             class Repeat:
                 def __init__(self) -> None:
                     self.count = 1
-                    self.eval_once = False
+                    self.evaluate = 'params'
                     self.iter_vars = None
 
             def __get_repeat(
@@ -5838,9 +5838,10 @@ script:
                 repeat = source_template.get('.repeat')
                 if repeat is not None:
                     if isinstance(repeat, dict):
-                        r.eval_once = argToBoolean(
-                            variables.eval_str(repeat.get('eval_once', 'false'))
-                        )
+                        r.evaluate = variables.eval_str(repeat.get('eval', 'params'))
+                        if r.evaluate not in ('once', 'params', 'vars'):
+                            raise DemistoException('repeat.eval must be once, params or vars')
+
                         r.iter_vars = __get_iter_vars(
                             repeat.get('iter_vars'),
                             variables
@@ -5855,17 +5856,26 @@ script:
                 for x in source_templates:
                     yield from SourceTemplateUnit.__enum_templates(x, variables)
             elif isinstance(source_templates, dict):
-                if lvars := source_templates.get('.variables'):
-                    variables = variables.inherit(None, lvars)
+                first_vars = variables
+                if raw_vars := source_templates.get('.variables'):
+                    first_vars = variables.inherit(None, raw_vars)
 
                 template = None
-                repeat = __get_repeat(source_templates, variables)
-                for lvars in repeat.iter_vars or [None]:
-                    lvars = variables.inherit(None, lvars)
+                repeat = __get_repeat(source_templates, first_vars)
+                for iter_vars in repeat.iter_vars or [None]:
+                    lvars = None
                     for _ in range(repeat.count):
-                        if template is None or not repeat.eval_once:
+                        if repeat.evaluate == 'vars':
+                            if raw_vars:
+                                lvars = variables.inherit(None, raw_vars)
+                            lvars = lvars.inherit(None, iter_vars)
+                        elif not lvars:
+                            lvars = first_vars.inherit(None, iter_vars)
+
+                        if template is None or repeat.evaluate != 'once':
                             template = Template(source_templates, lvars)
                         yield template
+
             else:
                 raise DemistoException('Source template must be dict or list.')
 
@@ -6918,7 +6928,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.77.20",
+                "dst": "172.16.77.240",
                 "dst_port": "137, 138",
                 "ip_protocol": "udp",
                 "fw_action": "allow",
@@ -6932,7 +6942,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.77.20",
+                "dst": "172.16.77.240",
                 "dst_port": "135, 389, 445",
                 "ip_protocol": "tcp",
                 "fw_action": "allow",
@@ -7186,7 +7196,10 @@ script:
                         ]
                     },
                     ".wait": "{random.randint(0, 10)}",
-                    ".repeat": 100
+                    ".repeat": {
+                        "eval": "vars",
+                        "count": 100
+                    }
                 }
             },
             {
@@ -7290,7 +7303,10 @@ script:
                         "dst": "https://{fqdn}"
                     },
                     ".wait": "{random.randint(0, 10)}",
-                    ".repeat": 50
+                    ".repeat": {
+                        "eval": "params",
+                        "count": 50
+                    }
                 }
             },
             {
@@ -7505,6 +7521,7 @@ script:
                             ]
                         },
                         ".repeat": {
+                            "eval": "vars",
                             "count": "{random.randint(10, 20)}"
                         }
                     }
@@ -7843,7 +7860,7 @@ script:
             """
             self.__internal_dhcp_windows = {
                 'product': 'windows-dhcp',
-                'ip': '172.16.77.20',
+                'ip': '172.16.77.240',
                 'fqdn': 'win-dhcp.corp.panw.lan'
             }
 
