@@ -1662,7 +1662,8 @@ script:
             self.__socket_timeout = DEFAULT_SOCKET_TIMEOUT
 
             ''' SECTION: Connect '''
-            self.__proxies, self.__insecure = handle_proxy_for_long_running(proxy_param_name='proxy')
+            self.__insecure = argToBoolean(params.get('insecure', 'false'))
+            self.__proxies, _ = handle_proxy_for_long_running(proxy_param_name='proxy')
             rate = Settings.__parse_human_rate(
                 params.get('rate_limit') or 0,
                 'Invalid rate limit'
@@ -9410,28 +9411,32 @@ script:
                     demisto.error(f'Failed to resume scheduled jobs - {e}')
                     pass
 
-            # Start the scenario
             scenario = await Scenario.load(settings)
-            IntegrationContextUtils.update_status({
-                'started': utc_timestamp(),
-                'status': IntegrationContextUtils.Status.RUNNING,
-                'instance_name': demisto.integrationInstance(),
-            }, new=True, sync=True)
 
-            async with ScenarioPlayer(settings, scenario) as player:
-                player.set_first_trigger_times(first_trigger_times or {})
-                await player.run()
+            while True:
+                # Start the scenario
+                IntegrationContextUtils.update_status({
+                    'started': utc_timestamp(),
+                    'status': IntegrationContextUtils.Status.RUNNING,
+                    'instance_name': demisto.integrationInstance(),
+                }, new=True, sync=True)
 
-            # Fall asleep in eternal
-            IntegrationContextUtils.update_status({
-                'finished': utc_timestamp(),
-                'status': IntegrationContextUtils.Status.FINISHED,
-                'message': (
-                    'The scenario has successfully finished.'
-                    ' Resetting the status is required to replay again or play other scenarios.'
-                ),
-            }, sync=True)
-            threading.Event().wait()
+                async with ScenarioPlayer(settings, scenario) as player:
+                    player.set_first_trigger_times(first_trigger_times or {})
+                    await player.run()
+
+                IntegrationContextUtils.update_status({
+                    'finished': utc_timestamp(),
+                    'status': IntegrationContextUtils.Status.FINISHED,
+                    'message': (
+                        'The scenario has successfully finished.'
+                        ' Resetting the status is required to replay again or play other scenarios.'
+                    ),
+                }, sync=True)
+
+                # Sleep until the status is reset
+                while IntegrationContextUtils.get_status().get('status') != IntegrationContextUtils.Status.RESET:
+                    time.sleep(5)
 
         except Exception as e:
             demisto.error(f'An error occurred in long running loop: {e}')
