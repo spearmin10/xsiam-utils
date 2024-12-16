@@ -6790,7 +6790,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "public",
+                "dst": "realip-by-http.dst-if-possible",
                 "dst_port": 443,
                 "ip_protocol": "tcp",
                 "app_protocol": "https",
@@ -6817,7 +6817,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "public",
+                "dst": "realip-by-http.dst-if-possible",
                 "dst_port": 443,
                 "ip_protocol": "tcp",
                 "app_protocol": "https",
@@ -6944,7 +6944,7 @@ script:
                 "#": "Windows Executable Download - Windows Update [No Proxy]",
                 ".interval": "{random.randint(3600, 7200)}",
                 ".variables": {
-                    "src": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
+                    "src_ip": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                     "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
@@ -7424,13 +7424,13 @@ script:
                 "#": "Port Scan + SMB: User Password Brute Force Attempt",
                 ".interval": "{random.randint(0, 7200)}",
                 ".variables": {
-                    "src": "172.16.77.{random.randint(10, 14)}"
+                    "src_ip": "172.16.77.{random.randint(10, 14)}"
                 },
                 "sources": [
                     {
                         "operation": "internal.outbound",
                         "type": "network",
-                        "src": "{src}",
+                        "src": "{src_ip}",
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
@@ -7443,8 +7443,8 @@ script:
                     },
                     {
                         ".variables": {
-                            "source_port": "{random.randint(10000, 65534)}",
-                            "dst": "172.16.78.{random.randint(1, 199)}"
+                            "src_port": "{random.randint(10000, 65534)}",
+                            "dst_ip": "172.16.78.{random.randint(1, 199)}"
                         },
                         ".next": {
                             "mode": "sequential",
@@ -7452,12 +7452,12 @@ script:
                                 {
                                     "operation": "internal.outbound",
                                     "type": "network",
-                                    "src": "{src}",
-                                    "src_port": "{source_port}",
+                                    "src": "{src_ip}",
+                                    "src_port": "{src_port}",
                                     "src_user": null,
                                     "src_host": null,
                                     "src_domain": null,
-                                    "dst": "{dst}",
+                                    "dst": "{dst_ip}",
                                     "dst_port": "445",
                                     "ip_protocol": "tcp",
                                     "app_protocol": "incomplete",
@@ -7468,10 +7468,10 @@ script:
                                     "type": "ngfw-threat",
                                     "params": {
                                         "subtype": "vulnerability",
-                                        "source_ip": "{src}",
+                                        "source_ip": "{src_ip}",
                                         "source_user": null,
-                                        "source_port": "{source_port}",
-                                        "dest_ip": "{dst}",
+                                        "source_port": "{src_port}",
+                                        "dest_ip": "{dst_ip}",
                                         "dest_port": "445",
                                         "protocol": "tcp",
                                         "app": "ms-ds-smbv3",
@@ -7488,10 +7488,10 @@ script:
                                     "type": "ngfw-threat",
                                     "params": {
                                         "subtype": "vulnerability",
-                                        "source_ip": "{src}",
+                                        "source_ip": "{src_ip}",
                                         "source_user": null,
-                                        "source_port": "{source_port}",
-                                        "dest_ip": "{dst}",
+                                        "source_port": "{src_port}",
+                                        "dest_ip": "{dst_ip}",
                                         "dest_port": "445",
                                         "protocol": "tcp",
                                         "app": "ms-ds-smbv3",
@@ -7514,20 +7514,20 @@ script:
                 "#": "Malicious PowerShell Script [No Proxy]",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src": "172.16.77.{random.randint(32, 36)}",
+                    "src_ip": "172.16.77.{random.randint(32, 36)}",
                     "src_port": "{random.randint(10000, 65534)}",
-                    "dst": "185.199.110.133"
+                    "dst_ip": "185.199.110.133"
                 },
                 "sources": [
                     {
                         "operation": "internal.outbound",
                         "type": "network",
-                        "src": "{src}",
+                        "src": "{src_ip}",
                         "src_port": "{src_port}",
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
-                        "dst": "{dst}",
+                        "dst": "{dst_ip}",
                         "dst_port": "443",
                         "ip_protocol": "tcp",
                         "app_protocol": "github-downloading",
@@ -7538,10 +7538,10 @@ script:
                         "type": "ngfw-threat",
                         "params": {
                             "subtype": "ml-virus",
-                            "source_ip": "{src}",
+                            "source_ip": "{src_ip}",
                             "source_user": null,
                             "source_port": "{src_port}",
-                            "dest_ip": "{dst}",
+                            "dest_ip": "{dst_ip}",
                             "dest_port": "443",
                             "protocol": "tcp",
                             "app": "github-downloading",
