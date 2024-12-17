@@ -2766,7 +2766,7 @@ script:
             :return: The user ID associated with the IP.
             """
             if ent := self.__ents.get(ip):
-                return ent.get('user')
+                return demisto.get(ent, 'user.name')
             return None
 
         def get_host_by_ip(
@@ -2818,11 +2818,14 @@ script:
             :return: The mapping table of users.
             """
             return {
-                user: assign_params(
+                user_name: assign_params(
                     ip=ip,
                     domain=ent.get('domain'),
-                    host=ent.get('host')
-                ) for ip, ent in self.__ents.items() if (user := ent.get('user'))
+                    host=ent.get('host'),
+                    family_name=user.get('family_name'),
+                    given_name=user.get('given_name'),
+                ) for ip, ent in self.__ents.items()
+                if (user := ent.get('user')) and (user_name := user.get('name'))
             }
 
 
@@ -7299,7 +7302,7 @@ script:
                     ".variables": {
                         "user_params": {
                             "type": "eval",
-                            "value": "random.choices([{'n': n, 'user': uid} for n, uid in enumerate(__users)], k=30)"
+                            "value": "random.choices([{'n': n, 'user': user.get('name')} for n, user in enumerate(__users)], k=30)"
                         }
                     },
                     "operation": "log",
@@ -7747,25 +7750,106 @@ script:
         def __build_ip_entries(
         ) -> dict[str, Any]:
             users = [
-                'lsears', 'fmayo', 'mdunlap', 'mhayden', 'twilder',
-                'cmckay', 'mcoffey', 'omccarty', 'jewing', 'jcooley',
-                'tvaughan', 'cbonner', 'acotton', 'jholder', 'rstark',
-                'bferrell', 'lcantrell', 'tfulton', 'llynn', 'dlott',
-                'wcalderon', 'drosa', 'jpollard', 'fhooper', 'lburch',
-                'amullen', 'tfry', 'wriddle', 'glevy', 'ddavid',
-                'gduke', 'jodonnell', 'dguy', 'pmichael', 'dbritt',
-                'dfrederick', 'ldaugherty', 'zberger', 'cdillard', 'halston',
-                'mjarvis', 'vfrye', 'rriggs', 'cchaney', 'godom',
-                'hduffy', 'sfitzpatrick', 'rvalenzuela', 'smerrill', 'rmayer',
-                'lalford', 'bmcpherson', 'racevedo', 'cdonovan', 'tbarrera',
-                'galbert', 'gcote', 'mreilly', 'rcompton', 'rraymond',
-                'bmooney', 'amcgowan', 'ncraft', 'rcleveland', 'lclemons',
-                'ewynn', 'mnielsen', 'rbaird', 'bstanton', 'csnider',
-                'crosales', 'dbright', 'fwitt', 'astuart', 'ehays',
-                'bholden', 'grutledge', 'rkinney', 'mclements', 'rcastaneda',
-                'aslater', 'hhahn', 'jemerson', 'aconrad', 'kburks',
-                'cdelaney', 'cpate', 'elancaster', 'dsweet', 'jjustice',
-                'ntyson', 'jsharpe', 'cwhitfield', 'jtalley', 'fmacias',
+                {'name': 'lsears', 'given_name': 'Leroy', 'family_name': 'Sears'},
+                {'name': 'fmayo', 'given_name': 'Francisco', 'family_name': 'Mayo'},
+                {'name': 'mdunlap', 'given_name': 'Marcus', 'family_name': 'Dunlap'},
+                {'name': 'mhayden', 'given_name': 'Micheal', 'family_name': 'Hayden'},
+                {'name': 'twilder', 'given_name': 'Theodore', 'family_name': 'Wilder'},
+                {'name': 'cmckay', 'given_name': 'Clifford', 'family_name': 'Mckay'},
+                {'name': 'mcoffey', 'given_name': 'Miguel', 'family_name': 'Coffey'},
+                {'name': 'omccarty', 'given_name': 'Oscar', 'family_name': 'Mccarty'},
+                {'name': 'jewing', 'given_name': 'Jay', 'family_name': 'Ewing'},
+                {'name': 'jcooley', 'given_name': 'Jim', 'family_name': 'Cooley'},
+                {'name': 'tvaughan', 'given_name': 'Tom', 'family_name': 'Vaughan'},
+                {'name': 'cbonner', 'given_name': 'Calvin', 'family_name': 'Bonner'},
+                {'name': 'acotton', 'given_name': 'Alex', 'family_name': 'Cotton'},
+                {'name': 'jholder', 'given_name': 'Jon', 'family_name': 'Holder'},
+                {'name': 'rstark', 'given_name': 'Ronnie', 'family_name': 'Stark'},
+                {'name': 'bferrell', 'given_name': 'Bill', 'family_name': 'Ferrell'},
+                {'name': 'lcantrell', 'given_name': 'Lloyd', 'family_name': 'Cantrell'},
+                {'name': 'tfulton', 'given_name': 'Tommy', 'family_name': 'Fulton'},
+                {'name': 'llynn', 'given_name': 'Leon', 'family_name': 'Lynn'},
+                {'name': 'dlott', 'given_name': 'Derek', 'family_name': 'Lott'},
+                {'name': 'wcalderon', 'given_name': 'Warren', 'family_name': 'Calderon'},
+                {'name': 'drosa', 'given_name': 'Darrell', 'family_name': 'Rosa'},
+                {'name': 'jpollard', 'given_name': 'Jerome', 'family_name': 'Pollard'},
+                {'name': 'fhooper', 'given_name': 'Floyd', 'family_name': 'Hooper'},
+                {'name': 'lburch', 'given_name': 'Leo', 'family_name': 'Burch'},
+                {'name': 'amullen', 'given_name': 'Alvin', 'family_name': 'Mullen'},
+                {'name': 'tfry', 'given_name': 'Tim', 'family_name': 'Fry'},
+                {'name': 'wriddle', 'given_name': 'Wesley', 'family_name': 'Riddle'},
+                {'name': 'glevy', 'given_name': 'Gordon', 'family_name': 'Levy'},
+                {'name': 'ddavid', 'given_name': 'Dean', 'family_name': 'David'},
+                {'name': 'gduke', 'given_name': 'Greg', 'family_name': 'Duke'},
+                {'name': 'jodonnell', 'given_name': 'Jorge', 'family_name': 'Odonnell'},
+                {'name': 'dguy', 'given_name': 'Dustin', 'family_name': 'Guy'},
+                {'name': 'pmichael', 'given_name': 'Pedro', 'family_name': 'Michael'},
+                {'name': 'dbritt', 'given_name': 'Derrick', 'family_name': 'Britt'},
+                {'name': 'dfrederick', 'given_name': 'Dan', 'family_name': 'Frederick'},
+                {'name': 'ldaugherty', 'given_name': 'Lewis', 'family_name': 'Daugherty'},
+                {'name': 'zberger', 'given_name': 'Zachary', 'family_name': 'Berger'},
+                {'name': 'cdillard', 'given_name': 'Corey', 'family_name': 'Dillard'},
+                {'name': 'halston', 'given_name': 'Herman', 'family_name': 'Alston'},
+                {'name': 'mjarvis', 'given_name': 'Maurice', 'family_name': 'Jarvis'},
+                {'name': 'vfrye', 'given_name': 'Vernon', 'family_name': 'Frye'},
+                {'name': 'rriggs', 'given_name': 'Roberto', 'family_name': 'Riggs'},
+                {'name': 'cchaney', 'given_name': 'Clyde', 'family_name': 'Chaney'},
+                {'name': 'godom', 'given_name': 'Glen', 'family_name': 'Odom'},
+                {'name': 'hduffy', 'given_name': 'Hector', 'family_name': 'Duffy'},
+                {'name': 'sfitzpatrick', 'given_name': 'Shane', 'family_name': 'Fitzpatrick'},
+                {'name': 'rvalenzuela', 'given_name': 'Ricardo', 'family_name': 'Valenzuela'},
+                {'name': 'smerrill', 'given_name': 'Sam', 'family_name': 'Merrill'},
+                {'name': 'rmayer', 'given_name': 'Rick', 'family_name': 'Mayer'},
+                {'name': 'lalford', 'given_name': 'Lester', 'family_name': 'Alford'},
+                {'name': 'bmcpherson', 'given_name': 'Brent', 'family_name': 'Mcpherson'},
+                {'name': 'racevedo', 'given_name': 'Ramon', 'family_name': 'Acevedo'},
+                {'name': 'cdonovan', 'given_name': 'Charlie', 'family_name': 'Donovan'},
+                {'name': 'tbarrera', 'given_name': 'Tyler', 'family_name': 'Barrera'},
+                {'name': 'galbert', 'given_name': 'Gilbert', 'family_name': 'Albert'},
+                {'name': 'gcote', 'given_name': 'Gene', 'family_name': 'Cote'},
+                {'name': 'mreilly', 'given_name': 'Marc', 'family_name': 'Reilly'},
+                {'name': 'rcompton', 'given_name': 'Reginald', 'family_name': 'Compton'},
+                {'name': 'rraymond', 'given_name': 'Ruben', 'family_name': 'Raymond'},
+                {'name': 'bmooney', 'given_name': 'Brett', 'family_name': 'Mooney'},
+                {'name': 'amcgowan', 'given_name': 'Angel', 'family_name': 'Mcgowan'},
+                {'name': 'ncraft', 'given_name': 'Nathaniel', 'family_name': 'Craft'},
+                {'name': 'rcleveland', 'given_name': 'Rafael', 'family_name': 'Cleveland'},
+                {'name': 'lclemons', 'given_name': 'Leslie', 'family_name': 'Clemons'},
+                {'name': 'ewynn', 'given_name': 'Edgar', 'family_name': 'Wynn'},
+                {'name': 'mnielsen', 'given_name': 'Milton', 'family_name': 'Nielsen'},
+                {'name': 'rbaird', 'given_name': 'Raul', 'family_name': 'Baird'},
+                {'name': 'bstanton', 'given_name': 'Ben', 'family_name': 'Stanton'},
+                {'name': 'csnider', 'given_name': 'Chester', 'family_name': 'Snider'},
+                {'name': 'crosales', 'given_name': 'Cecil', 'family_name': 'Rosales'},
+                {'name': 'dbright', 'given_name': 'Duane', 'family_name': 'Bright'},
+                {'name': 'fwitt', 'given_name': 'Franklin', 'family_name': 'Witt'},
+                {'name': 'astuart', 'given_name': 'Andre', 'family_name': 'Stuart'},
+                {'name': 'ehays', 'given_name': 'Elmer', 'family_name': 'Hays'},
+                {'name': 'bholden', 'given_name': 'Brad', 'family_name': 'Holden'},
+                {'name': 'grutledge', 'given_name': 'Gabriel', 'family_name': 'Rutledge'},
+                {'name': 'rkinney', 'given_name': 'Ron', 'family_name': 'Kinney'},
+                {'name': 'mclements', 'given_name': 'Mitchell', 'family_name': 'Clements'},
+                {'name': 'rcastaneda', 'given_name': 'Roland', 'family_name': 'Castaneda'},
+                {'name': 'aslater', 'given_name': 'Arnold', 'family_name': 'Slater'},
+                {'name': 'hhahn', 'given_name': 'Harvey', 'family_name': 'Hahn'},
+                {'name': 'jemerson', 'given_name': 'Jared', 'family_name': 'Emerson'},
+                {'name': 'aconrad', 'given_name': 'Adrian', 'family_name': 'Conrad'},
+                {'name': 'kburks', 'given_name': 'Karl', 'family_name': 'Burks'},
+                {'name': 'cdelaney', 'given_name': 'Cory', 'family_name': 'Delaney'},
+                {'name': 'cpate', 'given_name': 'Claude', 'family_name': 'Pate'},
+                {'name': 'elancaster', 'given_name': 'Erik', 'family_name': 'Lancaster'},
+                {'name': 'dsweet', 'given_name': 'Darryl', 'family_name': 'Sweet'},
+                {'name': 'jjustice', 'given_name': 'Jamie', 'family_name': 'Justice'},
+                {'name': 'ntyson', 'given_name': 'Neil', 'family_name': 'Tyson'},
+                {'name': 'jsharpe', 'given_name': 'Jessie', 'family_name': 'Sharpe'},
+                {'name': 'cwhitfield', 'given_name': 'Christian', 'family_name': 'Whitfield'},
+                {'name': 'jtalley', 'given_name': 'Javier', 'family_name': 'Talley'},
+                {'name': 'fmacias', 'given_name': 'Fernando', 'family_name': 'Macias'},
+                {'name': 'cirwin', 'given_name': 'Clinton', 'family_name': 'Irwin'},
+                {'name': 'tburris', 'given_name': 'Ted', 'family_name': 'Burris'},
+                {'name': 'mratliff', 'given_name': 'Mathew', 'family_name': 'Ratliff'},
+                {'name': 'tmccray', 'given_name': 'Tyrone', 'family_name': 'Mccray'},
+                {'name': 'dmadden', 'given_name': 'Darren', 'family_name': 'Madden'}
             ]
             return {
                 f'172.16.77.{i}': assign_params(
