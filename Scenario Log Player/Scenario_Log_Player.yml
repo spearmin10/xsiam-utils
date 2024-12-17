@@ -4169,12 +4169,14 @@ script:
                     'http': random.randint(128, 1 * (1024 ** 2)),
                     'https': random.randint(1024, 100 * (1024 ** 2)),
                     'dns': random.randint(256, 512),
+                    'kerberos': random.randint(256, 512),
                 }.get(props.get('app_protocol')) or random.randint(128, 128 * 1024)
 
                 out_bytes = {
                     'http': random.randint(128, 2 * 1024),
                     'https': random.randint(1024, 10 * (1024 ** 2)),
                     'dns': random.randint(128, 256),
+                    'kerberos': random.randint(256, 512),
                 }.get(props.get('app_protocol')) or random.randint(128, 128 * 1024)
 
                 utcnow = datetime.datetime.now(datetime.UTC)
@@ -4321,12 +4323,14 @@ script:
                     'http': random.randint(128, 1 * (1024 ** 2)),
                     'https': random.randint(1024, 100 * (1024 ** 2)),
                     'dns': random.randint(256, 512),
+                    'kerberos': random.randint(256, 512),
                 }.get(props.get('app_protocol')) or random.randint(128, 128 * 1024)
 
                 out_bytes = {
                     'http': random.randint(128, 2 * 1024),
                     'https': random.randint(1024, 10 * (1024 ** 2)),
                     'dns': random.randint(128, 256),
+                    'kerberos': random.randint(256, 512),
                 }.get(props.get('app_protocol')) or random.randint(128, 128 * 1024)
 
                 exts = {
@@ -6872,7 +6876,7 @@ script:
                 ".weights": 0.1
             },
             {
-                "#": "Cooporate Potal",
+                "#": "Corporate Potal",
                 "operation": "internal.outbound",
                 "type": "network",
                 "src": "172.16.77.0/24",
@@ -6944,7 +6948,7 @@ script:
                 "src_host": null,
                 "src_domain": null,
                 "dst": "172.16.77.240",
-                "dst_port": "135, 389, 445",
+                "dst_port": "88, 135, 389, 445",
                 "ip_protocol": "tcp",
                 "fw_action": "allow",
                 ".weights": 250
@@ -7156,14 +7160,61 @@ script:
                 ".interval": "{random.randint(0, 600)}",
                 "sources": {
                     ".variables": {
-                        "x": "{random.randint(1, 199)}"
+                        "src_ip": "172.16.77.{random.randint(1, 199)}",
+                        "ad_ip": "172.16.77.240"
                     },
-                    "operation": "log",
-                    "type": "windows-event-ad",
-                    "src_ip": "172.16.77.{x}",
-                    "dst_host": "slp-ad.corp.panw.lan",
-                    "event_result": "success",
-                    "event_id": 4768
+                    ".next": {
+                        "mode": "sequential",
+                        "sources": [
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "log",
+                                "type": "windows-event-ad",
+                                "src_ip": "{src_ip}",
+                                "dst_host": "slp-ad.corp.panw.lan",
+                                "event_result": "success",
+                                "event_id": 4768
+                            }
+                        ]
+                    }
                 }
             },
             {
@@ -7367,11 +7418,11 @@ script:
                 ".interval": "{random.randint(7200, 14400)}",
                 "sources": {
                     ".variables": {
-                        "x": "{random.randint(1, 199)}"
+                        "src_ip": "172.16.77.{random.randint(1, 199)}"
                     },
                     "operation": "internal.outbound",
                     "type": "network",
-                    "src": "172.16.77.{x}",
+                    "src": "{src_ip}",
                     "src_user": null,
                     "src_host": null,
                     "src_domain": null,
