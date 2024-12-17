@@ -2822,6 +2822,7 @@ script:
                     ip=ip,
                     domain=ent.get('domain'),
                     host=ent.get('host'),
+                    name=user_name,
                     family_name=user.get('family_name'),
                     given_name=user.get('given_name'),
                 ) for ip, ent in self.__ents.items()
