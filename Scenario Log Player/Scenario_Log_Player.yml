@@ -2585,7 +2585,7 @@ script:
         """ Variables
         """
         @staticmethod
-        def __eval_str(
+        def __eval_fstr(
             value: Any,
             gvars: dict[str, Any] | None,
             lvars: dict[str, Any] | None,
@@ -2596,8 +2596,45 @@ script:
                     gvars,
                     lvars
                 )
+            elif isinstance(value, dict):
+                return {k: Variables.__eval_fstr(v, gvars, lvars) for k, v in value.items()}
+            elif isinstance(value, list):
+                return [Variables.__eval_fstr(v, gvars, lvars) for v in value]
             else:
                 return value
+
+        @staticmethod
+        def __eval_eval(
+            value: Any,
+            gvars: dict[str, Any] | None,
+            lvars: dict[str, Any] | None,
+        ) -> Any:
+            if isinstance(value, str):
+                return eval(value, gvars, lvars)
+            elif isinstance(value, dict):
+                return {k: Variables.__eval_eval(v, gvars, lvars) for k, v in value.items()}
+            elif isinstance(value, list):
+                return [Variables.__eval_eval(v, gvars, lvars) for v in value]
+            else:
+                return value
+
+        @staticmethod
+        def __eval_val(
+            value: Any,
+            gvars: dict[str, Any] | None,
+            lvars: dict[str, Any] | None,
+        ) -> Any:
+            v = value if isinstance(value, dict) else {'value': value}
+            vtype = v.get('type') or 'f-string'
+            value = v.get('value')
+            if vtype == 'f-string':
+                return Variables.__eval_fstr(value, gvars, lvars)
+            elif vtype == 'eval':
+                return Variables.__eval_eval(value, gvars, lvars)
+            elif vtype == 'raw':
+                return value
+            else:
+                raise DemistoException(f'Invalid variable type - {vtype}')
 
         @staticmethod
         def __eval(
@@ -2610,20 +2647,7 @@ script:
 
             lvars = dict(lvars or {})
             for k, v in nvars.items():
-                v = v if isinstance(v, dict) else {'value': v}
-                vtype = v.get('type') or 'f-string'
-                vval = v.get('value')
-                if vtype == 'f-string':
-                    lvars[k] = Variables.__eval_str(vval, gvars, lvars)
-                elif vtype == 'raw':
-                    lvars[k] = vval
-                elif vtype == 'eval':
-                    if isinstance(vval, str):
-                        lvars[k] = eval(vval, gvars, lvars)
-                    else:
-                        lvars[k] = vval
-                else:
-                    raise DemistoException(f'Invalid variable type - {vtype}')
+                lvars[k] = Variables.__eval_val(v, gvars, lvars)
             return lvars
 
         def __init__(
@@ -2659,7 +2683,16 @@ script:
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_str(value, self.__gvars, self.__lvars)
+            if isinstance(value, str):
+                return Variables.__eval_fstr(value, self.__gvars, self.__lvars)
+            else:
+                return value
+
+        def eval_val(
+            self,
+            value: Any,
+        ) -> Any:
+            return Variables.__eval_eval(value, self.__gvars, self.__lvars)
 
         def get_value(
             self,
@@ -5221,12 +5254,15 @@ script:
         def __init__(
             self,
             settings: Settings,
+            variables: Variables,
         ) -> None:
             """ Initialize the instance
 
             :param settings: The instance settings.
+            :param variables: The variables.
             """
             self.__settings = settings
+            self.__variables = variables
             self.__preferred_syslog_header = settings.syslog_preferred_headers.get('custom') or None
 
         def generate(
@@ -5234,7 +5270,7 @@ script:
             props: dict[str, Any]
         ) -> Iterator[LogEncoder]:
             log_format = (props.get('log_format') or 'cef').lower()
-            if log_format not in ('raw', 'cef', 'json'):
+            if log_format not in ('raw', 'cef', 'json', 'eval'):
                 raise DemistoException(f'Invalid log format - {log_format}')
 
             log_params_list = props.get('log_params') or (
@@ -5247,6 +5283,8 @@ script:
                 if log_format == 'raw':
                     if not isinstance(log_params, str):
                         log_params = json.dumps(log_params)
+                elif log_format == 'eval':
+                    log_params = self.__variables.eval_val(log_params)
 
                 yield LogEncoder(
                     settings=self.__settings,
@@ -5767,7 +5805,7 @@ script:
             """ Initialize the template by replacing variables in the template except for keys starting with '.'
 
             :param template: The source template.
-            :param variables: The variables for .
+            :param variables: The variables.
             """
             self.__template = Template.__eval(template, variables)
             self.__variables = variables
@@ -6897,13 +6935,13 @@ script:
                         "resp_content_type": "text/html; charset=UTF-8"
                     },
                     "dst": [
-                        "http://portal.corp.panw.lan/",
-                        "http://portal.corp.panw.lan/index.html",
-                        "http://portal.corp.panw.lan/product",
-                        "http://portal.corp.panw.lan/calendar",
-                        "http://portal.corp.panw.lan/contact",
+                        "http://portal.corp.cortex.lan/",
+                        "http://portal.corp.cortex.lan/index.html",
+                        "http://portal.corp.cortex.lan/product",
+                        "http://portal.corp.cortex.lan/calendar",
+                        "http://portal.corp.cortex.lan/contact",
                         {
-                            "url": "https://portal.corp.panw.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
+                            "url": "https://portal.corp.cortex.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
                             "resp_status": "{random.choices([200, 304, 404], weights=[10, 50, 2])[0]}",
                             ".weights": 100
                         }
@@ -7209,7 +7247,7 @@ script:
                                 "operation": "log",
                                 "type": "windows-event-ad",
                                 "src_ip": "{src_ip}",
-                                "dst_host": "slp-ad.corp.panw.lan",
+                                "dst_host": "slp-ad.corp.cortex.lan",
                                 "event_result": "success",
                                 "event_id": 4768
                             }
@@ -7732,7 +7770,7 @@ script:
             return {
                 f'172.16.77.{i}': assign_params(
                     host=f'SLP-{i:04}',
-                    domain='corp.panw.lan',
+                    domain='corp.cortex.lan',
                     user=user,
                 ) for i, user in itertools.zip_longest(range(1, 201), users)
             }
@@ -7818,17 +7856,17 @@ script:
                     'ngfw': {
                         'product': 'ngfw',
                         'ip': '172.16.77.251',
-                        'fqdn': 'ngdw.corp.panw.lan'
+                        'fqdn': 'ngdw.corp.cortex.lan'
                     },
                     'checkpoint-fw': {
                         'product': 'checkpoint-fw',
                         'ip': '172.16.77.252',
-                        'fqdn': 'checkpoint.corp.panw.lan'
+                        'fqdn': 'checkpoint.corp.cortex.lan'
                     },
                     'fortigate': {
                         'product': 'fortigate',
                         'ip': '172.16.77.253',
-                        'fqdn': 'fortigate.corp.panw.lan'
+                        'fqdn': 'fortigate.corp.cortex.lan'
                     }
                 }.get(name):
                     self.__internal_tap.append(service)
@@ -7852,7 +7890,7 @@ script:
                 'product': 'squid',
                 'ip': '172.16.77.250',
                 'port': 8080,
-                'fqdn': 'squid.corp.panw.lan',
+                'fqdn': 'squid.corp.cortex.lan',
                 'protocol': ['http', 'https'],
                 'proxy': {
                     'rule': {
@@ -7884,7 +7922,7 @@ script:
                 'product': 'apache-httpd',
                 'ip': '172.16.78.10',
                 'port': [80, 443],
-                'fqdn': 'apache-httpd.corp.panw.lan',
+                'fqdn': 'apache-httpd.corp.cortex.lan',
                 'apache-httpd': {
                     'log_format': log_formats
                 }
@@ -7899,7 +7937,7 @@ script:
                 'product': 'bind',
                 'ip': '172.16.78.2',
                 'port': 53,
-                'fqdn': 'bind.corp.panw.lan',
+                'fqdn': 'bind.corp.cortex.lan',
                 'dns': {
                     'forwarder': '202.12.27.33'
                 }
@@ -7913,7 +7951,7 @@ script:
             self.__internal_dhcp_windows = {
                 'product': 'windows-dhcp',
                 'ip': '172.16.77.240',
-                'fqdn': 'win-dhcp.corp.panw.lan'
+                'fqdn': 'win-dhcp.corp.cortex.lan'
             }
 
         def set_external_tap(
@@ -8646,7 +8684,7 @@ script:
                         case 'custom':
                             if props := await self.__props_generator.generate(template.template):
                                 await self.__generate_and_send_log(
-                                    [CustomLogGenerator(self.__settings)],
+                                    [CustomLogGenerator(self.__settings, self.__variables)],
                                     props
                                 )
 
