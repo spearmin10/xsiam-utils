@@ -7303,7 +7303,7 @@ script:
                     ".variables": {
                         "user_params": {
                             "type": "eval",
-                            "value": "random.choices([{'n': n, 'user': name} for n, user in enumerate(__users)], k=30)"
+                            "value": "random.choices([{'n': n, 'user': user} for n, user in enumerate(__users)], k=30)"
                         }
                     },
                     "operation": "log",
