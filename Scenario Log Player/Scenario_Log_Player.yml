@@ -5716,7 +5716,7 @@ script:
                 ),
                 'src_user': (
                     template.get('src_user') or
-                    self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip')) or ''
+                    self.__ip_ents.get_user_id_by_ip(props.get('src_ip')) or ''
                 ),
             })
             return props
