@@ -7550,9 +7550,10 @@ script:
                         "type": "eval",
                         "value": "random.choice(list(__users.values()))"
                     },
+                    "sender_domain": "{sender.get('internal_domain', '')}",
                     "sender_account_name": "{sender.get('name', '')}",
                     "sender_display_name": "{sender.get('family_name', '').title()}, {sender.get('given_name', '').title()}",
-                    "sender_email_address": "{sender_account_name}@{sender.get('internal_domain', '')}",
+                    "sender_email_address": "{sender_account_name}@{sender_domain}",
 
                     "internetmessageid": "<{''.join(random.choices(string.ascii_uppercase + string.digits, k=32))}@{sender_domain}>",
                     "internetmessageheaders": [
