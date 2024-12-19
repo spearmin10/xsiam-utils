@@ -407,6 +407,7 @@ script:
     import enum
     import queue
     import socket
+    import base64
     import string
     import random
     import hashlib
@@ -2688,6 +2689,18 @@ script:
             else:
                 return value
 
+        def eval_fstr(
+            self,
+            value: Any,
+        ) -> Any:
+            return Variables.__eval_fstr(value, self.__gvars, self.__lvars)
+
+        def eval_eval(
+            self,
+            value: Any,
+        ) -> Any:
+            return Variables.__eval_eval(value, self.__gvars, self.__lvars)
+
         def eval_val(
             self,
             value: Any,
@@ -2732,7 +2745,7 @@ script:
         """
         def __init__(
             self,
-            entries: dict[str, dict[str, str]] = None,
+            entries: dict[str, dict[str, Any]] = None,
         ) -> None:
             """ Initialize the instance
 
@@ -2748,7 +2761,7 @@ script:
 
         def update(
             self,
-            entries: dict[str, dict[str, str]] = None,
+            entries: dict[str, dict[str, Any]] = None,
         ) -> None:
             """ Add and update with new IP entries
 
@@ -2782,31 +2795,31 @@ script:
                 return ent.get('host')
             return None
 
-        def get_domain_by_ip(
+        def get_internal_domain_by_ip(
             self,
             ip: str | None
         ) -> str | None:
-            """ Get the domain name associated with the IP
+            """ Get the internal domain name associated with the IP
 
             :param ip: An IP address.
-            :return: The domain name associated with the IP.
+            :return: The internal domain name associated with the IP.
             """
             if ent := self.__ents.get(ip):
-                return ent.get('domain')
+                return demisto.get(ent, 'domain.internal')
             return None
 
-        def get_fqdn_by_ip(
+        def get_internal_fqdn_by_ip(
             self,
             ip: str | None
         ) -> str | None:
-            """ Get the FQDN associated with the IP
+            """ Get the FQDN of the internal host associated with the IP
 
             :param ip: An IP address.
             :return: The FQDN associated with the IP.
             """
             if ent := self.__ents.get(ip):
                 if host := ent.get('host'):
-                    if domain := ent.get('domain'):
+                    if domain := demisto.get(ent, 'domain.internal'):
                         return f'{host}.{domain}'
             return None
 
@@ -2817,17 +2830,20 @@ script:
 
             :return: The mapping table of users.
             """
-            return {
-                user_name: assign_params(
-                    ip=ip,
-                    domain=ent.get('domain'),
-                    host=ent.get('host'),
-                    name=user_name,
-                    family_name=user.get('family_name'),
-                    given_name=user.get('given_name'),
-                ) for ip, ent in self.__ents.items()
-                if (user := ent.get('user')) and (user_name := user.get('name'))
-            }
+            users = {}
+            for ip, ent in self.__ents.items():
+                if user := ent.get('user'):
+                    if name := user.get('name'):
+                        users[name] = assign_params(
+                            ip=ip,
+                            host=ent.get('host'),
+                            internal_domain=demisto.get(ent, 'domain.internal'),
+                            external_domain=demisto.get(ent, 'domain.external'),
+                            name=name,
+                            family_name=user.get('family_name'),
+                            given_name=user.get('given_name'),
+                        )
+            return users
 
 
     class AsyncHttpClient:
@@ -5274,7 +5290,7 @@ script:
             props: dict[str, Any]
         ) -> Iterator[LogEncoder]:
             log_format = (props.get('log_format') or 'cef').lower()
-            if log_format not in ('raw', 'cef', 'json', 'eval'):
+            if log_format not in ('raw', 'cef', 'json'):
                 raise DemistoException(f'Invalid log format - {log_format}')
 
             log_params_list = props.get('log_params') or (
@@ -5287,8 +5303,6 @@ script:
                 if log_format == 'raw':
                     if not isinstance(log_params, str):
                         log_params = json.dumps(log_params)
-                elif log_format == 'eval':
-                    log_params = self.__variables.eval_val(log_params)
 
                 yield LogEncoder(
                     settings=self.__settings,
@@ -5569,7 +5583,7 @@ script:
                     if 'src_user' in template else None
                 ),
                 src_domain=(
-                    template.get('src_domain') or self.__ip_ents.get_domain_by_ip(props.get('src_ip'))
+                    template.get('src_domain') or self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip'))
                     if 'src_domain' in template else None
                 ),
                 src_host=(
@@ -5581,7 +5595,7 @@ script:
                     if 'dst_user' in template else None
                 ),
                 dst_domain=(
-                    template.get('dst_domain') or self.__ip_ents.get_domain_by_ip(props.get('dst_ip'))
+                    template.get('dst_domain') or self.__ip_ents.get_internal_domain_by_ip(props.get('dst_ip'))
                     if 'dst_domain' in template else None
                 ),
                 dst_host=(
@@ -5620,7 +5634,7 @@ script:
             }
             props['src_fqdn'] = (
                 template.get('src_fqdn') or
-                self.__ip_ents.get_fqdn_by_ip(props.get('src_ip'))
+                self.__ip_ents.get_internal_fqdn_by_ip(props.get('src_ip'))
             )
             props.update(assign_params(
                 src_user=(
@@ -5698,11 +5712,11 @@ script:
             props.update({
                 'src_domain': (
                     template.get('src_domain') or
-                    self.__ip_ents.get_domain_by_ip(props.get('src_ip')) or ''
+                    self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip')) or ''
                 ),
                 'src_user': (
                     template.get('src_user') or
-                    self.__ip_ents.get_user_id_by_ip(props.get('src_ip')) or ''
+                    self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip')) or ''
                 ),
             })
             return props
@@ -5782,20 +5796,49 @@ script:
         def __eval(
             value: Any,
             variables: Variables,
+            eval_types: dict[str, str] = {},
+            path: str = '',
         ) -> Any:
             """ Run eval() for the value
 
             :param value: The value.
             :param variables: The local variables for eval().
+            :param eval_types: How it evaluates a value for each node path.
+            :patam path: The current path from the root node.
             :return The output value from eval().
             """
+            if method := eval_types.get(path):
+                if method == 'f-string':
+                    return variables.eval_fstr(value)
+                elif method == 'eval':
+                    return variables.eval_eval(value)
+                elif method == 'raw':
+                    return value
+                else:
+                    raise DemistoException(f'Invalid evaluation type - {method}')
+
             if isinstance(value, dict):
                 return {
-                    k: v if k.startswith('.') else Template.__eval(v, variables)
+                    k: v
+                        if k.startswith('.')
+                        else Template.__eval(
+                            value=v,
+                            variables=variables,
+                            eval_types=eval_types,
+                            path='.'.join(filter(None, [path, k])),
+                        )
                     for k, v in value.items()
                 }
             elif isinstance(value, list):
-                return [Template.__eval(v, variables) for v in value]
+                return [
+                    Template.__eval(
+                        value=v,
+                        variables=variables,
+                        eval_types=eval_types,
+                        path=path,
+                    )
+                    for v in value
+                ]
             elif isinstance(value, str):
                 return variables.eval_str(value)
             else:
@@ -5811,7 +5854,11 @@ script:
             :param template: The source template.
             :param variables: The variables.
             """
-            self.__template = Template.__eval(template, variables)
+            self.__template = Template.__eval(
+                value=template,
+                variables=variables,
+                eval_types=template.get('.eval') or {},
+            )
             self.__variables = variables
 
         @property
@@ -7751,111 +7798,120 @@ script:
         def __build_ip_entries(
         ) -> dict[str, Any]:
             users = [
-                {'name': 'lsears', 'given_name': 'Leroy', 'family_name': 'Sears'},
-                {'name': 'fmayo', 'given_name': 'Francisco', 'family_name': 'Mayo'},
-                {'name': 'mdunlap', 'given_name': 'Marcus', 'family_name': 'Dunlap'},
-                {'name': 'mhayden', 'given_name': 'Micheal', 'family_name': 'Hayden'},
-                {'name': 'twilder', 'given_name': 'Theodore', 'family_name': 'Wilder'},
-                {'name': 'cmckay', 'given_name': 'Clifford', 'family_name': 'Mckay'},
-                {'name': 'mcoffey', 'given_name': 'Miguel', 'family_name': 'Coffey'},
-                {'name': 'omccarty', 'given_name': 'Oscar', 'family_name': 'Mccarty'},
-                {'name': 'jewing', 'given_name': 'Jay', 'family_name': 'Ewing'},
-                {'name': 'jcooley', 'given_name': 'Jim', 'family_name': 'Cooley'},
-                {'name': 'tvaughan', 'given_name': 'Tom', 'family_name': 'Vaughan'},
-                {'name': 'cbonner', 'given_name': 'Calvin', 'family_name': 'Bonner'},
-                {'name': 'acotton', 'given_name': 'Alex', 'family_name': 'Cotton'},
-                {'name': 'jholder', 'given_name': 'Jon', 'family_name': 'Holder'},
-                {'name': 'rstark', 'given_name': 'Ronnie', 'family_name': 'Stark'},
-                {'name': 'bferrell', 'given_name': 'Bill', 'family_name': 'Ferrell'},
-                {'name': 'lcantrell', 'given_name': 'Lloyd', 'family_name': 'Cantrell'},
-                {'name': 'tfulton', 'given_name': 'Tommy', 'family_name': 'Fulton'},
-                {'name': 'llynn', 'given_name': 'Leon', 'family_name': 'Lynn'},
-                {'name': 'dlott', 'given_name': 'Derek', 'family_name': 'Lott'},
-                {'name': 'wcalderon', 'given_name': 'Warren', 'family_name': 'Calderon'},
-                {'name': 'drosa', 'given_name': 'Darrell', 'family_name': 'Rosa'},
-                {'name': 'jpollard', 'given_name': 'Jerome', 'family_name': 'Pollard'},
-                {'name': 'fhooper', 'given_name': 'Floyd', 'family_name': 'Hooper'},
-                {'name': 'lburch', 'given_name': 'Leo', 'family_name': 'Burch'},
-                {'name': 'amullen', 'given_name': 'Alvin', 'family_name': 'Mullen'},
-                {'name': 'tfry', 'given_name': 'Tim', 'family_name': 'Fry'},
-                {'name': 'wriddle', 'given_name': 'Wesley', 'family_name': 'Riddle'},
-                {'name': 'glevy', 'given_name': 'Gordon', 'family_name': 'Levy'},
-                {'name': 'ddavid', 'given_name': 'Dean', 'family_name': 'David'},
-                {'name': 'gduke', 'given_name': 'Greg', 'family_name': 'Duke'},
-                {'name': 'jodonnell', 'given_name': 'Jorge', 'family_name': 'Odonnell'},
-                {'name': 'dguy', 'given_name': 'Dustin', 'family_name': 'Guy'},
-                {'name': 'pmichael', 'given_name': 'Pedro', 'family_name': 'Michael'},
-                {'name': 'dbritt', 'given_name': 'Derrick', 'family_name': 'Britt'},
-                {'name': 'dfrederick', 'given_name': 'Dan', 'family_name': 'Frederick'},
-                {'name': 'ldaugherty', 'given_name': 'Lewis', 'family_name': 'Daugherty'},
-                {'name': 'zberger', 'given_name': 'Zachary', 'family_name': 'Berger'},
-                {'name': 'cdillard', 'given_name': 'Corey', 'family_name': 'Dillard'},
-                {'name': 'halston', 'given_name': 'Herman', 'family_name': 'Alston'},
-                {'name': 'mjarvis', 'given_name': 'Maurice', 'family_name': 'Jarvis'},
-                {'name': 'vfrye', 'given_name': 'Vernon', 'family_name': 'Frye'},
-                {'name': 'rriggs', 'given_name': 'Roberto', 'family_name': 'Riggs'},
-                {'name': 'cchaney', 'given_name': 'Clyde', 'family_name': 'Chaney'},
-                {'name': 'godom', 'given_name': 'Glen', 'family_name': 'Odom'},
-                {'name': 'hduffy', 'given_name': 'Hector', 'family_name': 'Duffy'},
-                {'name': 'sfitzpatrick', 'given_name': 'Shane', 'family_name': 'Fitzpatrick'},
-                {'name': 'rvalenzuela', 'given_name': 'Ricardo', 'family_name': 'Valenzuela'},
-                {'name': 'smerrill', 'given_name': 'Sam', 'family_name': 'Merrill'},
-                {'name': 'rmayer', 'given_name': 'Rick', 'family_name': 'Mayer'},
-                {'name': 'lalford', 'given_name': 'Lester', 'family_name': 'Alford'},
-                {'name': 'bmcpherson', 'given_name': 'Brent', 'family_name': 'Mcpherson'},
-                {'name': 'racevedo', 'given_name': 'Ramon', 'family_name': 'Acevedo'},
-                {'name': 'cdonovan', 'given_name': 'Charlie', 'family_name': 'Donovan'},
-                {'name': 'tbarrera', 'given_name': 'Tyler', 'family_name': 'Barrera'},
-                {'name': 'galbert', 'given_name': 'Gilbert', 'family_name': 'Albert'},
-                {'name': 'gcote', 'given_name': 'Gene', 'family_name': 'Cote'},
-                {'name': 'mreilly', 'given_name': 'Marc', 'family_name': 'Reilly'},
-                {'name': 'rcompton', 'given_name': 'Reginald', 'family_name': 'Compton'},
-                {'name': 'rraymond', 'given_name': 'Ruben', 'family_name': 'Raymond'},
-                {'name': 'bmooney', 'given_name': 'Brett', 'family_name': 'Mooney'},
-                {'name': 'amcgowan', 'given_name': 'Angel', 'family_name': 'Mcgowan'},
-                {'name': 'ncraft', 'given_name': 'Nathaniel', 'family_name': 'Craft'},
-                {'name': 'rcleveland', 'given_name': 'Rafael', 'family_name': 'Cleveland'},
-                {'name': 'lclemons', 'given_name': 'Leslie', 'family_name': 'Clemons'},
-                {'name': 'ewynn', 'given_name': 'Edgar', 'family_name': 'Wynn'},
-                {'name': 'mnielsen', 'given_name': 'Milton', 'family_name': 'Nielsen'},
-                {'name': 'rbaird', 'given_name': 'Raul', 'family_name': 'Baird'},
-                {'name': 'bstanton', 'given_name': 'Ben', 'family_name': 'Stanton'},
-                {'name': 'csnider', 'given_name': 'Chester', 'family_name': 'Snider'},
-                {'name': 'crosales', 'given_name': 'Cecil', 'family_name': 'Rosales'},
-                {'name': 'dbright', 'given_name': 'Duane', 'family_name': 'Bright'},
-                {'name': 'fwitt', 'given_name': 'Franklin', 'family_name': 'Witt'},
-                {'name': 'astuart', 'given_name': 'Andre', 'family_name': 'Stuart'},
-                {'name': 'ehays', 'given_name': 'Elmer', 'family_name': 'Hays'},
-                {'name': 'bholden', 'given_name': 'Brad', 'family_name': 'Holden'},
-                {'name': 'grutledge', 'given_name': 'Gabriel', 'family_name': 'Rutledge'},
-                {'name': 'rkinney', 'given_name': 'Ron', 'family_name': 'Kinney'},
-                {'name': 'mclements', 'given_name': 'Mitchell', 'family_name': 'Clements'},
-                {'name': 'rcastaneda', 'given_name': 'Roland', 'family_name': 'Castaneda'},
-                {'name': 'aslater', 'given_name': 'Arnold', 'family_name': 'Slater'},
-                {'name': 'hhahn', 'given_name': 'Harvey', 'family_name': 'Hahn'},
-                {'name': 'jemerson', 'given_name': 'Jared', 'family_name': 'Emerson'},
-                {'name': 'aconrad', 'given_name': 'Adrian', 'family_name': 'Conrad'},
-                {'name': 'kburks', 'given_name': 'Karl', 'family_name': 'Burks'},
-                {'name': 'cdelaney', 'given_name': 'Cory', 'family_name': 'Delaney'},
-                {'name': 'cpate', 'given_name': 'Claude', 'family_name': 'Pate'},
-                {'name': 'elancaster', 'given_name': 'Erik', 'family_name': 'Lancaster'},
-                {'name': 'dsweet', 'given_name': 'Darryl', 'family_name': 'Sweet'},
-                {'name': 'jjustice', 'given_name': 'Jamie', 'family_name': 'Justice'},
-                {'name': 'ntyson', 'given_name': 'Neil', 'family_name': 'Tyson'},
-                {'name': 'jsharpe', 'given_name': 'Jessie', 'family_name': 'Sharpe'},
-                {'name': 'cwhitfield', 'given_name': 'Christian', 'family_name': 'Whitfield'},
-                {'name': 'jtalley', 'given_name': 'Javier', 'family_name': 'Talley'},
-                {'name': 'fmacias', 'given_name': 'Fernando', 'family_name': 'Macias'},
-                {'name': 'cirwin', 'given_name': 'Clinton', 'family_name': 'Irwin'},
-                {'name': 'tburris', 'given_name': 'Ted', 'family_name': 'Burris'},
-                {'name': 'mratliff', 'given_name': 'Mathew', 'family_name': 'Ratliff'},
-                {'name': 'tmccray', 'given_name': 'Tyrone', 'family_name': 'Mccray'},
-                {'name': 'dmadden', 'given_name': 'Darren', 'family_name': 'Madden'}
+                {
+                    'name': given_name[:1] + family_name,
+                    'given_name': given_name,
+                    'family_name': family_name,
+                } for given_name, family_name in [
+                    ('leroy', 'sears'),
+                    ('francisco', 'mayo'),
+                    ('marcus', 'dunlap'),
+                    ('micheal', 'hayden'),
+                    ('theodore', 'wilder'),
+                    ('clifford', 'mckay'),
+                    ('miguel', 'coffey'),
+                    ('oscar', 'mccarty'),
+                    ('jay', 'ewing'),
+                    ('jim', 'cooley'),
+                    ('tom', 'vaughan'),
+                    ('calvin', 'bonner'),
+                    ('alex', 'cotton'),
+                    ('jon', 'holder'),
+                    ('ronnie', 'stark'),
+                    ('bill', 'ferrell'),
+                    ('lloyd', 'cantrell'),
+                    ('tommy', 'fulton'),
+                    ('leon', 'lynn'),
+                    ('derek', 'lott'),
+                    ('warren', 'calderon'),
+                    ('darrell', 'rosa'),
+                    ('jerome', 'pollard'),
+                    ('floyd', 'hooper'),
+                    ('leo', 'burch'),
+                    ('alvin', 'mullen'),
+                    ('tim', 'fry'),
+                    ('wesley', 'riddle'),
+                    ('gordon', 'levy'),
+                    ('dean', 'david'),
+                    ('greg', 'duke'),
+                    ('jorge', 'odonnell'),
+                    ('dustin', 'guy'),
+                    ('pedro', 'michael'),
+                    ('derrick', 'britt'),
+                    ('dan', 'frederick'),
+                    ('lewis', 'daugherty'),
+                    ('zachary', 'berger'),
+                    ('corey', 'dillard'),
+                    ('herman', 'alston'),
+                    ('maurice', 'jarvis'),
+                    ('vernon', 'frye'),
+                    ('roberto', 'riggs'),
+                    ('clyde', 'chaney'),
+                    ('glen', 'odom'),
+                    ('hector', 'duffy'),
+                    ('shane', 'fitzpatrick'),
+                    ('ricardo', 'valenzuela'),
+                    ('sam', 'merrill'),
+                    ('rick', 'mayer'),
+                    ('lester', 'alford'),
+                    ('brent', 'mcpherson'),
+                    ('ramon', 'acevedo'),
+                    ('charlie', 'donovan'),
+                    ('tyler', 'barrera'),
+                    ('gilbert', 'albert'),
+                    ('gene', 'cote'),
+                    ('marc', 'reilly'),
+                    ('reginald', 'compton'),
+                    ('ruben', 'raymond'),
+                    ('brett', 'mooney'),
+                    ('angel', 'mcgowan'),
+                    ('nathaniel', 'craft'),
+                    ('rafael', 'cleveland'),
+                    ('leslie', 'clemons'),
+                    ('edgar', 'wynn'),
+                    ('milton', 'nielsen'),
+                    ('raul', 'baird'),
+                    ('ben', 'stanton'),
+                    ('chester', 'snider'),
+                    ('cecil', 'rosales'),
+                    ('duane', 'bright'),
+                    ('franklin', 'witt'),
+                    ('andre', 'stuart'),
+                    ('elmer', 'hays'),
+                    ('brad', 'holden'),
+                    ('gabriel', 'rutledge'),
+                    ('ron', 'kinney'),
+                    ('mitchell', 'clements'),
+                    ('roland', 'castaneda'),
+                    ('arnold', 'slater'),
+                    ('harvey', 'hahn'),
+                    ('jared', 'emerson'),
+                    ('adrian', 'conrad'),
+                    ('karl', 'burks'),
+                    ('cory', 'delaney'),
+                    ('claude', 'pate'),
+                    ('erik', 'lancaster'),
+                    ('darryl', 'sweet'),
+                    ('jamie', 'justice'),
+                    ('neil', 'tyson'),
+                    ('jessie', 'sharpe'),
+                    ('christian', 'whitfield'),
+                    ('javier', 'talley'),
+                    ('fernando', 'macias'),
+                    ('clinton', 'irwin'),
+                    ('ted', 'burris'),
+                    ('mathew', 'ratliff'),
+                    ('tyrone', 'mccray'),
+                    ('darren', 'madden'),
+                ]
             ]
             return {
                 f'172.16.77.{i}': assign_params(
                     host=f'SLP-{i:04}',
-                    domain='corp.cortex.lan',
+                    domain={
+                        'internal': 'corp.cortex.lan',
+                        'external': 'cortex.corp',
+                    },
                     user=user,
                 ) for i, user in itertools.zip_longest(range(1, 201), users)
             }
@@ -8769,7 +8825,7 @@ script:
                         case 'custom':
                             if props := await self.__props_generator.generate(template.template):
                                 await self.__generate_and_send_log(
-                                    [CustomLogGenerator(self.__settings, self.__variables)],
+                                    [CustomLogGenerator(self.__settings, template.variables)],
                                     props
                                 )
 
