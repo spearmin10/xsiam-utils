@@ -6986,13 +6986,13 @@ script:
                         "resp_content_type": "text/html; charset=UTF-8"
                     },
                     "dst": [
-                        "http://portal.corp.cortex.lan/",
-                        "http://portal.corp.cortex.lan/index.html",
-                        "http://portal.corp.cortex.lan/product",
-                        "http://portal.corp.cortex.lan/calendar",
-                        "http://portal.corp.cortex.lan/contact",
+                        "http://portal.cortex.lan/",
+                        "http://portal.cortex.lan/index.html",
+                        "http://portal.cortex.lan/product",
+                        "http://portal.cortex.lan/calendar",
+                        "http://portal.cortex.lan/contact",
                         {
-                            "url": "https://portal.corp.cortex.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
+                            "url": "https://portal.cortex.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
                             "resp_status": "{random.choices([200, 304, 404], weights=[10, 50, 2])[0]}",
                             ".weights": 100
                         }
@@ -7298,7 +7298,7 @@ script:
                                 "operation": "log",
                                 "type": "windows-event-ad",
                                 "src_ip": "{src_ip}",
-                                "dst_host": "slp-ad.corp.cortex.lan",
+                                "dst_host": "slp-ad.cortex.lan",
                                 "event_result": "success",
                                 "event_id": 4768
                             }
@@ -7909,7 +7909,7 @@ script:
                 f'172.16.77.{i}': assign_params(
                     host=f'SLP-{i:04}',
                     domain={
-                        'internal': 'corp.cortex.lan',
+                        'internal': 'cortex.lan',
                         'external': 'cortex.corp',
                     },
                     user=user,
@@ -7997,17 +7997,17 @@ script:
                     'ngfw': {
                         'product': 'ngfw',
                         'ip': '172.16.77.251',
-                        'fqdn': 'ngdw.corp.cortex.lan'
+                        'fqdn': 'ngdw.cortex.lan'
                     },
                     'checkpoint-fw': {
                         'product': 'checkpoint-fw',
                         'ip': '172.16.77.252',
-                        'fqdn': 'checkpoint.corp.cortex.lan'
+                        'fqdn': 'checkpoint.cortex.lan'
                     },
                     'fortigate': {
                         'product': 'fortigate',
                         'ip': '172.16.77.253',
-                        'fqdn': 'fortigate.corp.cortex.lan'
+                        'fqdn': 'fortigate.cortex.lan'
                     }
                 }.get(name):
                     self.__internal_tap.append(service)
@@ -8031,7 +8031,7 @@ script:
                 'product': 'squid',
                 'ip': '172.16.77.250',
                 'port': 8080,
-                'fqdn': 'squid.corp.cortex.lan',
+                'fqdn': 'squid.cortex.lan',
                 'protocol': ['http', 'https'],
                 'proxy': {
                     'rule': {
@@ -8063,7 +8063,7 @@ script:
                 'product': 'apache-httpd',
                 'ip': '172.16.78.10',
                 'port': [80, 443],
-                'fqdn': 'apache-httpd.corp.cortex.lan',
+                'fqdn': 'apache-httpd.cortex.lan',
                 'apache-httpd': {
                     'log_format': log_formats
                 }
@@ -8078,7 +8078,7 @@ script:
                 'product': 'bind',
                 'ip': '172.16.78.2',
                 'port': 53,
-                'fqdn': 'bind.corp.cortex.lan',
+                'fqdn': 'bind.cortex.lan',
                 'dns': {
                     'forwarder': '202.12.27.33'
                 }
@@ -8092,7 +8092,7 @@ script:
             self.__internal_dhcp_windows = {
                 'product': 'windows-dhcp',
                 'ip': '172.16.77.240',
-                'fqdn': 'win-dhcp.corp.cortex.lan'
+                'fqdn': 'win-dhcp.cortex.lan'
             }
 
         def set_external_tap(
