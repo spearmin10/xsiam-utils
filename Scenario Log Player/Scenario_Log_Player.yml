@@ -3089,10 +3089,10 @@ script:
         def __encode_cef_header(
             val: Any
         ) -> str:
-            if isinstance(val, (list, dict)):
+            if val is None:
+                val = ''
+            elif not isinstance(val, str):
                 val = json.dumps(val)
-            else:
-                val = '' if val is None else str(val)
 
             m = {'|': r'\|', '\\': '\\\\'}
             return re.sub(r'[|\\]', lambda x:m[x[0]], val)
@@ -3101,10 +3101,10 @@ script:
         def __encode_cef_value(
             val: Any
         ) -> str:
-            if isinstance(val, (list, dict)):
+            if val is None:
+                val = ''
+            elif not isinstance(val, str):
                 val = json.dumps(val)
-            else:
-                val = '' if val is None else str(val)
 
             m = {'\n': r'\n', '\r': r'\r', '\t': r'\t', '=': r'\=', '\\': '\\\\'}
             return re.sub(r'[=\\\r\n]', lambda x:m[x[0]], val)
