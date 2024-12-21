@@ -393,7 +393,7 @@ configuration:
   type: 19
   required: false
 script:
-  script: |+
+  script: |
     import os
     import os.path
     import io
@@ -435,6 +435,7 @@ script:
     DEFAULT_HTTP_RETRIES = 3
     MAX_HEC_UPLOAD_BUFFER_SIZE = 15 * 1024 * 1024
     INTEGRATION_NAME = 'Scenario Log Player'
+    INITIAL_GLOBAL_VARS = globals()
 
 
     class SyslogHeaderType(enum.StrEnum):
@@ -1515,7 +1516,7 @@ script:
     }
 
 
-    def toList(
+    def to_list(
         val: Any
     ) -> list[Any]:
         if isinstance(val, list):
@@ -1526,10 +1527,10 @@ script:
             return [val]
 
 
-    def toSet(
+    def to_set(
         val: Any
     ) -> set[Any]:
-        return set(toList(val))
+        return set(to_list(val))
 
 
     class Settings:
@@ -2099,12 +2100,12 @@ script:
                     out[f'Log Stats - Syslog'] = f'{prefix}{nlogs_sent:,}'
 
             elif value_type == 'jobs' and isinstance(v, dict):
-                if waiting_jobs := list(filter(lambda x: 'next_time' in x, toList(v.get('waiting')))):
+                if waiting_jobs := list(filter(lambda x: 'next_time' in x, to_list(v.get('waiting')))):
                     next_job = min(waiting_jobs, key=lambda x:x.get('next_time'))
                     out[f'Jobs - Next Job'] = next_job.get('label') or '<NO LABEL>'
                     out[f'Jobs - Next Run'] = format_timestamp_to_display(next_job.get('next_time'), tz_offset)
 
-                if running_jobs := toList(v.get('running')):
+                if running_jobs := to_list(v.get('running')):
                     runnings_label = ', '.join([
                         j.get('label') or '<NO LABEL>'
                         for j in itertools.islice(iter(running_jobs), 3)
@@ -2131,7 +2132,7 @@ script:
         """
         md = tableToMarkdown(
             title,
-            toList(table),
+            to_list(table),
             headers=table.keys() if isinstance(table, dict) else None,
             headerTransform=lambda name: ' '.join(
                 (token.title() if token == token.lower() else token)
@@ -2589,18 +2590,17 @@ script:
         def __eval_fstr(
             value: Any,
             gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
         ) -> Any:
             if isinstance(value, str):
                 return eval(
                     "f'''" + value + "'''" if value.endswith('"') else 'f"""' + value + '"""',
                     gvars,
-                    lvars
+                    {}
                 )
             elif isinstance(value, dict):
-                return {k: Variables.__eval_fstr(v, gvars, lvars) for k, v in value.items()}
+                return {k: Variables.__eval_fstr(v, gvars) for k, v in value.items()}
             elif isinstance(value, list):
-                return [Variables.__eval_fstr(v, gvars, lvars) for v in value]
+                return [Variables.__eval_fstr(v, gvars) for v in value]
             else:
                 return value
 
@@ -2608,14 +2608,13 @@ script:
         def __eval_eval(
             value: Any,
             gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
         ) -> Any:
             if isinstance(value, str):
-                return eval(value, gvars, lvars)
+                return eval(value, gvars, {})
             elif isinstance(value, dict):
-                return {k: Variables.__eval_eval(v, gvars, lvars) for k, v in value.items()}
+                return {k: Variables.__eval_eval(v, gvars) for k, v in value.items()}
             elif isinstance(value, list):
-                return [Variables.__eval_eval(v, gvars, lvars) for v in value]
+                return [Variables.__eval_eval(v, gvars) for v in value]
             else:
                 return value
 
@@ -2623,15 +2622,14 @@ script:
         def __eval_val(
             value: Any,
             gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
         ) -> Any:
             v = value if isinstance(value, dict) else {'value': value}
             vtype = v.get('type') or 'f-string'
             value = v.get('value')
             if vtype == 'f-string':
-                return Variables.__eval_fstr(value, gvars, lvars)
+                return Variables.__eval_fstr(value, gvars)
             elif vtype == 'eval':
-                return Variables.__eval_eval(value, gvars, lvars)
+                return Variables.__eval_eval(value, gvars)
             elif vtype == 'raw':
                 return value
             else:
@@ -2640,44 +2638,37 @@ script:
         @staticmethod
         def __eval(
             gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
             nvars: dict[str, Any] | None,
         ) -> dict[str, Any] | None:
             if nvars is None:
-                return lvars
+                return gvars
 
-            lvars = dict(lvars or {})
+            gvars = dict(gvars or {})
             for k, v in nvars.items():
-                lvars[k] = Variables.__eval_val(v, gvars, lvars)
-            return lvars
+                gvars[k] = Variables.__eval_val(v, gvars)
+            return gvars
 
         def __init__(
             self,
-            gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
+            gvars: dict[str, Any] | None
         ) -> None:
             """ Initialize the instance
 
             :param gvars: Global variables (will be evaluated)
-            :param lvars: Local variables (will be evaluated)
             """
-            self.__gvars = Variables.__eval(None, None, gvars)
-            self.__lvars = Variables.__eval(self.__gvars, None, lvars)
+            self.__gvars = Variables.__eval(INITIAL_GLOBAL_VARS, gvars)
 
         def inherit(
             self,
             gvars: dict[str, Any] | None,
-            lvars: dict[str, Any] | None,
         ) -> Self:
             """ Inherit with new variables
 
             :param gvars: New global variables (will be evaluated)
-            :param lvars: New local variables (will be evaluated)
             :return: The new instance (Variables class).
             """
-            v = Variables(None, None)
-            v.__gvars = Variables.__eval(None, self.__gvars, gvars)
-            v.__lvars = Variables.__eval(self.__gvars, self.__lvars, lvars)
+            v = Variables(None)
+            v.__gvars = Variables.__eval(self.__gvars, gvars)
             return v
 
         def eval_str(
@@ -2685,7 +2676,7 @@ script:
             value: Any,
         ) -> Any:
             if isinstance(value, str):
-                return Variables.__eval_fstr(value, self.__gvars, self.__lvars)
+                return Variables.__eval_fstr(value, self.__gvars)
             else:
                 return value
 
@@ -2693,39 +2684,36 @@ script:
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_fstr(value, self.__gvars, self.__lvars)
+            return Variables.__eval_fstr(value, self.__gvars)
 
         def eval_eval(
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_eval(value, self.__gvars, self.__lvars)
+            return Variables.__eval_eval(value, self.__gvars)
 
         def eval_val(
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_eval(value, self.__gvars, self.__lvars)
+            return Variables.__eval_eval(value, self.__gvars)
 
         def get_value(
             self,
             key: str,
         ) -> Any:
-            v = (self.__lvars or {}).get(key)
-            if v is None:
-                v = (self.__gvars or {}).get(key)
-            return v
+            return (self.__gvars or {}).get(key)
 
-        def update_local_vars(
+        def update_global_vars(
             self,
-            lvars: dict[str, Any] | None,
+            gvars: dict[str, Any] | None,
         ) -> None:
-            if lvars is None:
+            if gvars is None:
                 pass
-            elif self.__lvars:
-                self.__lvars.update(lvars)
+            elif self.__gvars:
+                self.__gvars.update(gvars)
             else:
-                self.__lvars = lvars
+                self.__gvars = gvars
 
         @property
         def global_vars(
@@ -2733,25 +2721,35 @@ script:
         ) -> dict[str, Any] | None:
             return self.__gvars
 
-        @property
-        def local_vars(
-            self
-        ) -> dict[str, Any] | None:
-            return self.__lvars
-
 
     class IpEntries:
         """ IP Entries Manager
         """
+        @staticmethod
+        def flatten(
+            entries: dict[str, dict[str, Any]] = None,
+        ) -> dict[str, dict[str, str]]:
+            return {
+                ip: assign_params(
+                    ip=ip,
+                    host=ent.get('host'),
+                    internal_domain=demisto.get(ent, 'domain.internal'),
+                    external_domain=demisto.get(ent, 'domain.external'),
+                    user_name=demisto.get(ent, 'user.name'),
+                    family_name=demisto.get(ent, 'user.family_name'),
+                    given_name=demisto.get(ent, 'user.given_name'),
+                ) for ip, ent in (entries or {}).items()
+            }
+
         def __init__(
             self,
             entries: dict[str, dict[str, Any]] = None,
         ) -> None:
             """ Initialize the instance
 
-            :param users: IP attributes
+            :param entries: IP attributes
             """
-            self.__ents = entries if entries else {}
+            self.__ents = self.flatten(entries)
 
         @property
         def entries(
@@ -2767,7 +2765,7 @@ script:
 
             :param users: IP attributes
             """
-            self.__ents.update(entries if entries else {})
+            self.__ents.update(self.flatten(entries))
 
         def get_user_id_by_ip(
             self,
@@ -2779,7 +2777,7 @@ script:
             :return: The user ID associated with the IP.
             """
             if ent := self.__ents.get(ip):
-                return demisto.get(ent, 'user.name')
+                return ent.get('user_name')
             return None
 
         def get_host_by_ip(
@@ -2805,7 +2803,7 @@ script:
             :return: The internal domain name associated with the IP.
             """
             if ent := self.__ents.get(ip):
-                return demisto.get(ent, 'domain.internal')
+                return ent.get('internal_domain')
             return None
 
         def get_internal_fqdn_by_ip(
@@ -2819,7 +2817,7 @@ script:
             """
             if ent := self.__ents.get(ip):
                 if host := ent.get('host'):
-                    if domain := demisto.get(ent, 'domain.internal'):
+                    if domain := ent.get('internal_domain'):
                         return f'{host}.{domain}'
             return None
 
@@ -2832,17 +2830,16 @@ script:
             """
             users = {}
             for ip, ent in self.__ents.items():
-                if user := ent.get('user'):
-                    if name := user.get('name'):
-                        users[name] = assign_params(
-                            ip=ip,
-                            host=ent.get('host'),
-                            internal_domain=demisto.get(ent, 'domain.internal'),
-                            external_domain=demisto.get(ent, 'domain.external'),
-                            name=name,
-                            family_name=user.get('family_name'),
-                            given_name=user.get('given_name'),
-                        )
+                if user_name := ent.get('user_name'):
+                    users[user_name] = assign_params(
+                        ip=ip,
+                        host=ent.get('host'),
+                        internal_domain=ent.get('internal_domain'),
+                        external_domain=ent.get('external_domain'),
+                        user_name=user_name,
+                        family_name=ent.get('family_name'),
+                        given_name=ent.get('given_name'),
+                    )
             return users
 
 
@@ -5457,7 +5454,7 @@ script:
             :param http: The 'http' section of the template parameters.
             :return: HTTP session parameters.
             """
-            if not (dst := toList(demisto.get(http, 'dst'))):
+            if not (dst := to_list(demisto.get(http, 'dst'))):
                 return None
 
             weights = [max(float(x.get('.weights') or 1), 0) if isinstance(x, dict) else 1 for x in dst]
@@ -5507,7 +5504,7 @@ script:
             :param dns: The 'dns' section of the template parameters.
             :return: DNS session parameters.
             """
-            if not (queries := toList(demisto.get(dns, 'queries'))):
+            if not (queries := to_list(demisto.get(dns, 'queries'))):
                 return None
 
             weights = [max(float(x.get('.weights') or 1), 0) if isinstance(x, dict) else 1 for x in queries]
@@ -5952,22 +5949,22 @@ script:
             elif isinstance(source_templates, dict):
                 first_vars = variables
                 if raw_vars := source_templates.get('.variables'):
-                    first_vars = variables.inherit(None, raw_vars)
+                    first_vars = variables.inherit(raw_vars)
 
                 template = None
                 repeat = __get_repeat(source_templates, first_vars)
                 for iter_vars in repeat.iter_vars or [None]:
-                    lvars = None
+                    gvars = None
                     for _ in range(repeat.count):
                         if repeat.evaluate == 'vars':
                             if raw_vars:
-                                lvars = variables.inherit(None, raw_vars)
-                            lvars = lvars.inherit(None, iter_vars)
-                        elif not lvars:
-                            lvars = first_vars.inherit(None, iter_vars)
+                                gvars = variables.inherit(raw_vars)
+                            gvars = gvars.inherit(iter_vars)
+                        elif not gvars:
+                            gvars = first_vars.inherit(iter_vars)
 
                         if template is None or repeat.evaluate != 'once':
-                            template = Template(source_templates, lvars)
+                            template = Template(source_templates, gvars)
                         yield template
 
             else:
@@ -6004,6 +6001,37 @@ script:
             yield from SourceTemplateUnit.__enum_templates(self.__source_templates, variables)
 
 
+    class CallableUnits:
+        """ Callable Units
+        """
+        def __init__(
+            self,
+            callables: dict[str, dict[str, Any]],
+        ) -> None:
+            """ Initialize the callable units
+
+            :param callables: Named template sources.
+            """
+            self.__source_templates = {
+                k: [SourceTemplateUnit(v) for v in to_list(tunits)]
+                for k, tunits in callables.items()
+            }
+
+        def get_source_templates(
+            self,
+            name: str,
+        ) -> list[SourceTemplateUnit]:
+            """ Get the source template associated with the name
+
+            :param name: The template name.
+            :return: List of source templates.
+            """
+            templates = self.__source_templates.get(name)
+            if templates is None:
+                raise DemistoException(f'No callable templates - {name}')
+            return templates
+
+
     class JobUnit:
         """ Job Unit object
         """
@@ -6019,8 +6047,8 @@ script:
             """
             self.__params = job
             self.__interval = job.get('.interval') or 0
-            self.__sources = [SourceTemplateUnit(s) for s in toList(demisto.get(job, 'sources'))]
-            self.__variables = variables.inherit(None, job.get('.variables'))
+            self.__sources = [SourceTemplateUnit(s) for s in to_list(demisto.get(job, 'sources'))]
+            self.__variables = variables.inherit(job.get('.variables'))
             self.__label = job.get('#')
 
         @property
@@ -6090,7 +6118,7 @@ script:
                 case 'ngfw':
                     self.__generators = [
                         NGFWLogGenerator(settings, log_type)
-                        for log_type in toSet(
+                        for log_type in to_set(
                             demisto.get(service, 'ngfw.log_type') or ['traffic', 'url']
                         )
                     ]
@@ -6100,7 +6128,7 @@ script:
                         SquidLogGenerator(
                             settings,
                             log_format,
-                        ) for log_format in toSet(
+                        ) for log_format in to_set(
                             demisto.get(service, 'squid.log_format') or 'combined'
                         )
                     ]
@@ -6115,7 +6143,7 @@ script:
                         ApacheHttpdLogGenerator(
                             settings,
                             log_format,
-                        ) for log_format in toSet(
+                        ) for log_format in to_set(
                             demisto.get(service, 'apache-httpd.log_format') or 'combined'
                         )
                     ]
@@ -6198,13 +6226,13 @@ script:
             self.__rules = {
                 k: [
                     ipaddress.IPv4Network(ip_network, False)
-                    for ip_network in toList(demisto.get(service, f'proxy.rule.{k}'))
+                    for ip_network in to_list(demisto.get(service, f'proxy.rule.{k}'))
                 ] for k in ('src', 'dst')
             }
             self.__exceptions = {
                 k: [
                     ipaddress.IPv4Network(ip_network, False)
-                    for ip_network in toList(demisto.get(service, f'proxy.exception.{k}'))
+                    for ip_network in to_list(demisto.get(service, f'proxy.exception.{k}'))
                 ] for k in ('src', 'dst')
             }
 
@@ -6352,7 +6380,7 @@ script:
             ]:
                 ents.extend([
                     creator(self.__settings, s)
-                    for s in toList(demisto.get(services, k))
+                    for s in to_list(demisto.get(services, k))
                 ])
 
             self.__internal_gw_dst_ip = demisto.get(services, 'internal.gw.dst_ip')
@@ -6435,6 +6463,7 @@ script:
             self.__variables: dict[str, Any] = {}
             self.__sources: list[dict[str, Any]] = []
             self.__jobs: list[dict[str, Any]] = []
+            self.__callables: dict[str, dict[str, Any]] = {}
             self.__ip_ents: dict[str, dict[str, str]] = {}
             self.__services: dict[
                 str,
@@ -6453,15 +6482,16 @@ script:
             :param scenario: A new scenario in JSON.
             """
             self.__variables.update(scenario.get('variables') or {})
-            self.__sources.extend([x for x in toList(demisto.get(scenario, 'sources'))])
-            self.__jobs.extend([x for x in toList(demisto.get(scenario, 'jobs'))])
+            self.__sources.extend([x for x in to_list(scenario.get('sources'))])
+            self.__jobs.extend([x for x in to_list(scenario.get('jobs'))])
+            self.__callables.update(scenario.get('callables') or {})
             self.__ip_ents.update(scenario.get('ip_entries') or {})
 
             services = scenario.get('services') or {}
             for location in ['internal', 'external']:
                 for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
-                    dst = toList(demisto.get(self.__services, f'{location}.{service_type}'))
-                    src = toList(demisto.get(services, f'{location}.{service_type}'))
+                    dst = to_list(demisto.get(self.__services, f'{location}.{service_type}'))
+                    src = to_list(demisto.get(services, f'{location}.{service_type}'))
                     dst.extend(src)
                     if dst:
                         self.__services[location][service_type] = dst
@@ -6480,6 +6510,7 @@ script:
                 'variables': self.__variables,
                 'sources': self.__sources,
                 'jobs': self.__jobs,
+                'callables': self.__callables,
                 'services': self.__services,
                 'ip_entries': self.__ip_ents,
             }
@@ -6495,6 +6526,12 @@ script:
             self
         ) -> list[dict[str, Any]]:
             return self.__sources
+
+        @property
+        def callables(
+            self
+        ) -> dict[str, dict[str, Any]]:
+            return self.__callables
 
         @property
         def jobs(
@@ -6520,7 +6557,10 @@ script:
         """
         SCENARIO_NORMAL = r'''
     {
-        ".variables": {
+        "variables": {
+            "_internal_ad_ip": "172.16.77.240",
+            "_internal_dns_ip": "172.16.78.2",
+            "_corp_portal_ip": "172.16.78.10"
         },
         "sources": [
             {
@@ -6544,7 +6584,7 @@ script:
                         "resp_bytes": "{random.randint(376, 1024 * 1024)}"
                     },
                     "dst": [
-                        "http://download.windowsupdate.com/d/msdownload/update/others/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{''.join(random.choices(string.hexdigits, k=8))}_{''.join(random.choices(string.hexdigits, k=40))}.cab"
+                        "http://download.windowsupdate.com/d/msdownload/update/others/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{''.join(random.choices(string.hexdigits.lower(), k=8))}_{''.join(random.choices(string.hexdigits.lower(), k=40))}.cab"
                     ]
                 },
                 ".weights": 100
@@ -6878,7 +6918,7 @@ script:
                         "https://www2.bing.com/",
                         "https://xpaywalletcdn.azureedge.net/",
                         "https://xsoar-marketplace-review.paloaltonetworks.com/",
-                        "https://{''.join(random.choices(string.hexdigits, k=32))}.fp.measure.office.com/"
+                        "https://{''.join(random.choices(string.hexdigits.lower(), k=32))}.fp.measure.office.com/"
                     ]
                 },
                 ".weights": 100
@@ -6972,7 +7012,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.78.10",
+                "dst": "{_corp_portal_ip}",
                 "dst_port": 443,
                 "ip_protocol": "tcp",
                 "app_protocol": "https",
@@ -6986,13 +7026,13 @@ script:
                         "resp_content_type": "text/html; charset=UTF-8"
                     },
                     "dst": [
-                        "http://portal.cortex.lan/",
-                        "http://portal.cortex.lan/index.html",
-                        "http://portal.cortex.lan/product",
-                        "http://portal.cortex.lan/calendar",
-                        "http://portal.cortex.lan/contact",
+                        "http://portal.corp.cortex.lan/",
+                        "http://portal.corp.cortex.lan/index.html",
+                        "http://portal.corp.cortex.lan/product",
+                        "http://portal.corp.cortex.lan/calendar",
+                        "http://portal.corp.cortex.lan/contact",
                         {
-                            "url": "https://portal.cortex.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
+                            "url": "https://portal.corp.cortex.lan/item/product/{''.join(random.choices(string.digits, k=4))}.html",
                             "resp_status": "{random.choices([200, 304, 404], weights=[10, 50, 2])[0]}",
                             ".weights": 100
                         }
@@ -7022,7 +7062,7 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.77.240",
+                "dst": "{_internal_ad_ip}",
                 "dst_port": "137, 138",
                 "ip_protocol": "udp",
                 "fw_action": "allow",
@@ -7036,19 +7076,15 @@ script:
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.77.240",
+                "dst": "{_internal_ad_ip}",
                 "dst_port": "88, 135, 389, 445",
                 "ip_protocol": "tcp",
                 "fw_action": "allow",
                 ".weights": 250
             },
             {
-                "#": "Emails: Delivered From External Corp",
+                "#": "Emails Delivery",
                 ".variables": {
-                    "now_timestamp_ms": {
-                        "type": "eval",
-                        "value": "int(datetime.datetime.now().timestamp() * 1000)"
-                    },
                     "now_rfc1123_time": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S %z')}",
                     "now_iso8601_time": "{datetime.datetime.now(datetime.UTC).isoformat(timespec='seconds').replace('+00:00', 'Z')}",
                     "mta_host1_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
@@ -7075,7 +7111,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             },
@@ -7092,7 +7128,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             },
@@ -7109,7 +7145,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             },
@@ -7126,7 +7162,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             },
@@ -7143,7 +7179,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             },
@@ -7160,7 +7196,7 @@ script:
                                     "isInline": false,
                                     "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
                                     "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
+                                    "hash_str": "''.join(random.choices(string.hexdigits.lower(), k=64))"
                                 },
                                 "weight": 3
                             }
@@ -7168,392 +7204,37 @@ script:
                     },
                     "attachments": {
                         "type": "eval",
-                        "value": "random.choices([x['params'] for x in attachment_sources], [x['weight'] for x in attachment_sources], k=random.choices([0,1,2,3], [1000, 50, 20, 10])[0])"
+                        "value": "random.sample([x['params'] for x in attachment_sources], counts=[x['weight'] for x in attachment_sources], k=random.choices([0,1,2,3], [1000, 50, 20, 10])[0])"
                     },
 
-                    "sender_domains": ["apple.com", "microsoft.com", "amazon.com", "tesla.com", "google.com", "berkshirehathaway.com", "facebook.com", "jnj.com", "pg.com", "visa.com", "exxonmobil.com", "cokecce.com", "intel.com", "pfizer.com", "walmart.com", "chevron.com", "pepsico.com", "merck.com", "nike.com", "abbvie.com", "mcdonalds.com", "homedepot.com", "disney.com", "oracle.com", "lowes.com", "att.com", "lockheedmartin.com", "broadcom.com", "qualcomm.com", "uhg.com", "3m.com", "cvshealth.com", "abbott.com", "gs.com", "aexp.com", "honeywell.com", "morganstanley.com", "cat.com", "spglobal.com", "bms.com", "target.com", "slb.com", "americantower.com", "ge.com", "statestreet.com", "rtx.com", "adobe.com", "starbucks.com", "colpal.com", "mastercard.com", "johnsoncontrols.com", "gm.com", "cvshealth.com", "wellsfargo.com", "baxter.com", "salesforce.com", "nexteraenergy.com", "t-mobile.com", "kroger.com", "ti.com", "raytheon.com", "lilly.com", "duke-energy.com", "up.com", "cigna.com", "metlife.com", "citi.com", "blackrock.com", "adobe.com", "paypal.com", "intel.com", "aa.com", "linde.com", "honeywell.com", "conocophillips.com", "cognizant.com", "conagrabrands.com", "kimberly-clark.com", "altria.com", "northropgrumman.com", "homedepot.com", "lowes.com", "jetblue.com", "delta.com", "cat.com", "gs.com", "bms.com", "ups.com", "ford.com", "chevron.com", "gd.com", "aep.com", "qualcomm.com", "illumina.com", "biogen.com", "analog.com", "northropgrumman.com", "duke-energy.com", "jnj.com", "att.com"],
-                    "sender_domain": "{random.choice(sender_domains)}",
-                    "sender_family_names": ["smith", "johnson", "williams", "jones", "brown", "davis", "miller", "wilson", "moore", "taylor", "anderson", "thomas", "jackson", "white", "harris", "martin", "thompson", "garcia", "martinez", "robinson", "clark", "rodriguez", "lewis", "lee", "walker", "hall", "allen", "young", "hernandez", "king", "wright", "lopez", "hill", "scott", "green", "adams", "baker", "gonzalez", "nelson", "carter", "mitchell", "perez", "roberts", "turner", "phillips", "campbell", "parker", "evans", "edwards", "collins", "stewart", "sanchez", "morris", "rogers", "reed", "cook", "morgan", "bell", "murphy", "bailey", "rivera", "cooper", "richardson", "cox", "howard", "ward", "torres", "peterson", "gray", "ramirez", "james", "watson", "brooks", "kelly", "sanders", "price", "bennett", "wood", "barnes", "ross", "henderson", "coleman", "jenkins", "perry", "powell", "long", "patterson", "hughes", "flores", "washington", "butler", "simmons", "foster", "gonzales", "bryant", "alexander", "russell", "griffin", "diaz", "hayes", "myers", "ford", "hamilton", "graham", "sullivan", "wallace", "woods", "cole", "west", "jordan", "owens", "reynolds", "fisher", "ellis", "harrison", "gibson", "mcdonald", "cruz", "marshall", "ortiz", "gomez", "murray", "freeman", "wells", "webb", "simpson", "stevens", "tucker", "porter", "hunter", "hicks", "crawford", "henry", "boyd", "mason", "morales", "kennedy", "warren", "dixon", "ramos", "reyes", "burns", "gordon", "shaw", "holmes", "rice", "robertson", "hunt", "black", "daniels", "palmer", "mills", "nichols", "grant", "knight", "ferguson", "rose", "stone", "hawkins", "dunn", "perkins", "hudson", "spencer", "gardner", "stephens", "payne", "pierce", "berry", "matthews", "arnold", "wagner", "willis", "ray", "watkins", "olson", "carroll", "duncan", "snyder", "hart", "cunningham", "bradley", "lane", "andrews", "ruiz", "harper", "fox", "riley", "armstrong", "carpenter", "weaver", "greene", "lawrence", "elliott", "chavez", "sims", "austin", "peters", "kelley", "franklin", "lawson", "fields", "gutierrez", "ryan", "schmidt", "carr", "vasquez", "castillo", "wheeler", "chapman", "oliver", "montgomery", "richards", "williamson", "johnston", "banks", "meyer", "bishop", "mccoy", "howell", "alvarez", "morrison", "hansen", "fernandez", "garza", "harvey", "little", "burton", "stanley", "nguyen", "george", "jacobs", "reid", "kim", "fuller", "lynch", "dean", "gilbert", "garrett", "romero", "welch", "larson", "frazier", "burke", "hanson", "day", "mendoza", "moreno", "bowman", "medina", "fowler", "brewer", "hoffman", "carlson", "silva", "pearson", "holland", "douglas", "fleming", "jensen", "vargas", "byrd", "davidson", "hopkins", "may", "terry", "herrera", "wade", "soto", "walters", "curtis", "neal", "caldwell", "lowe", "jennings", "barnett", "graves", "jimenez", "horton", "shelton", "barrett", "obrien", "castro", "sutton", "gregory", "mckinney", "lucas", "miles", "craig", "rodriquez", "chambers", "holt", "lambert", "fletcher", "watts", "bates", "hale", "rhodes", "pena", "beck", "newman", "haynes", "mcdaniel", "mendez", "bush", "vaughn", "parks", "dawson", "santiago", "norris", "hardy", "love", "steele", "curry", "powers", "schultz", "barker", "guzman", "page", "munoz", "ball", "keller", "chandler", "weber", "leonard", "walsh", "lyons", "ramsey", "wolfe", "schneider", "mullins", "benson", "sharp", "bowen", "daniel", "barber", "cummings", "hines", "baldwin", "griffith", "valdez", "hubbard", "salazar", "reeves", "warner", "stevenson", "burgess", "santos", "tate", "cross", "garner", "mann", "mack", "moss", "thornton", "dennis", "mcgee", "farmer", "delgado", "aguilar", "vega", "glover", "manning", "cohen", "harmon", "rodgers", "robbins", "newton", "todd", "blair", "higgins", "ingram", "reese", "cannon", "strickland", "townsend", "potter", "goodwin", "walton", "rowe", "hampton", "ortega", "patton", "swanson", "joseph", "francis", "goodman", "maldonado", "yates", "becker", "erickson", "hodges", "rios", "conner", "adkins", "webster", "norman", "malone", "hammond", "flowers", "cobb", "moody", "quinn", "blake", "maxwell", "pope", "floyd", "osborne", "paul", "mccarthy", "guerrero", "lindsey", "estrada", "sandoval", "gibbs", "tyler", "gross", "fitzgerald", "stokes", "doyle", "sherman", "saunders", "wise", "colon", "gill", "alvarado", "greer", "padilla", "simon", "waters", "nunez", "ballard", "schwartz", "mcbride", "houston", "christensen", "klein", "pratt", "briggs", "parsons", "mclaughlin", "zimmerman", "french", "buchanan", "moran", "copeland", "roy", "pittman", "brady", "mccormick", "holloway", "brock", "poole", "frank", "logan", "owen", "bass", "marsh", "drake", "wong", "jefferson", "park", "morton", "abbott", "sparks", "patrick", "norton", "huff", "clayton", "massey", "lloyd", "figueroa", "carson", "bowers", "roberson", "barton", "tran", "lamb", "harrington", "casey", "boone", "cortez", "clarke", "mathis", "singleton", "wilkins", "cain", "bryan", "underwood", "hogan", "mckenzie", "collier", "luna", "phelps", "mcguire", "allison", "bridges", "wilkerson", "nash", "summers", "atkins", "wilcox", "pitts", "conley", "marquez", "burnett", "richard", "cochran", "chase", "davenport", "hood", "gates", "clay", "ayala", "sawyer", "roman", "vazquez", "dickerson", "hodge", "acosta", "flynn", "espinoza", "nicholson", "monroe", "wolf", "morrow", "kirk", "randall", "anthony", "whitaker", "oconnor", "skinner", "ware", "molina", "kirby", "huffman", "bradford", "charles", "gilmore", "dominguez", "oneal", "bruce", "lang", "combs", "kramer", "heath", "hancock", "gallagher", "gaines", "shaffer", "short", "wiggins", "mathews", "mcclain", "fischer", "wall", "small", "melton", "hensley", "bond", "dyer", "cameron", "grimes", "contreras", "christian", "wyatt", "baxter", "snow", "mosley", "shepherd", "larsen", "hoover", "beasley", "glenn", "petersen", "whitehead", "meyers", "keith", "garrison", "vincent", "shields", "horn", "savage", "olsen", "schroeder", "hartman", "woodard", "mueller", "kemp", "deleon", "booth", "patel", "calhoun", "wiley", "eaton", "cline", "navarro", "harrell", "lester", "humphrey", "parrish", "duran", "hutchinson", "hess", "dorsey", "bullock", "robles", "beard", "dalton", "avila", "vance", "rich", "blackwell", "york", "johns", "blankenship", "trevino", "salinas", "campos", "pruitt", "moses", "callahan", "golden", "montoya", "hardin", "guerra", "mcdowell", "carey", "stafford", "gallegos", "henson", "wilkinson", "booker", "merritt", "miranda", "atkinson", "orr", "decker", "hobbs", "preston", "tanner", "knox", "pacheco", "stephenson", "glass", "rojas", "serrano", "marks", "hickman", "english", "sweeney", "strong", "prince", "mcclure", "conway", "walter", "roth", "maynard", "farrell", "lowery", "hurst", "nixon", "weiss", "trujillo", "ellison", "sloan", "juarez", "winters", "mclean", "randolph", "leon", "boyer", "villarreal", "mccall", "gentry", "carrillo", "kent", "ayers", "lara", "shannon", "sexton", "pace", "hull", "leblanc", "browning", "velasquez", "leach", "chang", "house", "sellers", "herring", "noble", "foley", "bartlett", "mercado", "landry", "durham", "walls", "barr", "mckee", "bauer", "rivers", "everett", "bradshaw", "pugh", "velez", "rush", "estes", "dodson", "morse", "sheppard", "weeks", "camacho", "bean", "barron", "livingston", "middleton", "spears", "branch", "blevins", "chen", "kerr", "mcconnell", "hatfield", "harding", "ashley", "solis", "herman", "frost", "giles", "blackburn", "william", "pennington", "woodward", "finley", "mcintosh", "koch", "best", "solomon", "mccullough", "dudley", "nolan", "blanchard", "rivas", "brennan", "mejia", "kane", "benton", "joyce", "buckley", "haley", "valentine", "maddox", "russo", "mcknight", "buck", "moon", "mcmillan", "crosby", "berg", "dotson", "mays", "roach", "church", "chan", "richmond", "meadows", "faulkner", "oneill", "knapp", "kline", "barry", "ochoa", "jacobson", "gay", "avery", "hendricks", "horne", "shepard", "hebert", "cherry", "cardenas", "mcintyre", "whitney", "waller", "holman", "donaldson", "cantu", "terrell", "morin", "gillespie", "fuentes", "tillman", "sanford", "bentley", "peck", "key", "salas", "rollins", "gamble", "dickson", "battle", "santana", "cabrera", "cervantes", "howe", "hinton", "hurley", "spence", "zamora", "yang", "mcneil", "suarez", "case", "petty", "gould", "mcfarland", "sampson", "carver", "bray", "rosario", "macdonald", "stout", "hester", "melendez", "dillon", "farley", "hopper", "galloway", "potts", "bernard", "joyner", "stein", "aguirre", "osborn", "mercer", "bender", "franco", "rowland", "sykes", "benjamin", "travis", "pickett", "crane", "sears", "mayo", "dunlap", "hayden", "wilder", "mckay", "coffey", "mccarty", "ewing", "cooley", "vaughan", "bonner", "cotton", "holder", "stark", "ferrell", "cantrell", "fulton", "lynn", "lott", "calderon", "rosa", "pollard", "hooper", "burch", "mullen", "fry", "riddle", "levy", "david", "duke", "odonnell", "guy", "michael", "britt", "frederick", "daugherty", "berger", "dillard", "alston", "jarvis", "frye", "riggs", "chaney", "odom", "duffy", "fitzpatrick", "valenzuela", "merrill", "mayer", "alford", "mcpherson", "acevedo", "donovan", "barrera", "albert", "cote", "reilly", "compton", "raymond", "mooney", "mcgowan", "craft", "cleveland", "clemons", "wynn", "nielsen", "baird", "stanton", "snider", "rosales", "bright", "witt", "stuart", "hays", "holden", "rutledge", "kinney", "clements", "castaneda", "slater", "hahn", "emerson", "conrad", "burks", "delaney", "pate", "lancaster", "sweet", "justice", "tyson", "sharpe", "whitfield", "talley", "macias", "irwin", "burris", "ratliff", "mccray", "madden", "kaufman", "beach", "goff", "cash", "bolton", "mcfadden", "levine", "good", "byers", "kirkland", "kidd", "workman", "carney", "dale", "mcleod", "holcomb", "england", "finch", "head", "burt", "hendrix", "sosa", "haney", "franks", "sargent", "nieves", "downs", "rasmussen", "bird", "hewitt", "lindsay", "le", "foreman", "valencia", "oneil", "delacruz", "vinson", "dejesus", "hyde", "forbes", "gilliam", "guthrie", "wooten", "huber", "barlow", "boyle", "mcmahon", "buckner", "rocha", "puckett", "langley", "knowles", "cooke", "velazquez", "whitley", "noel", "vang"],
-                    "sender_given_names": ["james", "john", "robert", "michael", "william", "david", "richard", "charles", "joseph", "thomas", "christopher", "daniel", "paul", "mark", "donald", "george", "kenneth", "steven", "edward", "brian", "ronald", "anthony", "kevin", "jason", "matthew", "gary", "timothy", "jose", "larry", "jeffrey", "frank", "scott", "eric", "stephen", "andrew", "raymond", "gregory", "joshua", "jerry", "dennis", "walter", "patrick", "peter", "harold", "douglas", "henry", "carl", "arthur", "ryan", "roger", "joe", "juan", "jack", "albert", "jonathan", "justin", "terry", "gerald", "keith", "samuel", "willie", "ralph", "lawrence", "nicholas", "roy", "benjamin", "bruce", "brandon", "adam", "harry", "fred", "wayne", "billy", "steve", "louis", "jeremy", "aaron", "randy", "howard", "eugene", "carlos", "russell", "bobby", "victor", "martin", "ernest", "phillip", "todd", "jesse", "craig", "alan", "shawn", "clarence", "sean", "philip", "chris", "johnny", "earl", "jimmy", "antonio", "danny", "bryan", "tony", "luis", "mike", "stanley", "leonard", "nathan", "dale", "manuel", "rodney", "curtis", "norman", "allen", "marvin", "vincent", "glenn", "jeffery", "travis", "jeff", "chad", "jacob", "lee", "melvin", "alfred", "kyle", "francis", "bradley", "jesus", "herbert", "frederick", "ray", "joel", "edwin", "don", "eddie", "ricky", "troy", "randall", "barry", "alexander", "bernard", "mario", "leroy", "francisco", "marcus", "micheal", "theodore", "clifford", "miguel", "oscar", "jay", "jim", "tom", "calvin", "alex", "jon", "ronnie", "bill", "lloyd", "tommy", "leon", "derek", "warren", "darrell", "jerome", "floyd", "leo", "alvin", "tim", "wesley", "gordon", "dean", "greg", "jorge", "dustin", "pedro", "derrick", "dan", "lewis", "zachary", "corey", "herman", "maurice", "vernon", "roberto", "clyde", "glen", "hector", "shane", "ricardo", "sam", "rick", "lester", "brent", "ramon", "charlie", "tyler", "gilbert", "gene", "marc", "reginald", "ruben", "brett", "angel", "nathaniel", "rafael", "leslie", "edgar", "milton", "raul", "ben", "chester", "cecil", "duane", "franklin", "andre", "elmer", "brad", "gabriel", "ron", "mitchell", "roland", "arnold", "harvey", "jared", "adrian", "karl", "cory", "claude", "erik", "darryl", "jamie", "neil", "jessie", "christian", "javier", "fernando", "clinton", "ted", "mathew", "tyrone", "darren", "lonnie", "lance", "cody", "julio", "kelly", "kurt", "allan", "nelson", "guy", "clayton", "hugh", "max", "dwayne", "dwight", "armando", "felix", "jimmie", "everett", "jordan", "ian", "wallace", "ken", "bob", "jaime", "casey", "alfredo", "alberto", "dave", "ivan", "johnnie", "sidney", "byron", "julian", "isaac", "morris", "clifton", "willard", "daryl", "ross", "virgil", "andy", "marshall", "salvador", "perry", "kirk", "sergio", "marion", "tracy", "seth", "kent", "terrance", "rene", "eduardo", "terrence", "enrique", "freddie", "wade", "mary", "patricia", "linda", "barbara", "elizabeth", "jennifer", "maria", "susan", "margaret", "dorothy", "lisa", "nancy", "karen", "betty", "helen", "sandra", "donna", "carol", "ruth", "sharon", "michelle", "laura", "sarah", "kimberly", "deborah", "jessica", "shirley", "cynthia", "angela", "melissa", "brenda", "amy", "anna", "rebecca", "virginia", "kathleen", "pamela", "martha", "debra", "amanda", "stephanie", "carolyn", "christine", "marie", "janet", "catherine", "frances", "ann", "joyce", "diane", "alice", "julie", "heather", "teresa", "doris", "gloria", "evelyn", "jean", "cheryl", "mildred", "katherine", "joan", "ashley", "judith", "rose", "janice", "kelly", "nicole", "judy", "christina", "kathy", "theresa", "beverly", "denise", "tammy", "irene", "jane", "lori", "rachel", "marilyn", "andrea", "kathryn", "louise", "sara", "anne", "jacqueline", "wanda", "bonnie", "julia", "ruby", "lois", "tina", "phyllis", "norma", "paula", "diana", "annie", "lillian", "emily", "robin", "peggy", "crystal", "gladys", "rita", "dawn", "connie", "florence", "tracy", "edna", "tiffany", "carmen", "rosa", "cindy", "grace", "wendy", "victoria", "edith", "kim", "sherry", "sylvia", "josephine", "thelma", "shannon", "sheila", "ethel", "ellen", "elaine", "marjorie", "carrie", "charlotte", "monica", "esther", "pauline", "emma", "juanita", "anita", "rhonda", "hazel", "amber", "eva", "debbie", "april", "leslie", "clara", "lucille", "jamie", "joanne", "eleanor", "valerie", "danielle", "megan", "alicia", "suzanne", "michele", "gail", "bertha", "darlene", "veronica", "jill", "erin", "geraldine", "lauren", "cathy", "joann", "lorraine", "lynn", "sally", "regina", "erica", "beatrice", "dolores", "bernice", "audrey", "yvonne", "annette", "june", "samantha", "marion", "dana", "stacy", "ana", "renee", "ida", "vivian", "roberta", "holly", "brittany", "melanie", "loretta", "yolanda", "jeanette", "laurie", "katie", "kristen", "vanessa", "alma", "sue", "elsie", "beth", "jeanne", "vicki", "carla", "tara", "rosemary", "eileen", "terri", "gertrude", "lucy", "tonya", "ella", "stacey", "wilma", "gina", "kristin", "jessie", "natalie", "agnes", "vera", "willie", "charlene", "bessie", "delores", "melinda", "pearl", "arlene", "maureen", "colleen", "allison", "tamara", "joy", "georgia", "constance", "lillie", "claudia", "jackie", "marcia", "tanya", "nellie", "minnie", "marlene", "heidi", "glenda", "lydia", "viola", "courtney", "marian", "stella", "caroline", "dora", "jo", "vickie", "mattie", "terry", "maxine", "irma", "mabel", "marsha", "myrtle", "lena", "christy", "deanna", "patsy", "hilda", "gwendolyn", "jennie", "nora", "margie", "nina", "cassandra", "leah", "penny", "kay", "priscilla", "naomi", "carole", "brandy", "olga", "billie", "dianne", "tracey", "leona", "jenny", "felicia", "sonia", "miriam", "velma", "becky", "bobbie", "violet", "kristina", "toni", "misty", "mae", "shelly", "daisy", "ramona", "sherri", "erika", "katrina", "claire", "lindsey", "lindsay", "geneva", "guadalupe", "belinda", "margarita", "sheryl", "cora", "faye", "ada", "natasha", "sabrina", "isabel", "marguerite", "hattie", "harriet", "molly", "cecilia", "kristi", "brandi", "blanche", "sandy", "rosie", "joanna", "iris", "eunice", "angie", "inez", "lynda", "madeline", "amelia", "alberta", "genevieve", "monique", "jodi", "janie", "maggie", "kayla", "sonya", "jan", "lee", "kristine", "candace", "fannie", "maryann", "opal", "alison", "yvette", "melody", "luz", "susie", "olivia", "flora", "shelley", "kristy", "mamie", "lula", "lola", "verna", "beulah", "antoinette", "candice", "juana", "jeannette", "pam", "kelli", "hannah", "whitney", "bridget", "karla", "celia", "latoya", "patty", "shelia", "gayle", "della", "vicky", "lynne", "sheri", "marianne", "kara", "jacquelyn", "erma", "blanca", "myra", "leticia", "pat", "krista", "roxanne", "angelica", "johnnie", "robyn", "francis", "adrienne", "rosalie", "alexandra", "brooke", "bethany", "sadie", "bernadette", "traci", "jody", "kendra", "jasmine", "nichole", "rachael", "chelsea", "mable", "ernestine", "muriel", "marcella", "elena", "krystal", "angelina", "nadine", "kari", "estelle", "dianna", "paulette", "lora", "mona", "doreen", "rosemarie", "angel", "desiree", "antonia", "hope", "ginger", "janis", "betsy", "christie", "freda", "mercedes", "meredith", "lynette", "teri", "cristina", "eula", "leigh", "meghan", "sophia", "eloise", "rochelle", "gretchen", "cecelia", "raquel", "henrietta", "alyssa", "jana", "kelley", "gwen", "kerry", "jenna", "tricia", "laverne", "olive", "alexis", "tasha", "silvia", "elvira", "casey", "delia", "sophie", "kate", "patti", "lorena", "kellie", "sonja", "lila", "lana", "darla", "may", "mindy", "essie", "mandy", "lorene", "elsa", "josefina", "jeannie", "miranda", "dixie", "lucia", "marta", "faith", "lela", "johanna", "shari", "camille", "tami", "shawna", "elisa", "ebony", "melba", "ora", "nettie", "tabitha", "ollie", "jaime", "winifred", "kristie", "marina", "alisha", "aimee", "rena", "myrna", "marla", "tammie", "latasha", "bonita", "patrice", "ronda", "sherrie", "addie", "francine", "deloris", "stacie", "adriana", "cheri", "shelby", "abigail", "celeste", "jewel", "cara", "adele", "rebekah", "lucinda", "dorthy", "chris", "effie", "trina", "reba", "shawn", "sallie", "aurora", "lenora", "etta", "lottie", "kerri", "trisha", "nikki", "estella", "francisca", "josie", "tracie", "marissa", "karin", "brittney", "janelle", "lourdes", "laurel", "helene", "fern", "elva", "corinne", "kelsey", "ina", "bettie", "elisabeth", "aida", "caitlin", "ingrid", "iva", "eugenia", "christa", "goldie", "cassie", "maude", "jenifer", "therese", "frankie", "dena", "lorna", "janette", "latonya", "candy", "morgan", "consuelo", "tamika", "rosetta", "debora", "cherie", "polly", "dina", "jewell", "fay", "jillian", "dorothea", "nell", "trudy", "esperanza", "patrica", "kimberley", "shanna", "helena", "carolina", "cleo", "stefanie", "rosario", "ola", "janine", "mollie", "lupe", "alisa", "lou", "maribel", "susanne", "bette", "susana", "elise", "cecile", "isabelle", "lesley", "jocelyn", "paige", "joni", "rachelle", "leola", "daphne", "alta", "ester", "petra", "graciela", "imogene", "jolene", "keisha", "lacey", "glenna", "gabriela", "keri", "ursula", "lizzie", "kirsten", "shana", "adeline", "mayra", "jayne", "jaclyn", "gracie", "sondra", "carmela", "marisa", "rosalind", "charity", "tonia", "beatriz", "marisol", "clarice", "jeanine", "sheena", "angeline", "frieda", "lily", "robbie", "shauna", "millie", "claudette", "cathleen", "angelia", "gabrielle", "autumn", "katharine", "summer", "jodie", "staci", "lea", "christi", "jimmie", "justine", "elma", "luella", "margret", "dominique", "socorro", "rene", "martina", "margo", "mavis", "callie", "bobbi", "maritza", "lucile", "leanne", "jeannine", "deana", "aileen", "lorie", "ladonna", "willa", "manuela", "gale", "selma", "dolly", "sybil", "abby", "lara", "dale", "ivy", "dee", "winnie", "marcy", "luisa", "jeri", "magdalena", "ofelia", "meagan", "audra", "matilda", "leila", "cornelia", "bianca", "simone", "bettye", "randi", "virgie", "latisha", "barbra", "georgina", "eliza", "leann", "bridgette", "rhoda", "haley", "adela", "nola", "bernadine", "flossie", "ila", "greta", "ruthie", "nelda", "minerva", "lilly", "terrie", "letha", "hilary", "estela", "valarie", "brianna", "rosalyn", "earline", "catalina", "ava", "mia", "clarissa", "lidia", "corrine", "alexandria", "concepcion", "tia", "sharron", "rae", "dona", "ericka", "jami", "elnora", "chandra", "lenore", "neva", "marylou", "melisa", "tabatha", "serena", "avis", "allie", "sofia", "jeanie", "odessa", "nannie", "harriett", "loraine", "penelope", "milagros", "emilia", "benita", "allyson", "ashlee", "tania", "tommie", "esmeralda", "karina", "eve", "pearlie", "zelma", "malinda", "noreen", "tameka", "saundra", "hillary", "amie", "althea", "rosalinda", "jordan", "lilia", "alana", "gay", "clare", "alejandra", "elinor", "michael", "lorrie", "jerri", "darcy", "earnestine", "carmella", "taylor", "noemi", "marcie", "liza", "annabelle", "louisa", "earlene", "mallory", "carlene", "nita", "selena", "tanisha", "katy", "julianne", "john", "lakisha", "edwina", "maricela", "margery", "kenya", "dollie", "roxie", "roslyn", "kathrine", "nanette", "charmaine", "lavonne", "ilene", "kris", "tammi", "suzette", "corine", "kaye", "jerry", "merle", "chrystal", "lina", "deanne", "lilian", "juliana", "aline", "luann", "kasey", "maryanne", "evangeline", "colette", "melva", "lawanda", "yesenia", "nadia", "madge", "kathie", "eddie", "ophelia", "valeria", "nona", "mitzi", "mari", "georgette", "claudine", "fran", "alissa", "roseann", "lakeisha", "susanna", "reva", "deidre", "chasity", "sheree", "carly", "james", "elvia", "alyce", "deirdre", "gena", "briana", "araceli", "katelyn", "rosanne", "wendi", "tessa", "berta", "marva", "imelda", "marietta", "marci", "leonor", "arline", "sasha", "madelyn", "janna", "juliette", "deena", "aurelia", "josefa", "augusta", "liliana", "young", "christian", "lessie", "amalia", "savannah", "anastasia", "vilma", "natalia", "rosella", "lynnette", "corina", "alfreda", "leanna", "carey", "amparo", "coleen", "tamra", "aisha", "wilda", "karyn", "cherry", "queen", "maura", "mai", "evangelina", "rosanna", "hallie", "erna", "enid", "mariana", "lacy", "juliet", "jacklyn", "freida", "madeleine", "mara", "hester", "cathryn", "lelia", "casandra", "bridgett", "angelita", "jannie", "dionne", "annmarie", "katina", "beryl", "phoebe", "millicent", "katheryn", "diann", "carissa", "maryellen", "liz", "lauri", "helga", "gilda", "adrian", "rhea", "marquita", "hollie", "tisha", "tamera", "angelique", "francesca", "britney", "kaitlin", "lolita", "florine", "rowena", "reyna", "twila", "fanny", "janell", "ines", "concetta", "bertie", "alba", "brigitte", "alyson", "vonda", "pansy", "elba", "noelle", "letitia", "kitty", "deann", "brandie", "louella", "leta", "felecia", "sharlene", "lesa", "beverley", "robert", "isabella", "herminia", "terra", "celina"],
-                    "sender_family_name": "{random.choice(sender_family_names)}",
-                    "sender_given_name": "{random.choice(sender_given_names)}",
-                    "sender_display_name": "{sender_family_name.title()}, {sender_given_name.title()}",
-                    "sender_account_name": "{sender_given_name[:1]}{sender_family_name}",
-                    "sender_email_address": "{sender_account_name}@{sender_domain}",
+                    "external_domains": ["apple.com", "microsoft.com", "amazon.com", "tesla.com", "google.com", "berkshirehathaway.com", "facebook.com", "jnj.com", "pg.com", "visa.com", "exxonmobil.com", "cokecce.com", "intel.com", "pfizer.com", "walmart.com", "chevron.com", "pepsico.com", "merck.com", "nike.com", "abbvie.com", "mcdonalds.com", "homedepot.com", "disney.com", "oracle.com", "lowes.com", "att.com", "lockheedmartin.com", "broadcom.com", "qualcomm.com", "uhg.com", "3m.com", "cvshealth.com", "abbott.com", "gs.com", "aexp.com", "honeywell.com", "morganstanley.com", "cat.com", "spglobal.com", "bms.com", "target.com", "slb.com", "americantower.com", "ge.com", "statestreet.com", "rtx.com", "adobe.com", "starbucks.com", "colpal.com", "mastercard.com", "johnsoncontrols.com", "gm.com", "cvshealth.com", "wellsfargo.com", "baxter.com", "salesforce.com", "nexteraenergy.com", "t-mobile.com", "kroger.com", "ti.com", "raytheon.com", "lilly.com", "duke-energy.com", "up.com", "cigna.com", "metlife.com", "citi.com", "blackrock.com", "adobe.com", "paypal.com", "intel.com", "aa.com", "linde.com", "honeywell.com", "conocophillips.com", "cognizant.com", "conagrabrands.com", "kimberly-clark.com", "altria.com", "northropgrumman.com", "homedepot.com", "lowes.com", "jetblue.com", "delta.com", "cat.com", "gs.com", "bms.com", "ups.com", "ford.com", "chevron.com", "gd.com", "aep.com", "qualcomm.com", "illumina.com", "biogen.com", "analog.com", "northropgrumman.com", "duke-energy.com", "jnj.com", "att.com"],
+                    "external_domain": "{random.choice(external_domains)}",
+                    "external_family_names": ["smith", "johnson", "williams", "jones", "brown", "davis", "miller", "wilson", "moore", "taylor", "anderson", "thomas", "jackson", "white", "harris", "martin", "thompson", "garcia", "martinez", "robinson", "clark", "rodriguez", "lewis", "lee", "walker", "hall", "allen", "young", "hernandez", "king", "wright", "lopez", "hill", "scott", "green", "adams", "baker", "gonzalez", "nelson", "carter", "mitchell", "perez", "roberts", "turner", "phillips", "campbell", "parker", "evans", "edwards", "collins", "stewart", "sanchez", "morris", "rogers", "reed", "cook", "morgan", "bell", "murphy", "bailey", "rivera", "cooper", "richardson", "cox", "howard", "ward", "torres", "peterson", "gray", "ramirez", "james", "watson", "brooks", "kelly", "sanders", "price", "bennett", "wood", "barnes", "ross", "henderson", "coleman", "jenkins", "perry", "powell", "long", "patterson", "hughes", "flores", "washington", "butler", "simmons", "foster", "gonzales", "bryant", "alexander", "russell", "griffin", "diaz", "hayes", "myers", "ford", "hamilton", "graham", "sullivan", "wallace", "woods", "cole", "west", "jordan", "owens", "reynolds", "fisher", "ellis", "harrison", "gibson", "mcdonald", "cruz", "marshall", "ortiz", "gomez", "murray", "freeman", "wells", "webb", "simpson", "stevens", "tucker", "porter", "hunter", "hicks", "crawford", "henry", "boyd", "mason", "morales", "kennedy", "warren", "dixon", "ramos", "reyes", "burns", "gordon", "shaw", "holmes", "rice", "robertson", "hunt", "black", "daniels", "palmer", "mills", "nichols", "grant", "knight", "ferguson", "rose", "stone", "hawkins", "dunn", "perkins", "hudson", "spencer", "gardner", "stephens", "payne", "pierce", "berry", "matthews", "arnold", "wagner", "willis", "ray", "watkins", "olson", "carroll", "duncan", "snyder", "hart", "cunningham", "bradley", "lane", "andrews", "ruiz", "harper", "fox", "riley", "armstrong", "carpenter", "weaver", "greene", "lawrence", "elliott", "chavez", "sims", "austin", "peters", "kelley", "franklin", "lawson", "fields", "gutierrez", "ryan", "schmidt", "carr", "vasquez", "castillo", "wheeler", "chapman", "oliver", "montgomery", "richards", "williamson", "johnston", "banks", "meyer", "bishop", "mccoy", "howell", "alvarez", "morrison", "hansen", "fernandez", "garza", "harvey", "little", "burton", "stanley", "nguyen", "george", "jacobs", "reid", "kim", "fuller", "lynch", "dean", "gilbert", "garrett", "romero", "welch", "larson", "frazier", "burke", "hanson", "day", "mendoza", "moreno", "bowman", "medina", "fowler", "brewer", "hoffman", "carlson", "silva", "pearson", "holland", "douglas", "fleming", "jensen", "vargas", "byrd", "davidson", "hopkins", "may", "terry", "herrera", "wade", "soto", "walters", "curtis", "neal", "caldwell", "lowe", "jennings", "barnett", "graves", "jimenez", "horton", "shelton", "barrett", "obrien", "castro", "sutton", "gregory", "mckinney", "lucas", "miles", "craig", "rodriquez", "chambers", "holt", "lambert", "fletcher", "watts", "bates", "hale", "rhodes", "pena", "beck", "newman", "haynes", "mcdaniel", "mendez", "bush", "vaughn", "parks", "dawson", "santiago", "norris", "hardy", "love", "steele", "curry", "powers", "schultz", "barker", "guzman", "page", "munoz", "ball", "keller", "chandler", "weber", "leonard", "walsh", "lyons", "ramsey", "wolfe", "schneider", "mullins", "benson", "sharp", "bowen", "daniel", "barber", "cummings", "hines", "baldwin", "griffith", "valdez", "hubbard", "salazar", "reeves", "warner", "stevenson", "burgess", "santos", "tate", "cross", "garner", "mann", "mack", "moss", "thornton", "dennis", "mcgee", "farmer", "delgado", "aguilar", "vega", "glover", "manning", "cohen", "harmon", "rodgers", "robbins", "newton", "todd", "blair", "higgins", "ingram", "reese", "cannon", "strickland", "townsend", "potter", "goodwin", "walton", "rowe", "hampton", "ortega", "patton", "swanson", "joseph", "francis", "goodman", "maldonado", "yates", "becker", "erickson", "hodges", "rios", "conner", "adkins", "webster", "norman", "malone", "hammond", "flowers", "cobb", "moody", "quinn", "blake", "maxwell", "pope", "floyd", "osborne", "paul", "mccarthy", "guerrero", "lindsey", "estrada", "sandoval", "gibbs", "tyler", "gross", "fitzgerald", "stokes", "doyle", "sherman", "saunders", "wise", "colon", "gill", "alvarado", "greer", "padilla", "simon", "waters", "nunez", "ballard", "schwartz", "mcbride", "houston", "christensen", "klein", "pratt", "briggs", "parsons", "mclaughlin", "zimmerman", "french", "buchanan", "moran", "copeland", "roy", "pittman", "brady", "mccormick", "holloway", "brock", "poole", "frank", "logan", "owen", "bass", "marsh", "drake", "wong", "jefferson", "park", "morton", "abbott", "sparks", "patrick", "norton", "huff", "clayton", "massey", "lloyd", "figueroa", "carson", "bowers", "roberson", "barton", "tran", "lamb", "harrington", "casey", "boone", "cortez", "clarke", "mathis", "singleton", "wilkins", "cain", "bryan", "underwood", "hogan", "mckenzie", "collier", "luna", "phelps", "mcguire", "allison", "bridges", "wilkerson", "nash", "summers", "atkins", "wilcox", "pitts", "conley", "marquez", "burnett", "richard", "cochran", "chase", "davenport", "hood", "gates", "clay", "ayala", "sawyer", "roman", "vazquez", "dickerson", "hodge", "acosta", "flynn", "espinoza", "nicholson", "monroe", "wolf", "morrow", "kirk", "randall", "anthony", "whitaker", "oconnor", "skinner", "ware", "molina", "kirby", "huffman", "bradford", "charles", "gilmore", "dominguez", "oneal", "bruce", "lang", "combs", "kramer", "heath", "hancock", "gallagher", "gaines", "shaffer", "short", "wiggins", "mathews", "mcclain", "fischer", "wall", "small", "melton", "hensley", "bond", "dyer", "cameron", "grimes", "contreras", "christian", "wyatt", "baxter", "snow", "mosley", "shepherd", "larsen", "hoover", "beasley", "glenn", "petersen", "whitehead", "meyers", "keith", "garrison", "vincent", "shields", "horn", "savage", "olsen", "schroeder", "hartman", "woodard", "mueller", "kemp", "deleon", "booth", "patel", "calhoun", "wiley", "eaton", "cline", "navarro", "harrell", "lester", "humphrey", "parrish", "duran", "hutchinson", "hess", "dorsey", "bullock", "robles", "beard", "dalton", "avila", "vance", "rich", "blackwell", "york", "johns", "blankenship", "trevino", "salinas", "campos", "pruitt", "moses", "callahan", "golden", "montoya", "hardin", "guerra", "mcdowell", "carey", "stafford", "gallegos", "henson", "wilkinson", "booker", "merritt", "miranda", "atkinson", "orr", "decker", "hobbs", "preston", "tanner", "knox", "pacheco", "stephenson", "glass", "rojas", "serrano", "marks", "hickman", "english", "sweeney", "strong", "prince", "mcclure", "conway", "walter", "roth", "maynard", "farrell", "lowery", "hurst", "nixon", "weiss", "trujillo", "ellison", "sloan", "juarez", "winters", "mclean", "randolph", "leon", "boyer", "villarreal", "mccall", "gentry", "carrillo", "kent", "ayers", "lara", "shannon", "sexton", "pace", "hull", "leblanc", "browning", "velasquez", "leach", "chang", "house", "sellers", "herring", "noble", "foley", "bartlett", "mercado", "landry", "durham", "walls", "barr", "mckee", "bauer", "rivers", "everett", "bradshaw", "pugh", "velez", "rush", "estes", "dodson", "morse", "sheppard", "weeks", "camacho", "bean", "barron", "livingston", "middleton", "spears", "branch", "blevins", "chen", "kerr", "mcconnell", "hatfield", "harding", "ashley", "solis", "herman", "frost", "giles", "blackburn", "william", "pennington", "woodward", "finley", "mcintosh", "koch", "best", "solomon", "mccullough", "dudley", "nolan", "blanchard", "rivas", "brennan", "mejia", "kane", "benton", "joyce", "buckley", "haley", "valentine", "maddox", "russo", "mcknight", "buck", "moon", "mcmillan", "crosby", "berg", "dotson", "mays", "roach", "church", "chan", "richmond", "meadows", "faulkner", "oneill", "knapp", "kline", "barry", "ochoa", "jacobson", "gay", "avery", "hendricks", "horne", "shepard", "hebert", "cherry", "cardenas", "mcintyre", "whitney", "waller", "holman", "donaldson", "cantu", "terrell", "morin", "gillespie", "fuentes", "tillman", "sanford", "bentley", "peck", "key", "salas", "rollins", "gamble", "dickson", "battle", "santana", "cabrera", "cervantes", "howe", "hinton", "hurley", "spence", "zamora", "yang", "mcneil", "suarez", "case", "petty", "gould", "mcfarland", "sampson", "carver", "bray", "rosario", "macdonald", "stout", "hester", "melendez", "dillon", "farley", "hopper", "galloway", "potts", "bernard", "joyner", "stein", "aguirre", "osborn", "mercer", "bender", "franco", "rowland", "sykes", "benjamin", "travis", "pickett", "crane", "sears", "mayo", "dunlap", "hayden", "wilder", "mckay", "coffey", "mccarty", "ewing", "cooley", "vaughan", "bonner", "cotton", "holder", "stark", "ferrell", "cantrell", "fulton", "lynn", "lott", "calderon", "rosa", "pollard", "hooper", "burch", "mullen", "fry", "riddle", "levy", "david", "duke", "odonnell", "guy", "michael", "britt", "frederick", "daugherty", "berger", "dillard", "alston", "jarvis", "frye", "riggs", "chaney", "odom", "duffy", "fitzpatrick", "valenzuela", "merrill", "mayer", "alford", "mcpherson", "acevedo", "donovan", "barrera", "albert", "cote", "reilly", "compton", "raymond", "mooney", "mcgowan", "craft", "cleveland", "clemons", "wynn", "nielsen", "baird", "stanton", "snider", "rosales", "bright", "witt", "stuart", "hays", "holden", "rutledge", "kinney", "clements", "castaneda", "slater", "hahn", "emerson", "conrad", "burks", "delaney", "pate", "lancaster", "sweet", "justice", "tyson", "sharpe", "whitfield", "talley", "macias", "irwin", "burris", "ratliff", "mccray", "madden", "kaufman", "beach", "goff", "cash", "bolton", "mcfadden", "levine", "good", "byers", "kirkland", "kidd", "workman", "carney", "dale", "mcleod", "holcomb", "england", "finch", "head", "burt", "hendrix", "sosa", "haney", "franks", "sargent", "nieves", "downs", "rasmussen", "bird", "hewitt", "lindsay", "le", "foreman", "valencia", "oneil", "delacruz", "vinson", "dejesus", "hyde", "forbes", "gilliam", "guthrie", "wooten", "huber", "barlow", "boyle", "mcmahon", "buckner", "rocha", "puckett", "langley", "knowles", "cooke", "velazquez", "whitley", "noel", "vang"],
+                    "external_given_names": ["james", "john", "robert", "michael", "william", "david", "richard", "charles", "joseph", "thomas", "christopher", "daniel", "paul", "mark", "donald", "george", "kenneth", "steven", "edward", "brian", "ronald", "anthony", "kevin", "jason", "matthew", "gary", "timothy", "jose", "larry", "jeffrey", "frank", "scott", "eric", "stephen", "andrew", "raymond", "gregory", "joshua", "jerry", "dennis", "walter", "patrick", "peter", "harold", "douglas", "henry", "carl", "arthur", "ryan", "roger", "joe", "juan", "jack", "albert", "jonathan", "justin", "terry", "gerald", "keith", "samuel", "willie", "ralph", "lawrence", "nicholas", "roy", "benjamin", "bruce", "brandon", "adam", "harry", "fred", "wayne", "billy", "steve", "louis", "jeremy", "aaron", "randy", "howard", "eugene", "carlos", "russell", "bobby", "victor", "martin", "ernest", "phillip", "todd", "jesse", "craig", "alan", "shawn", "clarence", "sean", "philip", "chris", "johnny", "earl", "jimmy", "antonio", "danny", "bryan", "tony", "luis", "mike", "stanley", "leonard", "nathan", "dale", "manuel", "rodney", "curtis", "norman", "allen", "marvin", "vincent", "glenn", "jeffery", "travis", "jeff", "chad", "jacob", "lee", "melvin", "alfred", "kyle", "francis", "bradley", "jesus", "herbert", "frederick", "ray", "joel", "edwin", "don", "eddie", "ricky", "troy", "randall", "barry", "alexander", "bernard", "mario", "leroy", "francisco", "marcus", "micheal", "theodore", "clifford", "miguel", "oscar", "jay", "jim", "tom", "calvin", "alex", "jon", "ronnie", "bill", "lloyd", "tommy", "leon", "derek", "warren", "darrell", "jerome", "floyd", "leo", "alvin", "tim", "wesley", "gordon", "dean", "greg", "jorge", "dustin", "pedro", "derrick", "dan", "lewis", "zachary", "corey", "herman", "maurice", "vernon", "roberto", "clyde", "glen", "hector", "shane", "ricardo", "sam", "rick", "lester", "brent", "ramon", "charlie", "tyler", "gilbert", "gene", "marc", "reginald", "ruben", "brett", "angel", "nathaniel", "rafael", "leslie", "edgar", "milton", "raul", "ben", "chester", "cecil", "duane", "franklin", "andre", "elmer", "brad", "gabriel", "ron", "mitchell", "roland", "arnold", "harvey", "jared", "adrian", "karl", "cory", "claude", "erik", "darryl", "jamie", "neil", "jessie", "christian", "javier", "fernando", "clinton", "ted", "mathew", "tyrone", "darren", "lonnie", "lance", "cody", "julio", "kelly", "kurt", "allan", "nelson", "guy", "clayton", "hugh", "max", "dwayne", "dwight", "armando", "felix", "jimmie", "everett", "jordan", "ian", "wallace", "ken", "bob", "jaime", "casey", "alfredo", "alberto", "dave", "ivan", "johnnie", "sidney", "byron", "julian", "isaac", "morris", "clifton", "willard", "daryl", "ross", "virgil", "andy", "marshall", "salvador", "perry", "kirk", "sergio", "marion", "tracy", "seth", "kent", "terrance", "rene", "eduardo", "terrence", "enrique", "freddie", "wade", "mary", "patricia", "linda", "barbara", "elizabeth", "jennifer", "maria", "susan", "margaret", "dorothy", "lisa", "nancy", "karen", "betty", "helen", "sandra", "donna", "carol", "ruth", "sharon", "michelle", "laura", "sarah", "kimberly", "deborah", "jessica", "shirley", "cynthia", "angela", "melissa", "brenda", "amy", "anna", "rebecca", "virginia", "kathleen", "pamela", "martha", "debra", "amanda", "stephanie", "carolyn", "christine", "marie", "janet", "catherine", "frances", "ann", "joyce", "diane", "alice", "julie", "heather", "teresa", "doris", "gloria", "evelyn", "jean", "cheryl", "mildred", "katherine", "joan", "ashley", "judith", "rose", "janice", "kelly", "nicole", "judy", "christina", "kathy", "theresa", "beverly", "denise", "tammy", "irene", "jane", "lori", "rachel", "marilyn", "andrea", "kathryn", "louise", "sara", "anne", "jacqueline", "wanda", "bonnie", "julia", "ruby", "lois", "tina", "phyllis", "norma", "paula", "diana", "annie", "lillian", "emily", "robin", "peggy", "crystal", "gladys", "rita", "dawn", "connie", "florence", "tracy", "edna", "tiffany", "carmen", "rosa", "cindy", "grace", "wendy", "victoria", "edith", "kim", "sherry", "sylvia", "josephine", "thelma", "shannon", "sheila", "ethel", "ellen", "elaine", "marjorie", "carrie", "charlotte", "monica", "esther", "pauline", "emma", "juanita", "anita", "rhonda", "hazel", "amber", "eva", "debbie", "april", "leslie", "clara", "lucille", "jamie", "joanne", "eleanor", "valerie", "danielle", "megan", "alicia", "suzanne", "michele", "gail", "bertha", "darlene", "veronica", "jill", "erin", "geraldine", "lauren", "cathy", "joann", "lorraine", "lynn", "sally", "regina", "erica", "beatrice", "dolores", "bernice", "audrey", "yvonne", "annette", "june", "samantha", "marion", "dana", "stacy", "ana", "renee", "ida", "vivian", "roberta", "holly", "brittany", "melanie", "loretta", "yolanda", "jeanette", "laurie", "katie", "kristen", "vanessa", "alma", "sue", "elsie", "beth", "jeanne", "vicki", "carla", "tara", "rosemary", "eileen", "terri", "gertrude", "lucy", "tonya", "ella", "stacey", "wilma", "gina", "kristin", "jessie", "natalie", "agnes", "vera", "willie", "charlene", "bessie", "delores", "melinda", "pearl", "arlene", "maureen", "colleen", "allison", "tamara", "joy", "georgia", "constance", "lillie", "claudia", "jackie", "marcia", "tanya", "nellie", "minnie", "marlene", "heidi", "glenda", "lydia", "viola", "courtney", "marian", "stella", "caroline", "dora", "jo", "vickie", "mattie", "terry", "maxine", "irma", "mabel", "marsha", "myrtle", "lena", "christy", "deanna", "patsy", "hilda", "gwendolyn", "jennie", "nora", "margie", "nina", "cassandra", "leah", "penny", "kay", "priscilla", "naomi", "carole", "brandy", "olga", "billie", "dianne", "tracey", "leona", "jenny", "felicia", "sonia", "miriam", "velma", "becky", "bobbie", "violet", "kristina", "toni", "misty", "mae", "shelly", "daisy", "ramona", "sherri", "erika", "katrina", "claire", "lindsey", "lindsay", "geneva", "guadalupe", "belinda", "margarita", "sheryl", "cora", "faye", "ada", "natasha", "sabrina", "isabel", "marguerite", "hattie", "harriet", "molly", "cecilia", "kristi", "brandi", "blanche", "sandy", "rosie", "joanna", "iris", "eunice", "angie", "inez", "lynda", "madeline", "amelia", "alberta", "genevieve", "monique", "jodi", "janie", "maggie", "kayla", "sonya", "jan", "lee", "kristine", "candace", "fannie", "maryann", "opal", "alison", "yvette", "melody", "luz", "susie", "olivia", "flora", "shelley", "kristy", "mamie", "lula", "lola", "verna", "beulah", "antoinette", "candice", "juana", "jeannette", "pam", "kelli", "hannah", "whitney", "bridget", "karla", "celia", "latoya", "patty", "shelia", "gayle", "della", "vicky", "lynne", "sheri", "marianne", "kara", "jacquelyn", "erma", "blanca", "myra", "leticia", "pat", "krista", "roxanne", "angelica", "johnnie", "robyn", "francis", "adrienne", "rosalie", "alexandra", "brooke", "bethany", "sadie", "bernadette", "traci", "jody", "kendra", "jasmine", "nichole", "rachael", "chelsea", "mable", "ernestine", "muriel", "marcella", "elena", "krystal", "angelina", "nadine", "kari", "estelle", "dianna", "paulette", "lora", "mona", "doreen", "rosemarie", "angel", "desiree", "antonia", "hope", "ginger", "janis", "betsy", "christie", "freda", "mercedes", "meredith", "lynette", "teri", "cristina", "eula", "leigh", "meghan", "sophia", "eloise", "rochelle", "gretchen", "cecelia", "raquel", "henrietta", "alyssa", "jana", "kelley", "gwen", "kerry", "jenna", "tricia", "laverne", "olive", "alexis", "tasha", "silvia", "elvira", "casey", "delia", "sophie", "kate", "patti", "lorena", "kellie", "sonja", "lila", "lana", "darla", "may", "mindy", "essie", "mandy", "lorene", "elsa", "josefina", "jeannie", "miranda", "dixie", "lucia", "marta", "faith", "lela", "johanna", "shari", "camille", "tami", "shawna", "elisa", "ebony", "melba", "ora", "nettie", "tabitha", "ollie", "jaime", "winifred", "kristie", "marina", "alisha", "aimee", "rena", "myrna", "marla", "tammie", "latasha", "bonita", "patrice", "ronda", "sherrie", "addie", "francine", "deloris", "stacie", "adriana", "cheri", "shelby", "abigail", "celeste", "jewel", "cara", "adele", "rebekah", "lucinda", "dorthy", "chris", "effie", "trina", "reba", "shawn", "sallie", "aurora", "lenora", "etta", "lottie", "kerri", "trisha", "nikki", "estella", "francisca", "josie", "tracie", "marissa", "karin", "brittney", "janelle", "lourdes", "laurel", "helene", "fern", "elva", "corinne", "kelsey", "ina", "bettie", "elisabeth", "aida", "caitlin", "ingrid", "iva", "eugenia", "christa", "goldie", "cassie", "maude", "jenifer", "therese", "frankie", "dena", "lorna", "janette", "latonya", "candy", "morgan", "consuelo", "tamika", "rosetta", "debora", "cherie", "polly", "dina", "jewell", "fay", "jillian", "dorothea", "nell", "trudy", "esperanza", "patrica", "kimberley", "shanna", "helena", "carolina", "cleo", "stefanie", "rosario", "ola", "janine", "mollie", "lupe", "alisa", "lou", "maribel", "susanne", "bette", "susana", "elise", "cecile", "isabelle", "lesley", "jocelyn", "paige", "joni", "rachelle", "leola", "daphne", "alta", "ester", "petra", "graciela", "imogene", "jolene", "keisha", "lacey", "glenna", "gabriela", "keri", "ursula", "lizzie", "kirsten", "shana", "adeline", "mayra", "jayne", "jaclyn", "gracie", "sondra", "carmela", "marisa", "rosalind", "charity", "tonia", "beatriz", "marisol", "clarice", "jeanine", "sheena", "angeline", "frieda", "lily", "robbie", "shauna", "millie", "claudette", "cathleen", "angelia", "gabrielle", "autumn", "katharine", "summer", "jodie", "staci", "lea", "christi", "jimmie", "justine", "elma", "luella", "margret", "dominique", "socorro", "rene", "martina", "margo", "mavis", "callie", "bobbi", "maritza", "lucile", "leanne", "jeannine", "deana", "aileen", "lorie", "ladonna", "willa", "manuela", "gale", "selma", "dolly", "sybil", "abby", "lara", "dale", "ivy", "dee", "winnie", "marcy", "luisa", "jeri", "magdalena", "ofelia", "meagan", "audra", "matilda", "leila", "cornelia", "bianca", "simone", "bettye", "randi", "virgie", "latisha", "barbra", "georgina", "eliza", "leann", "bridgette", "rhoda", "haley", "adela", "nola", "bernadine", "flossie", "ila", "greta", "ruthie", "nelda", "minerva", "lilly", "terrie", "letha", "hilary", "estela", "valarie", "brianna", "rosalyn", "earline", "catalina", "ava", "mia", "clarissa", "lidia", "corrine", "alexandria", "concepcion", "tia", "sharron", "rae", "dona", "ericka", "jami", "elnora", "chandra", "lenore", "neva", "marylou", "melisa", "tabatha", "serena", "avis", "allie", "sofia", "jeanie", "odessa", "nannie", "harriett", "loraine", "penelope", "milagros", "emilia", "benita", "allyson", "ashlee", "tania", "tommie", "esmeralda", "karina", "eve", "pearlie", "zelma", "malinda", "noreen", "tameka", "saundra", "hillary", "amie", "althea", "rosalinda", "jordan", "lilia", "alana", "gay", "clare", "alejandra", "elinor", "michael", "lorrie", "jerri", "darcy", "earnestine", "carmella", "taylor", "noemi", "marcie", "liza", "annabelle", "louisa", "earlene", "mallory", "carlene", "nita", "selena", "tanisha", "katy", "julianne", "john", "lakisha", "edwina", "maricela", "margery", "kenya", "dollie", "roxie", "roslyn", "kathrine", "nanette", "charmaine", "lavonne", "ilene", "kris", "tammi", "suzette", "corine", "kaye", "jerry", "merle", "chrystal", "lina", "deanne", "lilian", "juliana", "aline", "luann", "kasey", "maryanne", "evangeline", "colette", "melva", "lawanda", "yesenia", "nadia", "madge", "kathie", "eddie", "ophelia", "valeria", "nona", "mitzi", "mari", "georgette", "claudine", "fran", "alissa", "roseann", "lakeisha", "susanna", "reva", "deidre", "chasity", "sheree", "carly", "james", "elvia", "alyce", "deirdre", "gena", "briana", "araceli", "katelyn", "rosanne", "wendi", "tessa", "berta", "marva", "imelda", "marietta", "marci", "leonor", "arline", "sasha", "madelyn", "janna", "juliette", "deena", "aurelia", "josefa", "augusta", "liliana", "young", "christian", "lessie", "amalia", "savannah", "anastasia", "vilma", "natalia", "rosella", "lynnette", "corina", "alfreda", "leanna", "carey", "amparo", "coleen", "tamra", "aisha", "wilda", "karyn", "cherry", "queen", "maura", "mai", "evangelina", "rosanna", "hallie", "erna", "enid", "mariana", "lacy", "juliet", "jacklyn", "freida", "madeleine", "mara", "hester", "cathryn", "lelia", "casandra", "bridgett", "angelita", "jannie", "dionne", "annmarie", "katina", "beryl", "phoebe", "millicent", "katheryn", "diann", "carissa", "maryellen", "liz", "lauri", "helga", "gilda", "adrian", "rhea", "marquita", "hollie", "tisha", "tamera", "angelique", "francesca", "britney", "kaitlin", "lolita", "florine", "rowena", "reyna", "twila", "fanny", "janell", "ines", "concetta", "bertie", "alba", "brigitte", "alyson", "vonda", "pansy", "elba", "noelle", "letitia", "kitty", "deann", "brandie", "louella", "leta", "felecia", "sharlene", "lesa", "beverley", "robert", "isabella", "herminia", "terra", "celina"],
+                    "external_family_name": "{random.choice(external_family_names)}",
+                    "external_given_name": "{random.choice(external_given_names)}",
+                    "external_account_name": "{external_given_name[:1]}{external_family_name}",
+                    "external_display_name": "{external_family_name.title()}, {external_given_name.title()}",
+                    "external_email_address": "{external_account_name}@{external_domain}",
 
-                    "recipient": {
+                    "internal_user": {
                         "type": "eval",
                         "value": "random.choice(list(__users.values()))"
                     },
-                    "recipient_account_name": "{recipient.get('name', '')}",
-                    "recipient_display_name": "{recipient.get('family_name', '').title()}, {recipient.get('given_name', '').title()}",
-                    "recipient_email_address": "{recipient_account_name}@{recipient.get('internal_domain', '')}",
+                    "internal_domain": "{internal_user.get('external_domain', '')}",
+                    "internal_account_name": "{internal_user.get('user_name', '')}",
+                    "internal_display_name": "{internal_user.get('family_name', '').title()}, {internal_user.get('given_name', '').title()}",
+                    "internal_email_address": "{internal_account_name}@{internal_domain}",
 
-                    "internetmessageid": "<{''.join(random.choices(string.ascii_uppercase + string.digits, k=32))}@{sender_domain}>",
-                    "internetmessageheaders": [
-                        {
-                            "name": "Received",
-                            "value": "from {mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM (2603:1096:400:2e5::9) by {mta_host2_main}.{mta_host_sub}.PROD.OUTLOOK.COM with HTTPS; {now_rfc1123_time}"
-                        },
-                        {
-                            "name": "Content-Type",
-                            "value": "application/ms-tnef"
-                        },
-                        {
-                            "name": "Content-Transfer-Encoding",
-                            "value": "binary"
-                        },
-                        {
-                            "name": "From",
-                            "value": "\"{sender_display_name}\" <{sender_email_address}>"
-                        },
-                        {
-                            "name": "To",
-                            "value": "\"{recipient_display_name}\" <{recipient_email_address}>"
-                        },
-                        {
-                            "name": "Importance",
-                            "value": "low"
-                        },
-                        {
-                            "name": "X-Priority",
-                            "value": "5"
-                        },
-                        {
-                            "name": "Date",
-                            "value": "{now_rfc1123_time}"
-                        },
-                        {
-                            "name": "Message-ID",
-                            "value": "{internetmessageid}"
-                        },
-                        {
-                            "name": "Accept-Language",
-                            "value": "en-US"
-                        },
-                        {
-                            "name": "Content-Language",
-                            "value": "en-US"
-                        },
-                        {
-                            "name": "X-MS-Has-Attach",
-                            "value": "{'yes' if attachments else 'no'}"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-SCL",
-                            "value": "1"
-                        },
-                        {
-                            "name": "MIME-Version",
-                            "value": "1.0"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-MessageDirectionality",
-                            "value": "Originating"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-AuthSource",
-                            "value": "{mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-AuthAs",
-                            "value": "Internal"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-AuthMechanism",
-                            "value": "04"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-Network-Message-Id",
-                            "value": "{uuid.uuid4()}"
-                        },
-                        {
-                            "name": "X-MS-PublicTrafficType",
-                            "value": "Email"
-                        },
-                        {
-                            "name": "X-MS-TrafficTypeDiagnostic",
-                            "value": "{mta_host1_main}:EE_|TY1P286MB3277:EE_|OS3P286MB1759:EE_"
-                        },
-                        {
-                            "name": "Return-Path",
-                            "value": "\"{recipient_display_name}\" <{recipient_email_address}>"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-ExpirationStartTime",
-                            "value": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S.%f')[:-2]} (UTC)"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-ExpirationStartTimeReason",
-                            "value": "OriginalSubmit"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-ExpirationInterval",
-                            "value": "1:00:00:00.0000000"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Organization-ExpirationIntervalReason",
-                            "value": "OriginalSubmit"
-                        },
-                        {
-                            "name": "X-MS-Office365-Filtering-Correlation-Id",
-                            "value": "{uuid.uuid4()}"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Transport-Rules-Loop",
-                            "value": "1"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-OriginalArrivalTime",
-                            "value": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S.%f')[:-2]} (UTC)"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-FromEntityHeader",
-                            "value": "Hosted"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-Id",
-                            "value": "{uuid.uuid4()}"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-AuthSource",
-                            "value": "{mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-AuthAs",
-                            "value": "Internal"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-Network-Message-Id",
-                            "value": "{uuid.uuid4()}"
-                        },
-                        {
-                            "name": "X-MS-Exchange-CrossTenant-MailboxType",
-                            "value": "HOSTED"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Transport-EndToEndLatency",
-                            "value": "00:00:01.7340127"
-                        },
-                        {
-                            "name": "X-MS-Exchange-Processed-By-BccFoldering",
-                            "value": "15.20.8251.004"
-                        },
-                        {
-                            "name": "X-Microsoft-Antispam-Mailbox-Delivery",
-                            "value": "ucf:0;jmr:0;auth:0;dest:I;ENG:(910001)(944506478)(944626604)(920097)(425001)(930097)(140003);"
-                        }
-                    ],
-                    "weblink": "https://outlook.office365.com/owa/?ItemID={''.join(random.choices(string.ascii_lowercase, k=120))}&exvsurl=1&viewmodel=ReadMessageItem"
-                },
-                ".eval": {
-                    "log_params": "eval"
-                },
-                "operation": "log",
-                "type": "custom",
-                "cef_version": "0",
-                "cef_vendor": "msft",
-                "cef_product": "o365_emails",
-                "log_format": "json",
-                "log_params": {
-                    "attachments": "attachments",
-                    "bccrecipients": [],
-                    "body": null,
-                    "categories": [],
-                    "ccrecipients": [],
-                    "changekey": "''.join(random.choices(string.ascii_lowercase, k=40))",
-                    "conversationid": "''.join(random.choices(string.hexdigits, k=80))",
-                    "conversationindex": "''.join(random.choices(string.hexdigits, k=54))",
-                    "createddatetime": "now_timestamp_ms",
-                    "flag": {
-                        "flagStatus": "'notFlagged'"
-                    },
-                    "from": {
-                        "emailAddress": {
-                            "name": "sender_display_name",
-                            "address": "sender_email_address"
-                        }
-                    },
-                    "hasattachments": "bool(attachments)",
-                    "id": "''.join(random.choices(string.hexdigits, k=150))",
-                    "importance": "'low'",
-                    "inferenceclassification": "'focused'",
-                    "internetmessageheaders": "internetmessageheaders",
-                    "internetmessageid": "internetmessageid",
-                    "isdeliveryreceiptrequested": false,
-                    "isdraft": false,
-                    "isread": false,
-                    "isreadreceiptrequested": false,
-                    "lastmodifieddatetime": "now_timestamp_ms",
-                    "parentfolderid": "base64.b64encode(recipient_email_address.encode()).decode()",
-                    "receiveddatetime": "now_timestamp_ms",
-                    "replyto": [],
-                    "sender": {
-                        "emailAddress": {
-                            "name": "sender_display_name",
-                            "address": "sender_email_address"
-                        }
-                    },
-                    "sentdatetime": "now_timestamp_ms",
-                    "torecipients": [
-                        {
-                            "emailAddress": {
-                                "name": "recipient_display_name",
-                                "address": "recipient_email_address"
-                            }
-                        }
-                    ],
-                    "weblink": "weblink"
-                },
-                ".weights": 5
-            },
-            {
-                "#": "Emails: Deliver To External Corp",
-                ".variables": {
-                    "now_timestamp_ms": {
+                    "sender_recipient": {
                         "type": "eval",
-                        "value": "int(datetime.datetime.now().timestamp() * 1000)"
+                        "value": "random.sample([{'domain': internal_domain, 'display_name': internal_display_name, 'email_address': internal_email_address}, {'domain': external_domain, 'display_name': external_display_name, 'email_address': external_email_address}], k=2)"
                     },
-                    "now_rfc1123_time": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S %z')}",
-                    "now_iso8601_time": "{datetime.datetime.now(datetime.UTC).isoformat(timespec='seconds').replace('+00:00', 'Z')}",
-                    "mta_host1_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
-                    "mta_host2_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
-                    "mta_host_sub": "{''.join(random.choices(string.ascii_uppercase, k=4))}{''.join(random.choices(string.digits, k=3))}",
-                    "pdf_filenames": ["invoice", "document", "report", "proposal", "contract", "application", "resume", "presentation", "letter", "budget", "summary", "sales_report", "meeting_notes", "agreement", "order_confirmation", "receipt", "policy", "project_plan", "invoice_123", "payment_receipt", "scanned_document", "final_report", "tax_form", "report_final", "user_guide", "catalog", "proposal_final", "test_results", "client_feedback", "event_agenda", "company_profile", "work_schedule", "feedback_form", "contract_final", "job_description", "product_catalog", "advertisement", "training_manual", "letter_of_recommendation", "privacy_policy", "product_information", "staff_schedule", "project_report", "application_form", "terms_and_conditions", "employee_handbook", "invoice_details", "monthly_report", "business_plan", "financial_report", "newsletter", "budget_plan", "service_agreement", "membership_form", "conference_schedule", "business_proposal", "presentation_final", "user_manual", "audit_report", "event_invitation", "meeting_agenda", "legal_documents", "product_review", "statement_of_work", "project_update", "time_sheet", "non_disclosure_agreement", "travel_plan", "expense_report", "service_report", "application_letter", "offer_letter", "sales_invoice", "refund_policy", "case_study", "meeting_minutes", "supplier_agreement", "policy_update", "maintenance_report", "employee_performance", "investment_report", "software_update", "event_report", "client_proposal", "research_report", "work_plan", "lease_agreement", "contact_information", "annual_report", "press_release", "legal_notice", "reference_letter", "vendor_invoice", "end_of_year_report", "school_report", "incident_report", "warranty_policy", "notice_of_termination", "product_specifications", "customer_feedback"],
-                    "docx_filenames": ["invoice", "document", "proposal", "report", "resume", "cover_letter", "contract", "application", "meeting_notes", "project_plan", "agreement", "letter", "report_final", "business_plan", "application_form", "feedback", "budget", "contract_final", "meeting_minutes", "letter_of_recommendation", "job_description", "employee_manual", "proposal_final", "task_list", "assignment", "letter_of_intent", "client_feedback", "employee_performance", "research_paper", "invoice_details", "sales_report", "project_report", "annual_report", "employee_survey", "feedback_form", "terms_and_conditions", "meeting_agenda", "policy_document", "case_study", "product_description", "confidentiality_agreement", "school_report", "expense_report", "non_disclosure_agreement", "purchase_order", "marketing_plan", "research_summary", "team_schedule", "sales_invoice", "legal_notice", "product_specification", "user_guide", "project_update", "client_proposal", "statement_of_work", "training_material", "tax_form", "work_schedule", "company_profile", "contract_template", "travel_itinerary", "event_agenda", "travel_plan", "proposal_letter", "employee_guide", "statement", "press_release", "reference_letter", "client_report", "legal_documents", "press_kit", "research_report", "meeting_report", "service_agreement", "action_plan", "invoice_template", "financial_statement", "report_template", "inventory_report", "asset_report", "proposal_document", "product_review", "risk_assessment", "supplier_agreement", "travel_expenses", "customer_feedback", "end_of_year_report", "performance_review", "marketing_report", "customer_report", "annual_performance", "employee_report", "service_report", "timeline", "business_summary", "letter_of_offer", "staff_schedule", "onboarding_documents", "invitation_letter", "task_report"],
-                    "xlsx_filenames": ["invoice", "budget", "sales_report", "financial_statement", "project_schedule", "expense_report", "client_list", "payroll", "inventory", "timesheet", "monthly_report", "profit_loss", "business_plan", "employee_schedule", "forecast", "quarterly_report", "balance_sheet", "sales_invoice", "tax_report", "project_budget", "marketing_plan", "revenue_report", "cash_flow", "product_sales", "meeting_schedule", "order_summary", "project_plan", "task_list", "audit_report", "financial_analysis", "expense_summary", "investment_plan", "customer_data", "capital_budget", "profit_margin", "company_budget", "product_inventory", "team_schedule", "employee_data", "sales_forecast", "meeting_minutes", "supplier_invoice", "project_progress", "event_budget", "performance_review", "customer_feedback", "service_report", "business_summary", "client_invoice", "financial_projection", "purchase_order", "marketing_report", "vendor_list", "product_list", "work_plan", "expense_details", "profit_and_loss", "income_statement", "product_price_list", "order_tracking", "contract_summary", "cash_report", "asset_report", "risk_assessment", "project_overview", "account_statement", "employee_performance", "contract_payment", "product_cost", "supplier_report", "year_end_report", "investment_report", "financial_forecast", "customer_invoice", "purchase_report", "time_tracking", "holiday_schedule", "supplier_payment", "training_schedule", "operational_report", "product_launch", "marketing_budget", "service_invoice", "event_schedule", "business_forecast", "stock_report", "recruitment_schedule", "performance_metrics", "vendor_report", "cost_breakdown", "bonus_report", "service_plan", "budget_template", "annual_plan", "partner_invoice", "department_budget", "sales_pipeline", "client_schedule", "subscription_report", "proposal_budget"],
-                    "zip_filenames": ["project_files", "documents", "photos", "images", "report_data", "backup", "presentation", "contract_files", "work_docs", "archive", "invoice_data", "proposal_files", "client_documents", "sales_data", "marketing_materials", "financial_reports", "source_code", "project_backup", "team_documents", "tax_documents", "product_images", "order_data", "application_files", "software", "meeting_notes", "documents_backup", "business_reports", "project_pictures", "images_backup", "data_archive", "payment_files", "customer_data", "vendor_files", "employee_data", "research_data", "product_manual", "product_images", "event_photos", "event_files", "marketing_files", "contract_backup", "financial_data", "sales_reports", "documents_archive", "code_files", "proposal_archive", "order_invoices", "video_files", "business_documents", "software_update", "client_reports", "meeting_pictures", "press_releases", "project_archives", "system_files", "presentation_files", "backup_files", "purchase_orders", "company_docs", "proposal_files", "event_archive", "customer_files", "project_materials", "time_tracking", "product_catalog", "product_data", "invoice_files", "files_for_review", "financial_archive", "product_design", "job_applications", "staff_schedule", "employee_forms", "purchase_data", "system_backup", "meeting_docs", "proposal_documents", "product_information", "order_documents", "customer_reports", "resource_files", "software_tools", "team_files", "backup_data", "event_documents", "client_feedback", "photo_archive", "task_files", "financial_documents", "monthly_reports", "presentation_data", "event_files_backup", "research_files", "vendor_reports", "client_agreements", "product_info", "files_for_upload", "meeting_agenda", "archive_data", "contract_documents"],
-
-                    "attachment_sources": {
-                        "type": "eval",
-                        "value": [
-                            {
-                                "#": "'.pdf'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/pdf'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "f'Q-{random.randint(100000, 999999)}.pdf'",
-                                    "contentType": "'application/pdf'",
-                                    "size": "random.randint(512 * 1024, 1 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            },
-                            {
-                                "#": "'.pdf'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/pdf'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "random.choice(pdf_filenames) + random.choice(['', '_' + datetime.datetime.now().strftime('%Y%m%d')]) + '.pdf'",
-                                    "contentType": "'application/pdf'",
-                                    "size": "random.randint(512 * 1024, 1 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            },
-                            {
-                                "#": "'.docx'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "random.choice(docx_filenames) + random.choice(['', '_' + datetime.datetime.now().strftime('%Y%m%d')]) + '.docx'",
-                                    "contentType": "'application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
-                                    "size": "random.randint(512 * 1024, 5 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            },
-                            {
-                                "#": "'.xlsx'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "random.choice(xlsx_filenames) + random.choice(['', '_' + datetime.datetime.now().strftime('%Y%m%d')]) + '.xlsx'",
-                                    "contentType": "'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-                                    "size": "random.randint(512 * 1024, 5 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            },
-                            {
-                                "#": "'.zip'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/x-zip-compressed'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "random.choice(zip_filenames) + random.choice(['', '_' + datetime.datetime.now().strftime('%Y%m%d')]) + '.xlsx'",
-                                    "contentType": "'application/x-zip-compressed'",
-                                    "size": "random.randint(512 * 1024, 5 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            },
-                            {
-                                "#": "'.zip'",
-                                "params": {
-                                    "@odata.type": "'#microsoft.graph.fileAttachment'",
-                                    "@odata.mediaContentType": "'application/x-zip-compressed'",
-                                    "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
-                                    "lastModifiedDateTime": "now_iso8601_time",
-                                    "name": "datetime.datetime.now().strftime('%Y%m%d%H%M') + '.zip'",
-                                    "contentType": "'application/x-zip-compressed'",
-                                    "size": "random.randint(512 * 1024, 5 * 1024 * 1024)",
-                                    "isInline": false,
-                                    "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
-                                    "contentLocation": null,
-                                    "hash_str": "''.join(random.choices(string.hexdigits, k=64))"
-                                },
-                                "weight": 3
-                            }
-                        ]
-                    },
-                    "attachments": {
-                        "type": "eval",
-                        "value": "random.choices([x['params'] for x in attachment_sources], [x['weight'] for x in attachment_sources], k=random.choices([0,1,2,3], [1000, 50, 20, 10])[0])"
-                    },
-
-                    "recipient_domains": ["apple.com", "microsoft.com", "amazon.com", "tesla.com", "google.com", "berkshirehathaway.com", "facebook.com", "jnj.com", "pg.com", "visa.com", "exxonmobil.com", "cokecce.com", "intel.com", "pfizer.com", "walmart.com", "chevron.com", "pepsico.com", "merck.com", "nike.com", "abbvie.com", "mcdonalds.com", "homedepot.com", "disney.com", "oracle.com", "lowes.com", "att.com", "lockheedmartin.com", "broadcom.com", "qualcomm.com", "uhg.com", "3m.com", "cvshealth.com", "abbott.com", "gs.com", "aexp.com", "honeywell.com", "morganstanley.com", "cat.com", "spglobal.com", "bms.com", "target.com", "slb.com", "americantower.com", "ge.com", "statestreet.com", "rtx.com", "adobe.com", "starbucks.com", "colpal.com", "mastercard.com", "johnsoncontrols.com", "gm.com", "cvshealth.com", "wellsfargo.com", "baxter.com", "salesforce.com", "nexteraenergy.com", "t-mobile.com", "kroger.com", "ti.com", "raytheon.com", "lilly.com", "duke-energy.com", "up.com", "cigna.com", "metlife.com", "citi.com", "blackrock.com", "adobe.com", "paypal.com", "intel.com", "aa.com", "linde.com", "honeywell.com", "conocophillips.com", "cognizant.com", "conagrabrands.com", "kimberly-clark.com", "altria.com", "northropgrumman.com", "homedepot.com", "lowes.com", "jetblue.com", "delta.com", "cat.com", "gs.com", "bms.com", "ups.com", "ford.com", "chevron.com", "gd.com", "aep.com", "qualcomm.com", "illumina.com", "biogen.com", "analog.com", "northropgrumman.com", "duke-energy.com", "jnj.com", "att.com"],
-                    "recipient_domain": "{random.choice(recipient_domains)}",
-                    "recipient_family_names": ["smith", "johnson", "williams", "jones", "brown", "davis", "miller", "wilson", "moore", "taylor", "anderson", "thomas", "jackson", "white", "harris", "martin", "thompson", "garcia", "martinez", "robinson", "clark", "rodriguez", "lewis", "lee", "walker", "hall", "allen", "young", "hernandez", "king", "wright", "lopez", "hill", "scott", "green", "adams", "baker", "gonzalez", "nelson", "carter", "mitchell", "perez", "roberts", "turner", "phillips", "campbell", "parker", "evans", "edwards", "collins", "stewart", "sanchez", "morris", "rogers", "reed", "cook", "morgan", "bell", "murphy", "bailey", "rivera", "cooper", "richardson", "cox", "howard", "ward", "torres", "peterson", "gray", "ramirez", "james", "watson", "brooks", "kelly", "sanders", "price", "bennett", "wood", "barnes", "ross", "henderson", "coleman", "jenkins", "perry", "powell", "long", "patterson", "hughes", "flores", "washington", "butler", "simmons", "foster", "gonzales", "bryant", "alexander", "russell", "griffin", "diaz", "hayes", "myers", "ford", "hamilton", "graham", "sullivan", "wallace", "woods", "cole", "west", "jordan", "owens", "reynolds", "fisher", "ellis", "harrison", "gibson", "mcdonald", "cruz", "marshall", "ortiz", "gomez", "murray", "freeman", "wells", "webb", "simpson", "stevens", "tucker", "porter", "hunter", "hicks", "crawford", "henry", "boyd", "mason", "morales", "kennedy", "warren", "dixon", "ramos", "reyes", "burns", "gordon", "shaw", "holmes", "rice", "robertson", "hunt", "black", "daniels", "palmer", "mills", "nichols", "grant", "knight", "ferguson", "rose", "stone", "hawkins", "dunn", "perkins", "hudson", "spencer", "gardner", "stephens", "payne", "pierce", "berry", "matthews", "arnold", "wagner", "willis", "ray", "watkins", "olson", "carroll", "duncan", "snyder", "hart", "cunningham", "bradley", "lane", "andrews", "ruiz", "harper", "fox", "riley", "armstrong", "carpenter", "weaver", "greene", "lawrence", "elliott", "chavez", "sims", "austin", "peters", "kelley", "franklin", "lawson", "fields", "gutierrez", "ryan", "schmidt", "carr", "vasquez", "castillo", "wheeler", "chapman", "oliver", "montgomery", "richards", "williamson", "johnston", "banks", "meyer", "bishop", "mccoy", "howell", "alvarez", "morrison", "hansen", "fernandez", "garza", "harvey", "little", "burton", "stanley", "nguyen", "george", "jacobs", "reid", "kim", "fuller", "lynch", "dean", "gilbert", "garrett", "romero", "welch", "larson", "frazier", "burke", "hanson", "day", "mendoza", "moreno", "bowman", "medina", "fowler", "brewer", "hoffman", "carlson", "silva", "pearson", "holland", "douglas", "fleming", "jensen", "vargas", "byrd", "davidson", "hopkins", "may", "terry", "herrera", "wade", "soto", "walters", "curtis", "neal", "caldwell", "lowe", "jennings", "barnett", "graves", "jimenez", "horton", "shelton", "barrett", "obrien", "castro", "sutton", "gregory", "mckinney", "lucas", "miles", "craig", "rodriquez", "chambers", "holt", "lambert", "fletcher", "watts", "bates", "hale", "rhodes", "pena", "beck", "newman", "haynes", "mcdaniel", "mendez", "bush", "vaughn", "parks", "dawson", "santiago", "norris", "hardy", "love", "steele", "curry", "powers", "schultz", "barker", "guzman", "page", "munoz", "ball", "keller", "chandler", "weber", "leonard", "walsh", "lyons", "ramsey", "wolfe", "schneider", "mullins", "benson", "sharp", "bowen", "daniel", "barber", "cummings", "hines", "baldwin", "griffith", "valdez", "hubbard", "salazar", "reeves", "warner", "stevenson", "burgess", "santos", "tate", "cross", "garner", "mann", "mack", "moss", "thornton", "dennis", "mcgee", "farmer", "delgado", "aguilar", "vega", "glover", "manning", "cohen", "harmon", "rodgers", "robbins", "newton", "todd", "blair", "higgins", "ingram", "reese", "cannon", "strickland", "townsend", "potter", "goodwin", "walton", "rowe", "hampton", "ortega", "patton", "swanson", "joseph", "francis", "goodman", "maldonado", "yates", "becker", "erickson", "hodges", "rios", "conner", "adkins", "webster", "norman", "malone", "hammond", "flowers", "cobb", "moody", "quinn", "blake", "maxwell", "pope", "floyd", "osborne", "paul", "mccarthy", "guerrero", "lindsey", "estrada", "sandoval", "gibbs", "tyler", "gross", "fitzgerald", "stokes", "doyle", "sherman", "saunders", "wise", "colon", "gill", "alvarado", "greer", "padilla", "simon", "waters", "nunez", "ballard", "schwartz", "mcbride", "houston", "christensen", "klein", "pratt", "briggs", "parsons", "mclaughlin", "zimmerman", "french", "buchanan", "moran", "copeland", "roy", "pittman", "brady", "mccormick", "holloway", "brock", "poole", "frank", "logan", "owen", "bass", "marsh", "drake", "wong", "jefferson", "park", "morton", "abbott", "sparks", "patrick", "norton", "huff", "clayton", "massey", "lloyd", "figueroa", "carson", "bowers", "roberson", "barton", "tran", "lamb", "harrington", "casey", "boone", "cortez", "clarke", "mathis", "singleton", "wilkins", "cain", "bryan", "underwood", "hogan", "mckenzie", "collier", "luna", "phelps", "mcguire", "allison", "bridges", "wilkerson", "nash", "summers", "atkins", "wilcox", "pitts", "conley", "marquez", "burnett", "richard", "cochran", "chase", "davenport", "hood", "gates", "clay", "ayala", "sawyer", "roman", "vazquez", "dickerson", "hodge", "acosta", "flynn", "espinoza", "nicholson", "monroe", "wolf", "morrow", "kirk", "randall", "anthony", "whitaker", "oconnor", "skinner", "ware", "molina", "kirby", "huffman", "bradford", "charles", "gilmore", "dominguez", "oneal", "bruce", "lang", "combs", "kramer", "heath", "hancock", "gallagher", "gaines", "shaffer", "short", "wiggins", "mathews", "mcclain", "fischer", "wall", "small", "melton", "hensley", "bond", "dyer", "cameron", "grimes", "contreras", "christian", "wyatt", "baxter", "snow", "mosley", "shepherd", "larsen", "hoover", "beasley", "glenn", "petersen", "whitehead", "meyers", "keith", "garrison", "vincent", "shields", "horn", "savage", "olsen", "schroeder", "hartman", "woodard", "mueller", "kemp", "deleon", "booth", "patel", "calhoun", "wiley", "eaton", "cline", "navarro", "harrell", "lester", "humphrey", "parrish", "duran", "hutchinson", "hess", "dorsey", "bullock", "robles", "beard", "dalton", "avila", "vance", "rich", "blackwell", "york", "johns", "blankenship", "trevino", "salinas", "campos", "pruitt", "moses", "callahan", "golden", "montoya", "hardin", "guerra", "mcdowell", "carey", "stafford", "gallegos", "henson", "wilkinson", "booker", "merritt", "miranda", "atkinson", "orr", "decker", "hobbs", "preston", "tanner", "knox", "pacheco", "stephenson", "glass", "rojas", "serrano", "marks", "hickman", "english", "sweeney", "strong", "prince", "mcclure", "conway", "walter", "roth", "maynard", "farrell", "lowery", "hurst", "nixon", "weiss", "trujillo", "ellison", "sloan", "juarez", "winters", "mclean", "randolph", "leon", "boyer", "villarreal", "mccall", "gentry", "carrillo", "kent", "ayers", "lara", "shannon", "sexton", "pace", "hull", "leblanc", "browning", "velasquez", "leach", "chang", "house", "sellers", "herring", "noble", "foley", "bartlett", "mercado", "landry", "durham", "walls", "barr", "mckee", "bauer", "rivers", "everett", "bradshaw", "pugh", "velez", "rush", "estes", "dodson", "morse", "sheppard", "weeks", "camacho", "bean", "barron", "livingston", "middleton", "spears", "branch", "blevins", "chen", "kerr", "mcconnell", "hatfield", "harding", "ashley", "solis", "herman", "frost", "giles", "blackburn", "william", "pennington", "woodward", "finley", "mcintosh", "koch", "best", "solomon", "mccullough", "dudley", "nolan", "blanchard", "rivas", "brennan", "mejia", "kane", "benton", "joyce", "buckley", "haley", "valentine", "maddox", "russo", "mcknight", "buck", "moon", "mcmillan", "crosby", "berg", "dotson", "mays", "roach", "church", "chan", "richmond", "meadows", "faulkner", "oneill", "knapp", "kline", "barry", "ochoa", "jacobson", "gay", "avery", "hendricks", "horne", "shepard", "hebert", "cherry", "cardenas", "mcintyre", "whitney", "waller", "holman", "donaldson", "cantu", "terrell", "morin", "gillespie", "fuentes", "tillman", "sanford", "bentley", "peck", "key", "salas", "rollins", "gamble", "dickson", "battle", "santana", "cabrera", "cervantes", "howe", "hinton", "hurley", "spence", "zamora", "yang", "mcneil", "suarez", "case", "petty", "gould", "mcfarland", "sampson", "carver", "bray", "rosario", "macdonald", "stout", "hester", "melendez", "dillon", "farley", "hopper", "galloway", "potts", "bernard", "joyner", "stein", "aguirre", "osborn", "mercer", "bender", "franco", "rowland", "sykes", "benjamin", "travis", "pickett", "crane", "sears", "mayo", "dunlap", "hayden", "wilder", "mckay", "coffey", "mccarty", "ewing", "cooley", "vaughan", "bonner", "cotton", "holder", "stark", "ferrell", "cantrell", "fulton", "lynn", "lott", "calderon", "rosa", "pollard", "hooper", "burch", "mullen", "fry", "riddle", "levy", "david", "duke", "odonnell", "guy", "michael", "britt", "frederick", "daugherty", "berger", "dillard", "alston", "jarvis", "frye", "riggs", "chaney", "odom", "duffy", "fitzpatrick", "valenzuela", "merrill", "mayer", "alford", "mcpherson", "acevedo", "donovan", "barrera", "albert", "cote", "reilly", "compton", "raymond", "mooney", "mcgowan", "craft", "cleveland", "clemons", "wynn", "nielsen", "baird", "stanton", "snider", "rosales", "bright", "witt", "stuart", "hays", "holden", "rutledge", "kinney", "clements", "castaneda", "slater", "hahn", "emerson", "conrad", "burks", "delaney", "pate", "lancaster", "sweet", "justice", "tyson", "sharpe", "whitfield", "talley", "macias", "irwin", "burris", "ratliff", "mccray", "madden", "kaufman", "beach", "goff", "cash", "bolton", "mcfadden", "levine", "good", "byers", "kirkland", "kidd", "workman", "carney", "dale", "mcleod", "holcomb", "england", "finch", "head", "burt", "hendrix", "sosa", "haney", "franks", "sargent", "nieves", "downs", "rasmussen", "bird", "hewitt", "lindsay", "le", "foreman", "valencia", "oneil", "delacruz", "vinson", "dejesus", "hyde", "forbes", "gilliam", "guthrie", "wooten", "huber", "barlow", "boyle", "mcmahon", "buckner", "rocha", "puckett", "langley", "knowles", "cooke", "velazquez", "whitley", "noel", "vang"],
-                    "recipient_given_names": ["james", "john", "robert", "michael", "william", "david", "richard", "charles", "joseph", "thomas", "christopher", "daniel", "paul", "mark", "donald", "george", "kenneth", "steven", "edward", "brian", "ronald", "anthony", "kevin", "jason", "matthew", "gary", "timothy", "jose", "larry", "jeffrey", "frank", "scott", "eric", "stephen", "andrew", "raymond", "gregory", "joshua", "jerry", "dennis", "walter", "patrick", "peter", "harold", "douglas", "henry", "carl", "arthur", "ryan", "roger", "joe", "juan", "jack", "albert", "jonathan", "justin", "terry", "gerald", "keith", "samuel", "willie", "ralph", "lawrence", "nicholas", "roy", "benjamin", "bruce", "brandon", "adam", "harry", "fred", "wayne", "billy", "steve", "louis", "jeremy", "aaron", "randy", "howard", "eugene", "carlos", "russell", "bobby", "victor", "martin", "ernest", "phillip", "todd", "jesse", "craig", "alan", "shawn", "clarence", "sean", "philip", "chris", "johnny", "earl", "jimmy", "antonio", "danny", "bryan", "tony", "luis", "mike", "stanley", "leonard", "nathan", "dale", "manuel", "rodney", "curtis", "norman", "allen", "marvin", "vincent", "glenn", "jeffery", "travis", "jeff", "chad", "jacob", "lee", "melvin", "alfred", "kyle", "francis", "bradley", "jesus", "herbert", "frederick", "ray", "joel", "edwin", "don", "eddie", "ricky", "troy", "randall", "barry", "alexander", "bernard", "mario", "leroy", "francisco", "marcus", "micheal", "theodore", "clifford", "miguel", "oscar", "jay", "jim", "tom", "calvin", "alex", "jon", "ronnie", "bill", "lloyd", "tommy", "leon", "derek", "warren", "darrell", "jerome", "floyd", "leo", "alvin", "tim", "wesley", "gordon", "dean", "greg", "jorge", "dustin", "pedro", "derrick", "dan", "lewis", "zachary", "corey", "herman", "maurice", "vernon", "roberto", "clyde", "glen", "hector", "shane", "ricardo", "sam", "rick", "lester", "brent", "ramon", "charlie", "tyler", "gilbert", "gene", "marc", "reginald", "ruben", "brett", "angel", "nathaniel", "rafael", "leslie", "edgar", "milton", "raul", "ben", "chester", "cecil", "duane", "franklin", "andre", "elmer", "brad", "gabriel", "ron", "mitchell", "roland", "arnold", "harvey", "jared", "adrian", "karl", "cory", "claude", "erik", "darryl", "jamie", "neil", "jessie", "christian", "javier", "fernando", "clinton", "ted", "mathew", "tyrone", "darren", "lonnie", "lance", "cody", "julio", "kelly", "kurt", "allan", "nelson", "guy", "clayton", "hugh", "max", "dwayne", "dwight", "armando", "felix", "jimmie", "everett", "jordan", "ian", "wallace", "ken", "bob", "jaime", "casey", "alfredo", "alberto", "dave", "ivan", "johnnie", "sidney", "byron", "julian", "isaac", "morris", "clifton", "willard", "daryl", "ross", "virgil", "andy", "marshall", "salvador", "perry", "kirk", "sergio", "marion", "tracy", "seth", "kent", "terrance", "rene", "eduardo", "terrence", "enrique", "freddie", "wade", "mary", "patricia", "linda", "barbara", "elizabeth", "jennifer", "maria", "susan", "margaret", "dorothy", "lisa", "nancy", "karen", "betty", "helen", "sandra", "donna", "carol", "ruth", "sharon", "michelle", "laura", "sarah", "kimberly", "deborah", "jessica", "shirley", "cynthia", "angela", "melissa", "brenda", "amy", "anna", "rebecca", "virginia", "kathleen", "pamela", "martha", "debra", "amanda", "stephanie", "carolyn", "christine", "marie", "janet", "catherine", "frances", "ann", "joyce", "diane", "alice", "julie", "heather", "teresa", "doris", "gloria", "evelyn", "jean", "cheryl", "mildred", "katherine", "joan", "ashley", "judith", "rose", "janice", "kelly", "nicole", "judy", "christina", "kathy", "theresa", "beverly", "denise", "tammy", "irene", "jane", "lori", "rachel", "marilyn", "andrea", "kathryn", "louise", "sara", "anne", "jacqueline", "wanda", "bonnie", "julia", "ruby", "lois", "tina", "phyllis", "norma", "paula", "diana", "annie", "lillian", "emily", "robin", "peggy", "crystal", "gladys", "rita", "dawn", "connie", "florence", "tracy", "edna", "tiffany", "carmen", "rosa", "cindy", "grace", "wendy", "victoria", "edith", "kim", "sherry", "sylvia", "josephine", "thelma", "shannon", "sheila", "ethel", "ellen", "elaine", "marjorie", "carrie", "charlotte", "monica", "esther", "pauline", "emma", "juanita", "anita", "rhonda", "hazel", "amber", "eva", "debbie", "april", "leslie", "clara", "lucille", "jamie", "joanne", "eleanor", "valerie", "danielle", "megan", "alicia", "suzanne", "michele", "gail", "bertha", "darlene", "veronica", "jill", "erin", "geraldine", "lauren", "cathy", "joann", "lorraine", "lynn", "sally", "regina", "erica", "beatrice", "dolores", "bernice", "audrey", "yvonne", "annette", "june", "samantha", "marion", "dana", "stacy", "ana", "renee", "ida", "vivian", "roberta", "holly", "brittany", "melanie", "loretta", "yolanda", "jeanette", "laurie", "katie", "kristen", "vanessa", "alma", "sue", "elsie", "beth", "jeanne", "vicki", "carla", "tara", "rosemary", "eileen", "terri", "gertrude", "lucy", "tonya", "ella", "stacey", "wilma", "gina", "kristin", "jessie", "natalie", "agnes", "vera", "willie", "charlene", "bessie", "delores", "melinda", "pearl", "arlene", "maureen", "colleen", "allison", "tamara", "joy", "georgia", "constance", "lillie", "claudia", "jackie", "marcia", "tanya", "nellie", "minnie", "marlene", "heidi", "glenda", "lydia", "viola", "courtney", "marian", "stella", "caroline", "dora", "jo", "vickie", "mattie", "terry", "maxine", "irma", "mabel", "marsha", "myrtle", "lena", "christy", "deanna", "patsy", "hilda", "gwendolyn", "jennie", "nora", "margie", "nina", "cassandra", "leah", "penny", "kay", "priscilla", "naomi", "carole", "brandy", "olga", "billie", "dianne", "tracey", "leona", "jenny", "felicia", "sonia", "miriam", "velma", "becky", "bobbie", "violet", "kristina", "toni", "misty", "mae", "shelly", "daisy", "ramona", "sherri", "erika", "katrina", "claire", "lindsey", "lindsay", "geneva", "guadalupe", "belinda", "margarita", "sheryl", "cora", "faye", "ada", "natasha", "sabrina", "isabel", "marguerite", "hattie", "harriet", "molly", "cecilia", "kristi", "brandi", "blanche", "sandy", "rosie", "joanna", "iris", "eunice", "angie", "inez", "lynda", "madeline", "amelia", "alberta", "genevieve", "monique", "jodi", "janie", "maggie", "kayla", "sonya", "jan", "lee", "kristine", "candace", "fannie", "maryann", "opal", "alison", "yvette", "melody", "luz", "susie", "olivia", "flora", "shelley", "kristy", "mamie", "lula", "lola", "verna", "beulah", "antoinette", "candice", "juana", "jeannette", "pam", "kelli", "hannah", "whitney", "bridget", "karla", "celia", "latoya", "patty", "shelia", "gayle", "della", "vicky", "lynne", "sheri", "marianne", "kara", "jacquelyn", "erma", "blanca", "myra", "leticia", "pat", "krista", "roxanne", "angelica", "johnnie", "robyn", "francis", "adrienne", "rosalie", "alexandra", "brooke", "bethany", "sadie", "bernadette", "traci", "jody", "kendra", "jasmine", "nichole", "rachael", "chelsea", "mable", "ernestine", "muriel", "marcella", "elena", "krystal", "angelina", "nadine", "kari", "estelle", "dianna", "paulette", "lora", "mona", "doreen", "rosemarie", "angel", "desiree", "antonia", "hope", "ginger", "janis", "betsy", "christie", "freda", "mercedes", "meredith", "lynette", "teri", "cristina", "eula", "leigh", "meghan", "sophia", "eloise", "rochelle", "gretchen", "cecelia", "raquel", "henrietta", "alyssa", "jana", "kelley", "gwen", "kerry", "jenna", "tricia", "laverne", "olive", "alexis", "tasha", "silvia", "elvira", "casey", "delia", "sophie", "kate", "patti", "lorena", "kellie", "sonja", "lila", "lana", "darla", "may", "mindy", "essie", "mandy", "lorene", "elsa", "josefina", "jeannie", "miranda", "dixie", "lucia", "marta", "faith", "lela", "johanna", "shari", "camille", "tami", "shawna", "elisa", "ebony", "melba", "ora", "nettie", "tabitha", "ollie", "jaime", "winifred", "kristie", "marina", "alisha", "aimee", "rena", "myrna", "marla", "tammie", "latasha", "bonita", "patrice", "ronda", "sherrie", "addie", "francine", "deloris", "stacie", "adriana", "cheri", "shelby", "abigail", "celeste", "jewel", "cara", "adele", "rebekah", "lucinda", "dorthy", "chris", "effie", "trina", "reba", "shawn", "sallie", "aurora", "lenora", "etta", "lottie", "kerri", "trisha", "nikki", "estella", "francisca", "josie", "tracie", "marissa", "karin", "brittney", "janelle", "lourdes", "laurel", "helene", "fern", "elva", "corinne", "kelsey", "ina", "bettie", "elisabeth", "aida", "caitlin", "ingrid", "iva", "eugenia", "christa", "goldie", "cassie", "maude", "jenifer", "therese", "frankie", "dena", "lorna", "janette", "latonya", "candy", "morgan", "consuelo", "tamika", "rosetta", "debora", "cherie", "polly", "dina", "jewell", "fay", "jillian", "dorothea", "nell", "trudy", "esperanza", "patrica", "kimberley", "shanna", "helena", "carolina", "cleo", "stefanie", "rosario", "ola", "janine", "mollie", "lupe", "alisa", "lou", "maribel", "susanne", "bette", "susana", "elise", "cecile", "isabelle", "lesley", "jocelyn", "paige", "joni", "rachelle", "leola", "daphne", "alta", "ester", "petra", "graciela", "imogene", "jolene", "keisha", "lacey", "glenna", "gabriela", "keri", "ursula", "lizzie", "kirsten", "shana", "adeline", "mayra", "jayne", "jaclyn", "gracie", "sondra", "carmela", "marisa", "rosalind", "charity", "tonia", "beatriz", "marisol", "clarice", "jeanine", "sheena", "angeline", "frieda", "lily", "robbie", "shauna", "millie", "claudette", "cathleen", "angelia", "gabrielle", "autumn", "katharine", "summer", "jodie", "staci", "lea", "christi", "jimmie", "justine", "elma", "luella", "margret", "dominique", "socorro", "rene", "martina", "margo", "mavis", "callie", "bobbi", "maritza", "lucile", "leanne", "jeannine", "deana", "aileen", "lorie", "ladonna", "willa", "manuela", "gale", "selma", "dolly", "sybil", "abby", "lara", "dale", "ivy", "dee", "winnie", "marcy", "luisa", "jeri", "magdalena", "ofelia", "meagan", "audra", "matilda", "leila", "cornelia", "bianca", "simone", "bettye", "randi", "virgie", "latisha", "barbra", "georgina", "eliza", "leann", "bridgette", "rhoda", "haley", "adela", "nola", "bernadine", "flossie", "ila", "greta", "ruthie", "nelda", "minerva", "lilly", "terrie", "letha", "hilary", "estela", "valarie", "brianna", "rosalyn", "earline", "catalina", "ava", "mia", "clarissa", "lidia", "corrine", "alexandria", "concepcion", "tia", "sharron", "rae", "dona", "ericka", "jami", "elnora", "chandra", "lenore", "neva", "marylou", "melisa", "tabatha", "serena", "avis", "allie", "sofia", "jeanie", "odessa", "nannie", "harriett", "loraine", "penelope", "milagros", "emilia", "benita", "allyson", "ashlee", "tania", "tommie", "esmeralda", "karina", "eve", "pearlie", "zelma", "malinda", "noreen", "tameka", "saundra", "hillary", "amie", "althea", "rosalinda", "jordan", "lilia", "alana", "gay", "clare", "alejandra", "elinor", "michael", "lorrie", "jerri", "darcy", "earnestine", "carmella", "taylor", "noemi", "marcie", "liza", "annabelle", "louisa", "earlene", "mallory", "carlene", "nita", "selena", "tanisha", "katy", "julianne", "john", "lakisha", "edwina", "maricela", "margery", "kenya", "dollie", "roxie", "roslyn", "kathrine", "nanette", "charmaine", "lavonne", "ilene", "kris", "tammi", "suzette", "corine", "kaye", "jerry", "merle", "chrystal", "lina", "deanne", "lilian", "juliana", "aline", "luann", "kasey", "maryanne", "evangeline", "colette", "melva", "lawanda", "yesenia", "nadia", "madge", "kathie", "eddie", "ophelia", "valeria", "nona", "mitzi", "mari", "georgette", "claudine", "fran", "alissa", "roseann", "lakeisha", "susanna", "reva", "deidre", "chasity", "sheree", "carly", "james", "elvia", "alyce", "deirdre", "gena", "briana", "araceli", "katelyn", "rosanne", "wendi", "tessa", "berta", "marva", "imelda", "marietta", "marci", "leonor", "arline", "sasha", "madelyn", "janna", "juliette", "deena", "aurelia", "josefa", "augusta", "liliana", "young", "christian", "lessie", "amalia", "savannah", "anastasia", "vilma", "natalia", "rosella", "lynnette", "corina", "alfreda", "leanna", "carey", "amparo", "coleen", "tamra", "aisha", "wilda", "karyn", "cherry", "queen", "maura", "mai", "evangelina", "rosanna", "hallie", "erna", "enid", "mariana", "lacy", "juliet", "jacklyn", "freida", "madeleine", "mara", "hester", "cathryn", "lelia", "casandra", "bridgett", "angelita", "jannie", "dionne", "annmarie", "katina", "beryl", "phoebe", "millicent", "katheryn", "diann", "carissa", "maryellen", "liz", "lauri", "helga", "gilda", "adrian", "rhea", "marquita", "hollie", "tisha", "tamera", "angelique", "francesca", "britney", "kaitlin", "lolita", "florine", "rowena", "reyna", "twila", "fanny", "janell", "ines", "concetta", "bertie", "alba", "brigitte", "alyson", "vonda", "pansy", "elba", "noelle", "letitia", "kitty", "deann", "brandie", "louella", "leta", "felecia", "sharlene", "lesa", "beverley", "robert", "isabella", "herminia", "terra", "celina"],
-                    "recipient_family_name": "{random.choice(recipient_family_names)}",
-                    "recipient_given_name": "{random.choice(recipient_given_names)}",
-                    "recipient_display_name": "{recipient_family_name.title()}, {recipient_given_name.title()}",
-                    "recipient_account_name": "{recipient_given_name[:1]}{recipient_family_name}",
-                    "recipient_email_address": "{recipient_account_name}@{recipient_domain}",
-
-                    "sender": {
-                        "type": "eval",
-                        "value": "random.choice(list(__users.values()))"
-                    },
-                    "sender_domain": "{sender.get('internal_domain', '')}",
-                    "sender_account_name": "{sender.get('name', '')}",
-                    "sender_display_name": "{sender.get('family_name', '').title()}, {sender.get('given_name', '').title()}",
-                    "sender_email_address": "{sender_account_name}@{sender_domain}",
+                    "sender_domain": "{sender_recipient[0]['domain']}",
+                    "sender_display_name": "{sender_recipient[0]['display_name']}",
+                    "sender_email_address": "{sender_recipient[0]['email_address']}",
+                    "recipient_display_name": "{sender_recipient[1]['display_name']}",
+                    "recipient_email_address": "{sender_recipient[1]['email_address']}",
 
                     "internetmessageid": "<{''.join(random.choices(string.ascii_uppercase + string.digits, k=32))}@{sender_domain}>",
                     "internetmessageheaders": [
@@ -7728,9 +7409,9 @@ script:
                     "categories": [],
                     "ccrecipients": [],
                     "changekey": "''.join(random.choices(string.ascii_lowercase, k=40))",
-                    "conversationid": "''.join(random.choices(string.hexdigits, k=80))",
-                    "conversationindex": "''.join(random.choices(string.hexdigits, k=54))",
-                    "createddatetime": "now_timestamp_ms",
+                    "conversationid": "''.join(random.choices(string.hexdigits.lower(), k=80))",
+                    "conversationindex": "''.join(random.choices(string.hexdigits.lower(), k=54))",
+                    "createddatetime": "now_iso8601_time",
                     "flag": {
                         "flagStatus": "'notFlagged'"
                     },
@@ -7741,7 +7422,7 @@ script:
                         }
                     },
                     "hasattachments": "bool(attachments)",
-                    "id": "''.join(random.choices(string.hexdigits, k=150))",
+                    "id": "''.join(random.choices(string.hexdigits.lower(), k=150))",
                     "importance": "'low'",
                     "inferenceclassification": "'focused'",
                     "internetmessageheaders": "internetmessageheaders",
@@ -7750,9 +7431,9 @@ script:
                     "isdraft": false,
                     "isread": false,
                     "isreadreceiptrequested": false,
-                    "lastmodifieddatetime": "now_timestamp_ms",
-                    "parentfolderid": "base64.b64encode(sender_email_address.encode()).decode()",
-                    "receiveddatetime": "now_timestamp_ms",
+                    "lastmodifieddatetime": "now_iso8601_time",
+                    "parentfolderid": "base64.b64encode(internal_email_address.encode()).decode()",
+                    "receiveddatetime": "now_iso8601_time",
                     "replyto": [],
                     "sender": {
                         "emailAddress": {
@@ -7760,7 +7441,7 @@ script:
                             "address": "sender_email_address"
                         }
                     },
-                    "sentdatetime": "now_timestamp_ms",
+                    "sentdatetime": "now_iso8601_time",
                     "torecipients": [
                         {
                             "emailAddress": {
@@ -7771,7 +7452,7 @@ script:
                     ],
                     "weblink": "weblink"
                 },
-                ".weights": 5
+                ".weights": 0.5
             }
         ],
         "jobs": [
@@ -7782,7 +7463,7 @@ script:
                     "src_ip": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
-                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
                 },
                 "sources": [
                     {
@@ -7841,7 +7522,7 @@ script:
                     "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
-                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
                     "proxy_ip": "172.16.77.250"
                 },
                 "sources": [
@@ -7901,7 +7582,7 @@ script:
                     "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
-                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits, k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
+                    "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
                     "proxy_ip": "172.16.77.250",
                     "proxy_port": 8080
                 },
@@ -7981,7 +7662,7 @@ script:
                 "sources": {
                     ".variables": {
                         "src_ip": "172.16.77.{random.randint(1, 199)}",
-                        "ad_ip": "172.16.77.240"
+                        "ad_ip": "{_internal_ad_ip}"
                     },
                     ".next": {
                         "mode": "sequential",
@@ -8029,8 +7710,70 @@ script:
                                 "operation": "log",
                                 "type": "windows-event-ad",
                                 "src_ip": "{src_ip}",
-                                "dst_host": "slp-ad.cortex.lan",
+                                "dst_host": "slp-ad.corp.cortex.lan",
                                 "event_result": "success",
+                                "event_id": 4768
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "#": "AD Authentication - Failure",
+                ".interval": "{random.randint(43200, 86400)}",
+                "sources": {
+                    ".variables": {
+                        "src_ip": "172.16.77.{random.randint(1, 199)}",
+                        "ad_ip": "{_internal_ad_ip}"
+                    },
+                    ".next": {
+                        "mode": "sequential",
+                        "sources": [
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "internal.outbound",
+                                "type": "network",
+                                "src": "{src_ip}",
+                                "src_user": null,
+                                "src_host": null,
+                                "src_domain": null,
+                                "dst": "{ad_ip}",
+                                "dst_port": 88,
+                                "ip_protocol": "tcp",
+                                "app_protocol": "kerberos",
+                                "fw_action": "allow"
+                            },
+                            {
+                                "operation": "log",
+                                "type": "windows-event-ad",
+                                "src_ip": "{src_ip}",
+                                "dst_host": "slp-ad.corp.cortex.lan",
+                                "event_result": "failure",
                                 "event_id": 4768
                             }
                         ]
@@ -8104,7 +7847,9 @@ script:
 
         SCENARIO_ANOMALY = r'''
     {
-        ".variables": {
+        "variables": {
+            "_internal_ad_ip": "172.16.77.240",
+            "_internal_dns_ip": "172.16.78.2"
         },
         "sources": [
             {
@@ -8145,6 +7890,275 @@ script:
                 "fw_action": "drop"
             }
         ],
+        "callables": {
+            "Malicious_Email_To_User": {
+                ".variables": {
+                    "internal_user": {
+                        "type": "eval",
+                        "value": "next((u for u in __users.values() if u.get('ip') == src_ip), {})"
+                    },
+                    "now_rfc1123_time": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S %z')}",
+                    "now_iso8601_time": "{datetime.datetime.now(datetime.UTC).isoformat(timespec='seconds').replace('+00:00', 'Z')}",
+                    "mta_host1_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
+                    "mta_host2_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
+                    "mta_host_sub": "{''.join(random.choices(string.ascii_uppercase, k=4))}{''.join(random.choices(string.digits, k=3))}",
+                    "attachment_sources": {
+                        "type": "eval",
+                        "value": [
+                            {
+                                "@odata.type": "'#microsoft.graph.fileAttachment'",
+                                "@odata.mediaContentType": "'application/octet-stream'",
+                                "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
+                                "lastModifiedDateTime": "now_iso8601_time",
+                                "name": "'invoice.doc'",
+                                "contentType": "'application/octet-stream'",
+                                "size": 27479,
+                                "isInline": false,
+                                "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
+                                "contentLocation": null,
+                                "hash_str": "'906b5f181c4ec865b9362702e4578ca7f8d30751b90af706f0f4faf16bb3f575'"
+                            },
+                            {
+                                "@odata.type": "'#microsoft.graph.fileAttachment'",
+                                "@odata.mediaContentType": "'application/octet-stream'",
+                                "id": "''.join(random.choices(string.ascii_lowercase, k=180))",
+                                "lastModifiedDateTime": "now_iso8601_time",
+                                "name": "'invoice.xls'",
+                                "contentType": "'application/octet-stream'",
+                                "size": 52542,
+                                "isInline": false,
+                                "contentId": "f\"{''.join(random.choices(string.ascii_uppercase, k=32))}@{mta_host_sub}.PROD.OUTLOOK.COM\"",
+                                "contentLocation": null,
+                                "hash_str": "'814b6b5b2692a5376c5bb73c963bcfe47bc9ad25c598804dafd149fa92f77003'"
+                            }
+                        ]
+                    },
+                    "attachments": {
+                        "type": "eval",
+                        "value": "random.choice(attachment_sources)"
+                    },
+                    "sender_domain": "{random.choice(['x.co', 'vodpool.ga', 'mecofficial.com'])}",
+                    "sender_display_name": "{random.choice(['Ticket Center', 'Reservation'])}",
+                    "sender_account_name": "{''.join(random.choices(string.ascii_lowercase, k=10))}",
+                    "sender_email_address": "{sender_account_name}@{sender_domain}",
+                    "recipient_account_name": "{internal_user.get('name', '')}",
+                    "recipient_email_address": "{recipient_account_name}@{internal_user.get('external_domain', '')}",
+                    "internetmessageid": "<{''.join(random.choices(string.ascii_uppercase + string.digits, k=32))}@{sender_domain}>",
+                    "internetmessageheaders": [
+                        {
+                            "name": "Received",
+                            "value": "from {mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM (2603:1096:400:2e5::9) by {mta_host2_main}.{mta_host_sub}.PROD.OUTLOOK.COM with HTTPS; {now_rfc1123_time}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/ms-tnef"
+                        },
+                        {
+                            "name": "Content-Transfer-Encoding",
+                            "value": "binary"
+                        },
+                        {
+                            "name": "From",
+                            "value": "\"{sender_display_name}\" <{sender_email_address}>"
+                        },
+                        {
+                            "name": "To",
+                            "value": "{recipient_email_address}"
+                        },
+                        {
+                            "name": "Importance",
+                            "value": "low"
+                        },
+                        {
+                            "name": "X-Priority",
+                            "value": "5"
+                        },
+                        {
+                            "name": "Date",
+                            "value": "{now_rfc1123_time}"
+                        },
+                        {
+                            "name": "Message-ID",
+                            "value": "{internetmessageid}"
+                        },
+                        {
+                            "name": "Accept-Language",
+                            "value": "en-US"
+                        },
+                        {
+                            "name": "Content-Language",
+                            "value": "en-US"
+                        },
+                        {
+                            "name": "X-MS-Has-Attach",
+                            "value": "{'yes' if attachments else 'no'}"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-SCL",
+                            "value": "1"
+                        },
+                        {
+                            "name": "MIME-Version",
+                            "value": "1.0"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-MessageDirectionality",
+                            "value": "Originating"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-AuthSource",
+                            "value": "{mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-AuthAs",
+                            "value": "Internal"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-AuthMechanism",
+                            "value": "04"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-Network-Message-Id",
+                            "value": "{uuid.uuid4()}"
+                        },
+                        {
+                            "name": "X-MS-PublicTrafficType",
+                            "value": "Email"
+                        },
+                        {
+                            "name": "X-MS-TrafficTypeDiagnostic",
+                            "value": "{mta_host1_main}:EE_|TY1P286MB3277:EE_|OS3P286MB1759:EE_"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-ExpirationStartTime",
+                            "value": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S.%f')[:-2]} (UTC)"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-ExpirationStartTimeReason",
+                            "value": "OriginalSubmit"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-ExpirationInterval",
+                            "value": "1:00:00:00.0000000"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Organization-ExpirationIntervalReason",
+                            "value": "OriginalSubmit"
+                        },
+                        {
+                            "name": "X-MS-Office365-Filtering-Correlation-Id",
+                            "value": "{uuid.uuid4()}"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Transport-Rules-Loop",
+                            "value": "1"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-OriginalArrivalTime",
+                            "value": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S.%f')[:-2]} (UTC)"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-FromEntityHeader",
+                            "value": "Hosted"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-Id",
+                            "value": "{uuid.uuid4()}"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-AuthSource",
+                            "value": "{mta_host1_main}.{mta_host_sub}.PROD.OUTLOOK.COM"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-AuthAs",
+                            "value": "Internal"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-Network-Message-Id",
+                            "value": "{uuid.uuid4()}"
+                        },
+                        {
+                            "name": "X-MS-Exchange-CrossTenant-MailboxType",
+                            "value": "HOSTED"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Transport-EndToEndLatency",
+                            "value": "00:00:01.7340127"
+                        },
+                        {
+                            "name": "X-MS-Exchange-Processed-By-BccFoldering",
+                            "value": "15.20.8251.004"
+                        },
+                        {
+                            "name": "X-Microsoft-Antispam-Mailbox-Delivery",
+                            "value": "ucf:0;jmr:0;auth:0;dest:I;ENG:(910001)(944506478)(944626604)(920097)(425001)(930097)(140003);"
+                        }
+                    ],
+                    "weblink": "https://outlook.office365.com/owa/?ItemID={''.join(random.choices(string.ascii_lowercase, k=120))}&exvsurl=1&viewmodel=ReadMessageItem"
+                },
+                ".eval": {
+                    "log_params": "eval",
+                    "operation": "eval"
+                },
+                "operation": "'log' if bool(internal_user) else 'noop'",
+                "type": "custom",
+                "cef_version": "0",
+                "cef_vendor": "msft",
+                "cef_product": "o365_emails",
+                "log_format": "json",
+                "log_params": {
+                    "attachments": "attachments",
+                    "bccrecipients": [],
+                    "body": null,
+                    "categories": [],
+                    "ccrecipients": [],
+                    "changekey": "''.join(random.choices(string.ascii_lowercase, k=40))",
+                    "conversationid": "''.join(random.choices(string.hexdigits, k=80))",
+                    "conversationindex": "''.join(random.choices(string.hexdigits, k=54))",
+                    "createddatetime": "now_iso8601_time",
+                    "flag": {
+                        "flagStatus": "'notFlagged'"
+                    },
+                    "from": {
+                        "emailAddress": {
+                            "name": "sender_display_name",
+                            "address": "sender_email_address"
+                        }
+                    },
+                    "hasattachments": "bool(attachments)",
+                    "id": "''.join(random.choices(string.hexdigits, k=150))",
+                    "importance": "'low'",
+                    "inferenceclassification": "'focused'",
+                    "internetmessageheaders": "internetmessageheaders",
+                    "internetmessageid": "internetmessageid",
+                    "isdeliveryreceiptrequested": false,
+                    "isdraft": false,
+                    "isread": false,
+                    "isreadreceiptrequested": false,
+                    "lastmodifieddatetime": "now_iso8601_time",
+                    "parentfolderid": "base64.b64encode(recipient_email_address.encode()).decode()",
+                    "receiveddatetime": "now_iso8601_time",
+                    "replyto": [],
+                    "sender": {
+                        "emailAddress": {
+                            "name": "sender_display_name",
+                            "address": "sender_email_address"
+                        }
+                    },
+                    "sentdatetime": "now_iso8601_time",
+                    "torecipients": [
+                        {
+                            "emailAddress": {
+                                "name": "''",
+                                "address": "recipient_email_address"
+                            }
+                        }
+                    ],
+                    "weblink": "weblink"
+                },
+                ".wait": 600
+            }
+        },
         "jobs": [
             {
                 "#": "Random-Looking Domain Names - Web Access",
@@ -8185,50 +8199,63 @@ script:
                 "#": "DGA - Random Domain Name Queries",
                 ".interval": "{random.randint(7200, 14400)}",
                 ".variables": {
-                    "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
-                    "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}",
-                    "src_ip": "172.16.77.{random.randint(10, 14)}",
-                    "src_port": "{random.randint(10000, 65534)}"
+                    "src_ip": "172.16.77.{random.randint(10, 14)}"
+                },
+                ".call": {
+                    "when": "before",
+                    "name": "Malicious_Email_To_User"
                 },
                 "sources": [
                     {
-                        "operation": "internal.outbound",
-                        "type": "network",
-                        "src": "{src_ip}",
-                        "src_port": "{src_port}",
-                        "src_user": null,
-                        "src_host": null,
-                        "src_domain": null,
-                        "dst": "172.16.78.2",
-                        "dst_port": 53,
-                        "ip_protocol": "udp",
-                        "app_protocol": "dns",
-                        "fw_action": "allow",
-                        "dns": {
-                            "queries": {
-                                "name": "{host}.{domain}",
-                                "type": "A"
-                            }
+                        ".variables": {
+                            "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
+                            "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}",
+                            "src_port": "{random.randint(10000, 65534)}"
                         },
-                        ".wait": 10
-                    },
-                    {
-                        "operation": "log",
-                        "type": "ngfw-threat",
-                        "params": {
-                            "subtype": "spyware",
-                            "source_ip": "{src_ip}",
-                            "source_user": null,
-                            "source_port": "{src_port}",
-                            "dest_ip": "172.16.78.2",
-                            "dest_port": 53,
-                            "protocol": "udp",
-                            "app": "dns-base",
-                            "app_category": "networking",
-                            "app_sub_category": "infrastructure",
-                            "threat_name": "DGA:{host}.{domain}",
-                            "threat_category": "dns-c2",
-                            "direction": "client to server"
+                        ".next": {
+                            "mode": "sequential",
+                            "sources": [
+                                {
+                                    "operation": "internal.outbound",
+                                    "type": "network",
+                                    "src": "{src_ip}",
+                                    "src_port": "{src_port}",
+                                    "src_user": null,
+                                    "src_host": null,
+                                    "src_domain": null,
+                                    "dst": "{_internal_dns_ip}",
+                                    "dst_port": 53,
+                                    "ip_protocol": "udp",
+                                    "app_protocol": "dns",
+                                    "fw_action": "allow",
+                                    "dns": {
+                                        "queries": {
+                                            "name": "{host}.{domain}",
+                                            "type": "A"
+                                        }
+                                    },
+                                    ".wait": 10
+                                },
+                                {
+                                    "operation": "log",
+                                    "type": "ngfw-threat",
+                                    "params": {
+                                        "subtype": "spyware",
+                                        "source_ip": "{src_ip}",
+                                        "source_user": null,
+                                        "source_port": "{src_port}",
+                                        "dest_ip": "{_internal_dns_ip}",
+                                        "dest_port": 53,
+                                        "protocol": "udp",
+                                        "app": "dns-base",
+                                        "app_category": "networking",
+                                        "app_sub_category": "infrastructure",
+                                        "threat_name": "DGA:{host}.{domain}",
+                                        "threat_category": "dns-c2",
+                                        "direction": "client to server"
+                                    }
+                                }
+                            ]
                         }
                     }
                 ]
@@ -8256,55 +8283,68 @@ script:
                 "#": "DNS tunneling",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
-                    "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
-                    "src_ip": "172.16.77.{datetime.datetime.now().day}",
-                    "dst_ip": "172.16.78.2"
+                    "src_ip": "172.16.77.{random.randint(10, 14)}"
+                },
+                ".call": {
+                    "when": "before",
+                    "name": "Malicious_Email_To_User"
                 },
                 "sources": [
                     {
-                      "operation": "internal.outbound",
-                      "type": "network",
-                      "src": "{src_ip}",
-                      "src_user": null,
-                      "src_host": null,
-                      "src_domain": null,
-                      "dst": "{dst_ip}",
-                      "dst_port": 53,
-                      "ip_protocol": "udp",
-                      "app_protocol": "dns",
-                      "fw_action": "allow",
-                      "dns": {
-                          "queries": [
-                              {
-                                  "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
-                                  "type": "A"
-                              }
-                          ]
-                      },
-                      ".repeat": 10000
-                    },
-                    {
-                        "operation": "internal.outbound",
-                        "type": "network",
-                        "src": "{src_ip}",
-                        "src_user": null,
-                        "src_host": null,
-                        "src_domain": null,
-                        "dst": "{dst_ip}",
-                        "dst_port": 53,
-                        "ip_protocol": "udp",
-                        "app_protocol": "dns",
-                        "fw_action": "allow",
-                        "dns": {
-                            "queries": [
+                        ".variables": {
+                            "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
+                            "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
+                            "dst_ip": "{_internal_dns_ip}"
+                        },
+                        ".next": {
+                            "mode": "sequential",
+                            "sources": [
                                 {
-                                    "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
-                                    "type": "TXT"
+                                  "operation": "internal.outbound",
+                                  "type": "network",
+                                  "src": "{src_ip}",
+                                  "src_user": null,
+                                  "src_host": null,
+                                  "src_domain": null,
+                                  "dst": "{dst_ip}",
+                                  "dst_port": 53,
+                                  "ip_protocol": "udp",
+                                  "app_protocol": "dns",
+                                  "fw_action": "allow",
+                                  "dns": {
+                                      "queries": [
+                                          {
+                                              "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
+                                              "type": "A"
+                                          }
+                                      ]
+                                  },
+                                  ".repeat": 10000
+                                },
+                                {
+                                    "operation": "internal.outbound",
+                                    "type": "network",
+                                    "src": "{src_ip}",
+                                    "src_user": null,
+                                    "src_host": null,
+                                    "src_domain": null,
+                                    "dst": "{dst_ip}",
+                                    "dst_port": 53,
+                                    "ip_protocol": "udp",
+                                    "app_protocol": "dns",
+                                    "fw_action": "allow",
+                                    "dns": {
+                                        "queries": [
+                                            {
+                                                "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
+                                                "type": "TXT"
+                                            }
+                                        ]
+                                    },
+                                    ".repeat": 10000
                                 }
                             ]
-                        },
-                        ".repeat": 10000
+                        }
                     }
                 ]
             },
@@ -8313,6 +8353,10 @@ script:
                 ".interval": "{random.randint(0, 7200)}",
                 ".variables": {
                     "src_ip": "172.16.77.{random.randint(10, 14)}"
+                },
+                ".call": {
+                    "when": "before",
+                    "name": "Malicious_Email_To_User"
                 },
                 "sources": [
                     {
@@ -8640,8 +8684,8 @@ script:
                 f'172.16.77.{i}': assign_params(
                     host=f'SLP-{i:04}',
                     domain={
-                        'internal': 'cortex.lan',
-                        'external': 'cortex.corp',
+                        'internal': 'corp.cortex.lan',
+                        'external': 'cortex.lan',
                     },
                     user=user,
                 ) for i, user in itertools.zip_longest(range(1, 201), users)
@@ -8728,17 +8772,17 @@ script:
                     'ngfw': {
                         'product': 'ngfw',
                         'ip': '172.16.77.251',
-                        'fqdn': 'ngdw.cortex.lan'
+                        'fqdn': 'ngfw.corp.cortex.lan'
                     },
                     'checkpoint-fw': {
                         'product': 'checkpoint-fw',
                         'ip': '172.16.77.252',
-                        'fqdn': 'checkpoint.cortex.lan'
+                        'fqdn': 'checkpoint.corp.cortex.lan'
                     },
                     'fortigate': {
                         'product': 'fortigate',
                         'ip': '172.16.77.253',
-                        'fqdn': 'fortigate.cortex.lan'
+                        'fqdn': 'fortigate.corp.cortex.lan'
                     }
                 }.get(name):
                     self.__internal_tap.append(service)
@@ -8762,7 +8806,7 @@ script:
                 'product': 'squid',
                 'ip': '172.16.77.250',
                 'port': 8080,
-                'fqdn': 'squid.cortex.lan',
+                'fqdn': 'squid.corp.cortex.lan',
                 'protocol': ['http', 'https'],
                 'proxy': {
                     'rule': {
@@ -8794,7 +8838,7 @@ script:
                 'product': 'apache-httpd',
                 'ip': '172.16.78.10',
                 'port': [80, 443],
-                'fqdn': 'apache-httpd.cortex.lan',
+                'fqdn': 'apache-httpd.corp.cortex.lan',
                 'apache-httpd': {
                     'log_format': log_formats
                 }
@@ -8809,7 +8853,7 @@ script:
                 'product': 'bind',
                 'ip': '172.16.78.2',
                 'port': 53,
-                'fqdn': 'bind.cortex.lan',
+                'fqdn': 'bind.corp.cortex.lan',
                 'dns': {
                     'forwarder': '202.12.27.33'
                 }
@@ -8823,7 +8867,7 @@ script:
             self.__internal_dhcp_windows = {
                 'product': 'windows-dhcp',
                 'ip': '172.16.77.240',
-                'fqdn': 'win-dhcp.cortex.lan'
+                'fqdn': 'win-dhcp.corp.cortex.lan'
             }
 
         def set_external_tap(
@@ -8953,12 +8997,13 @@ script:
             """
             self.__settings = settings
             self.__ip_ents = IpEntries(scenario.ip_entries)
-            self.__variables = Variables(None, scenario.variables)
-            self.__variables.update_local_vars({'__ips': self.__ip_ents.entries})
-            self.__variables.update_local_vars({'__users': self.__ip_ents.build_users()})
+            self.__variables = Variables(scenario.variables)
+            self.__variables.update_global_vars({'__ips': self.__ip_ents.entries})
+            self.__variables.update_global_vars({'__users': self.__ip_ents.build_users()})
 
             self.__sources = [SourceTemplateUnit(tunit) for tunit in scenario.sources]
             self.__jobs = [JobUnit(junit, self.__variables) for junit in scenario.jobs]
+            self.__callables = CallableUnits(scenario.callables)
             self.__services = ServiceMap(settings, scenario.services)
 
         @property
@@ -8978,6 +9023,12 @@ script:
             self
         ) -> list[JobUnit]:
             return self.__jobs
+
+        @property
+        def callables(
+            self
+        ) -> CallableUnits:
+            return self.__callables
 
         @property
         def services(
@@ -9134,7 +9185,7 @@ script:
             for p in ports:
                 if isinstance(p, str):
                     if SourceTemplateUnitsPlayer.__match_ports(
-                        [int(x) for x in toList(p)],
+                        [int(x) for x in to_list(p)],
                         port
                     ):
                         return True
@@ -9228,6 +9279,7 @@ script:
             self,
             settings: Settings,
             sources: list[SourceTemplateUnit],
+            callables: CallableUnits,
             props_generator: LogPropertiesGenerator,
             log_sender: LogSender,
             services: ServiceMap,
@@ -9237,6 +9289,7 @@ script:
 
             :param settings: The instance settings.
             :param sources: List of source template units to play.
+            :param callables: The callable units.
             :param props_generator: The log properties generator.
             :param log_sender: The log sender.
             :param services: The service map.
@@ -9246,6 +9299,7 @@ script:
             self.__props_generator = props_generator
             self.__log_sender = log_sender
             self.__sources = sources
+            self.__callables = callables
             self.__services = services
             self.__variables = variables
 
@@ -9522,7 +9576,26 @@ script:
 
             :param template: The template object.
             """
+            async def handle_call(
+                template: Template,
+                callables: CallableUnits,
+                when: str,
+            ) -> None:
+                for call in to_list(template.template.get('.call')):
+                    if when in to_list(call.get('when') or 'before'):
+                        if name := call.get('name'):
+                            await self.__new(
+                                callables.get_source_templates(name),
+                                template.variables
+                            ).run(
+                                'sequential', 1
+                            )
+
+            await handle_call(template, self.__callables, 'before')
+
             match template.template.get('operation'):
+                case 'noop':
+                    pass
                 case 'internal.outbound':
                     match template.template.get('type'):
                         case 'network':
@@ -9566,17 +9639,21 @@ script:
                 case _:
                     pass
 
+            await handle_call(template, self.__callables, 'after')
+
             if _wait := template.template.get('.wait'):
                 await asyncio.sleep(
                     (max(int(template.variables.eval_str(_wait)), 0))
                 )
             if _next := template.template.get('.next'):
                 await self.__new(
-                    [SourceTemplateUnit(tunit) for tunit in toList(demisto.get(_next, 'sources'))],
+                    [SourceTemplateUnit(tunit) for tunit in to_list(demisto.get(_next, 'sources'))],
                     template.variables,
                 ).run(
                     _next.get('mode') or 'sequential', 1
                 )
+
+            await handle_call(template, self.__callables, 'last')
 
         async def run(
             self,
@@ -9670,6 +9747,7 @@ script:
             self,
             settings: Settings,
             jobs: list[JobUnit],
+            callables: CallableUnits,
             props_generator: LogPropertiesGenerator,
             log_sender: LogSender,
             services: ServiceMap,
@@ -9678,6 +9756,7 @@ script:
 
             :param settings: The instance settings.
             :param jobs: List of job units to play.
+            :param callables: The callable units.
             :param props_generator: The log properties generator.
             :param log_sender: The log sender.
             :param services: The service map.
@@ -9686,6 +9765,7 @@ script:
             self.__props_generator = props_generator
             self.__log_sender = log_sender
             self.__jobs = jobs
+            self.__callables = callables
             self.__services = services
             self.__first_trigger_times: dict[str, float] = {}
 
@@ -9766,11 +9846,13 @@ script:
                     self,
                     settings: Settings,
                     nrepeat: int,
+                    callables: CallableUnits,
                     props_generator: LogPropertiesGenerator,
                     log_sender: LogSender,
                     services: ServiceMap,
                 ) -> None:
                     self.__settings = settings
+                    self.__callables = callables
                     self.__props_generator = props_generator
                     self.__log_sender = log_sender
                     self.__services = services
@@ -9813,6 +9895,7 @@ script:
                         props_generator=self.__props_generator,
                         log_sender=self.__log_sender,
                         sources=job.sources,
+                        callables=self.__callables,
                         services=self.__services,
                         variables=job.variables,
                     )
@@ -9871,6 +9954,7 @@ script:
                     with ScheduledJobs(
                         settings=self.__settings,
                         nrepeat=nrepeat,
+                        callables=self.__callables,
                         props_generator=self.__props_generator,
                         log_sender=self.__log_sender,
                         services=self.__services
@@ -9897,6 +9981,7 @@ script:
                                 props_generator=self.__props_generator,
                                 log_sender=self.__log_sender,
                                 sources=job.sources,
+                                callables=self.__callables,
                                 services=self.__services,
                                 variables=job.variables,
                             )
@@ -9937,6 +10022,7 @@ script:
             self.__main_player = SourceTemplateUnitsPlayer(
                 settings=settings,
                 sources=scenario.sources,
+                callables=scenario.callables,
                 props_generator=props_generator,
                 log_sender=self.__log_sender,
                 services=scenario.services,
@@ -9945,6 +10031,7 @@ script:
             self.__jobs_player = JobsPlayer(
                 settings=settings,
                 jobs=scenario.jobs,
+                callables=scenario.callables,
                 props_generator=props_generator,
                 log_sender=self.__log_sender,
                 services=scenario.services
@@ -10076,7 +10163,7 @@ script:
                                     job.get(time_key), settings.tz_offset_display
                                 )
                             })
-                            for job in toList(jobs_status.get(category))
+                            for job in to_list(jobs_status.get(category))
                         ],
                         key=lambda x: x.get(time_key) or '',
                         reverse=order_desc,
@@ -10353,7 +10440,7 @@ script:
                     if status.get('status') != IntegrationContextUtils.Status.FINISHED:
                         first_trigger_times = {
                             label: float(next_time)
-                            for job in toList(demisto.get(status, 'jobs.waiting'))
+                            for job in to_list(demisto.get(status, 'jobs.waiting'))
                             if (
                                 job.get('type') == 'scheduled_job' and
                                 (label := job.get('label')) and
@@ -10362,7 +10449,7 @@ script:
                         }
                         first_trigger_times.update({
                             label: utc_timestamp()
-                            for job in toList(demisto.get(status, 'jobs.running'))
+                            for job in to_list(demisto.get(status, 'jobs.running'))
                             if (
                                 job.get('type') == 'scheduled_job' and
                                 (label := job.get('label'))
@@ -10447,7 +10534,6 @@ script:
 
     if __name__ in ('__main__', '__builtin__', 'builtins'):
         main()
-
   type: python
   commands:
   - name: slp-get-running-status
