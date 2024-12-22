@@ -7935,13 +7935,13 @@ script:
                     },
                     "attachments": {
                         "type": "eval",
-                        "value": "random.choice(attachment_sources)"
+                        "value": "[random.choice(attachment_sources)]"
                     },
                     "sender_domain": "{random.choice(['x.co', 'vodpool.ga', 'mecofficial.com'])}",
                     "sender_display_name": "{random.choice(['Ticket Center', 'Reservation'])}",
                     "sender_account_name": "{''.join(random.choices(string.ascii_lowercase, k=10))}",
                     "sender_email_address": "{sender_account_name}@{sender_domain}",
-                    "recipient_account_name": "{internal_user.get('name', '')}",
+                    "recipient_account_name": "{internal_user.get('user_name', '')}",
                     "recipient_email_address": "{recipient_account_name}@{internal_user.get('external_domain', '')}",
                     "internetmessageid": "<{''.join(random.choices(string.ascii_uppercase + string.digits, k=32))}@{sender_domain}>",
                     "internetmessageheaders": [
