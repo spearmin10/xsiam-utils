@@ -8155,8 +8155,7 @@ script:
                         }
                     ],
                     "weblink": "weblink"
-                },
-                ".wait": 600
+                }
             }
         },
         "jobs": [
@@ -8199,63 +8198,56 @@ script:
                 "#": "DGA - Random Domain Name Queries",
                 ".interval": "{random.randint(7200, 14400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}"
-                },
-                ".call": {
-                    "when": "before",
-                    "name": "Malicious_Email_To_User"
+                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_port": "{random.randint(10000, 65534)}",
+                    "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
+                    "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}"
                 },
                 "sources": [
                     {
-                        ".variables": {
-                            "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
-                            "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}",
-                            "src_port": "{random.randint(10000, 65534)}"
+                        ".call": {
+                            "name": "Malicious_Email_To_User"
                         },
-                        ".next": {
-                            "mode": "sequential",
-                            "sources": [
-                                {
-                                    "operation": "internal.outbound",
-                                    "type": "network",
-                                    "src": "{src_ip}",
-                                    "src_port": "{src_port}",
-                                    "src_user": null,
-                                    "src_host": null,
-                                    "src_domain": null,
-                                    "dst": "{_internal_dns_ip}",
-                                    "dst_port": 53,
-                                    "ip_protocol": "udp",
-                                    "app_protocol": "dns",
-                                    "fw_action": "allow",
-                                    "dns": {
-                                        "queries": {
-                                            "name": "{host}.{domain}",
-                                            "type": "A"
-                                        }
-                                    },
-                                    ".wait": 10
-                                },
-                                {
-                                    "operation": "log",
-                                    "type": "ngfw-threat",
-                                    "params": {
-                                        "subtype": "spyware",
-                                        "source_ip": "{src_ip}",
-                                        "source_user": null,
-                                        "source_port": "{src_port}",
-                                        "dest_ip": "{_internal_dns_ip}",
-                                        "dest_port": 53,
-                                        "protocol": "udp",
-                                        "app": "dns-base",
-                                        "app_category": "networking",
-                                        "app_sub_category": "infrastructure",
-                                        "threat_name": "DGA:{host}.{domain}",
-                                        "threat_category": "dns-c2",
-                                        "direction": "client to server"
-                                    }
-                                }
-                            ]
+                        ".wait": 600
+                    },
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_port": "{src_port}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{_internal_dns_ip}",
+                        "dst_port": 53,
+                        "ip_protocol": "udp",
+                        "app_protocol": "dns",
+                        "fw_action": "allow",
+                        "dns": {
+                            "queries": {
+                                "name": "{host}.{domain}",
+                                "type": "A"
+                            }
+                        },
+                        ".wait": 10
+                    },
+                    {
+                        "operation": "log",
+                        "type": "ngfw-threat",
+                        "params": {
+                            "subtype": "spyware",
+                            "source_ip": "{src_ip}",
+                            "source_user": null,
+                            "source_port": "{src_port}",
+                            "dest_ip": "{_internal_dns_ip}",
+                            "dest_port": 53,
+                            "protocol": "udp",
+                            "app": "dns-base",
+                            "app_category": "networking",
+                            "app_sub_category": "infrastructure",
+                            "threat_name": "DGA:{host}.{domain}",
+                            "threat_category": "dns-c2",
+                            "direction": "client to server"
                         }
                     }
                 ]
@@ -8283,68 +8275,61 @@ script:
                 "#": "DNS tunneling",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}"
-                },
-                ".call": {
-                    "when": "before",
-                    "name": "Malicious_Email_To_User"
+                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "dst_ip": "{_internal_dns_ip}",
+                    "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
+                    "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}"
                 },
                 "sources": [
                     {
-                        ".variables": {
-                            "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
-                            "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}",
-                            "dst_ip": "{_internal_dns_ip}"
+                        ".call": {
+                            "name": "Malicious_Email_To_User"
                         },
-                        ".next": {
-                            "mode": "sequential",
-                            "sources": [
+                        ".wait": 600
+                    },
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 53,
+                        "ip_protocol": "udp",
+                        "app_protocol": "dns",
+                        "fw_action": "allow",
+                        "dns": {
+                            "queries": [
                                 {
-                                  "operation": "internal.outbound",
-                                  "type": "network",
-                                  "src": "{src_ip}",
-                                  "src_user": null,
-                                  "src_host": null,
-                                  "src_domain": null,
-                                  "dst": "{dst_ip}",
-                                  "dst_port": 53,
-                                  "ip_protocol": "udp",
-                                  "app_protocol": "dns",
-                                  "fw_action": "allow",
-                                  "dns": {
-                                      "queries": [
-                                          {
-                                              "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
-                                              "type": "A"
-                                          }
-                                      ]
-                                  },
-                                  ".repeat": 10000
-                                },
-                                {
-                                    "operation": "internal.outbound",
-                                    "type": "network",
-                                    "src": "{src_ip}",
-                                    "src_user": null,
-                                    "src_host": null,
-                                    "src_domain": null,
-                                    "dst": "{dst_ip}",
-                                    "dst_port": 53,
-                                    "ip_protocol": "udp",
-                                    "app_protocol": "dns",
-                                    "fw_action": "allow",
-                                    "dns": {
-                                        "queries": [
-                                            {
-                                                "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
-                                                "type": "TXT"
-                                            }
-                                        ]
-                                    },
-                                    ".repeat": 10000
+                                    "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain1}",
+                                    "type": "A"
                                 }
                             ]
-                        }
+                        },
+                        ".repeat": 10000
+                    },
+                    {
+                        "operation": "internal.outbound",
+                        "type": "network",
+                        "src": "{src_ip}",
+                        "src_user": null,
+                        "src_host": null,
+                        "src_domain": null,
+                        "dst": "{dst_ip}",
+                        "dst_port": 53,
+                        "ip_protocol": "udp",
+                        "app_protocol": "dns",
+                        "fw_action": "allow",
+                        "dns": {
+                            "queries": [
+                                {
+                                    "name": "{''.join(random.choices(string.ascii_lowercase, k=32))}.{domain2}",
+                                    "type": "TXT"
+                                }
+                            ]
+                        },
+                        ".repeat": 10000
                     }
                 ]
             },
@@ -8354,11 +8339,13 @@ script:
                 ".variables": {
                     "src_ip": "172.16.77.{random.randint(10, 14)}"
                 },
-                ".call": {
-                    "when": "before",
-                    "name": "Malicious_Email_To_User"
-                },
                 "sources": [
+                    {
+                        ".call": {
+                            "name": "Malicious_Email_To_User"
+                        },
+                        ".wait": 600
+                    },
                     {
                         "operation": "internal.outbound",
                         "type": "network",
