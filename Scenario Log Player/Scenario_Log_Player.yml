@@ -69,6 +69,14 @@ configuration:
   type: 0
   required: false
   additionalinfo: 0 = unlimited, default unit = Mbps
+- section: Connect
+  advanced: true
+  display: Allow rate limit bursting in specific scenarios
+  name: rate_limit_burst
+  defaultvalue: "true"
+  type: 8
+  required: false
+  additionalinfo: The rate limit is not applicable to the jobs.
 - section: XSIAM HTTP Collector
   display: Enable
   name: xsiam_hc_enable
@@ -1671,6 +1679,7 @@ script:
                 'Invalid rate limit'
             )
             self.__rate_limit = max(rate, 0.0)
+            self.__rate_limit_burst = argToBoolean(params.get('rate_limit_burst', 'true'))
 
             ''' SECTION: Miscellaneous '''
             self.__tz_offset_display = Settings.__to_timezone_offset(
@@ -1804,6 +1813,12 @@ script:
             self,
         ) -> float:
             return self.__rate_limit
+
+        @property
+        def rate_limit_burst(
+            self,
+        ) -> bool:
+            return self.__rate_limit_burst
 
         @property
         def xsiam_hc_enable(
@@ -3430,25 +3445,29 @@ script:
             async def send_log(
                 self,
                 log: str,
+                bypass_rate_limit: bool = False,
             ) -> int:
                 """ Send an event log
 
                 :param log: An event log
+                :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
                 :return: The number of log entries flushed.
                 """
                 self.__log_writer.write((log + '\n').encode())
                 self.__nlogs_buffered += 1
 
                 if self.__buffer.getbuffer().nbytes >= self.__buffer_size:
-                    return await self.flush()
+                    return await self.flush(bypass_rate_limit=bypass_rate_limit)
                 else:
                     return 0
 
             async def flush(
-                self
+                self,
+                bypass_rate_limit: bool = False,
             ) -> int:
                 """ Finish writing logs
 
+                :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
                 :return: The number of log entries flushed.
                 """
                 if not self.__nlogs_buffered:
@@ -3470,7 +3489,9 @@ script:
                 ) as resp:
                     await resp.json()
 
-                await self.__rate_limiter.transmit(len(data))
+                if not bypass_rate_limit:
+                    await self.__rate_limiter.transmit(len(data))
+
                 nlogs = self.__nlogs_buffered
                 self.__nlogs_sent += nlogs
                 self.__nlogs_buffered = 0
@@ -3580,29 +3601,37 @@ script:
         async def send_log(
             self,
             log: str,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an event log
 
             :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if log:
                 if self.__done:
                     raise DemistoException('The log sender has been shutdown.')
 
                 async with self.__alock:
-                    await self.__sender.send_log(log)
+                    await self.__sender.send_log(
+                        log,
+                        bypass_rate_limit=bypass_rate_limit
+                    )
 
         async def flush(
             self,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Flush buffered logs
+
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if self.__done:
                 raise DemistoException('The log sender has been shutdown.')
 
             async with self.__alock:
                 self.__last_flush_time = time.time()
-                await self.__sender.flush()
+                await self.__sender.flush(bypass_rate_limit=bypass_rate_limit)
 
         async def finish(
             self,
@@ -3751,9 +3780,11 @@ script:
         async def send_log(
             self,
             log: str,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an log message
 
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             :param log: A log message.
             """
             if not log:
@@ -3763,9 +3794,9 @@ script:
                 if self.__init:
                     self.__init = await self.__init()
 
-                await self.__rate_limiter.transmit(
-                    await self.__send_log(log)
-                )
+                n = await self.__send_log(log)
+                if not bypass_rate_limit:
+                    await self.__rate_limiter.transmit(n)
 
         async def finish(
             self
@@ -3789,7 +3820,7 @@ script:
         """
         def __init__(
             self,
-            settings: Settings
+            settings: Settings,
         ) -> None:
             """ Initialize the instance
 
@@ -3901,10 +3932,12 @@ script:
         async def __send_log_hc_raw(
             self,
             log: LogEncoder,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an event log
 
             :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if not self.__done and self.__hc_raw_sender:
                 msg = log.build_raw(
@@ -3913,15 +3946,20 @@ script:
                         self.__settings.xsiam_hc_enforce_log_spec_syslog_format,
                     )
                 )
-                await self.__hc_raw_sender.send_log(msg)
+                await self.__hc_raw_sender.send_log(
+                    msg,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
 
         async def __send_log_hc_cef(
             self,
             log: LogEncoder,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an event log
 
             :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if not self.__done and self.__hc_cef_sender:
                 msg = log.build_cef(
@@ -3930,15 +3968,20 @@ script:
                         self.__settings.xsiam_hc_enforce_log_spec_syslog_format,
                     )
                 )
-                await self.__hc_cef_sender.send_log(msg)
+                await self.__hc_cef_sender.send_log(
+                    msg,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
 
         async def __send_log_syslog(
             self,
             log: LogEncoder,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an event log
 
             :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if not self.__done and self.__syslog_sender:
                 msg = log.build_raw(
@@ -3947,53 +3990,74 @@ script:
                         self.__settings.syslog_transport_enforce_log_spec_format,
                     )
                 )
-                await self.__syslog_sender.send_log(msg)
+                await self.__syslog_sender.send_log(
+                    msg,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
                 self.__cnt_syslog += 1
 
         async def send_log(
             self,
             log: LogEncoder,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Send an event log
 
             :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if self.__done:
                 return
 
             if log.preferred_log_format == 'cef' and self.__hc_cef_sender:
-                await self.__send_log_hc_cef(log)
-
+                await self.__send_log_hc_cef(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
             elif (
                 self.__hc_cef_sender and
                 log.preferred_log_format == 'raw' and
                 self.__settings.xsiam_hc_raw_log_to_cef
             ):
-                await self.__send_log_hc_cef(log)
-
+                await self.__send_log_hc_cef(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
             elif log.preferred_log_format == 'raw' and self.__hc_raw_sender:
-                await self.__send_log_hc_raw(log)
-
+                await self.__send_log_hc_raw(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
             elif self.__hc_cef_sender:
-                await self.__send_log_hc_cef(log)
-
+                await self.__send_log_hc_cef(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
             elif self.__hc_raw_sender:
-                await self.__send_log_hc_raw(log)
-
+                await self.__send_log_hc_raw(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
             if self.__syslog_sender:
-                await self.__send_log_syslog(log)
+                await self.__send_log_syslog(
+                    log,
+                    bypass_rate_limit=bypass_rate_limit,
+                )
 
         async def flush(
-            self
+            self,
+            bypass_rate_limit: bool = False,
         ) -> None:
             """ Flush logs to the devices
+
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             if not self.__done:
                 for s in filter(None, [
                     self.__hc_raw_sender,
                     self.__hc_cef_sender,
                 ]):
-                    await s.flush()
+                    await s.flush(bypass_rate_limit=bypass_rate_limit)
 
         async def finish(
             self
@@ -8333,7 +8397,7 @@ script:
             },
             {
                 "#": "Port Scan + SMB: User Password Brute Force Attempt",
-                ".interval": "{random.randint(0, 7200)}",
+                ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
                     "src_ip": "172.16.77.{random.randint(10, 14)}"
                 },
@@ -9270,6 +9334,7 @@ script:
             services: ServiceMap,
             variables: Variables,
             switching_interval: int,
+            bypass_rate_limit: bool,
         ) -> None:
             """ Initialize the instance
 
@@ -9281,6 +9346,7 @@ script:
             :param services: The service map.
             :param variables: The variables.
             :param switching_interval: The interval time in seconds to check and switch the CPU context when sending a log.
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
             """
             self.__settings = settings
             self.__props_generator = props_generator
@@ -9291,6 +9357,7 @@ script:
             self.__variables = variables
             self.__switching_interval = max(switching_interval, 0)
             self.__next_switching_time = datetime.datetime.now().timestamp() + self.__switching_interval
+            self.__bypass_rate_limit = bypass_rate_limit
 
         def __new(
             self,
@@ -9333,7 +9400,10 @@ script:
                         }, sync=True)
                         break
 
-                    await self.__log_sender.send_log(log_encoder)
+                    await self.__log_sender.send_log(
+                        log_encoder,
+                        bypass_rate_limit=self.__bypass_rate_limit
+                    )
 
                     if datetime.datetime.now().timestamp() >= self.__next_switching_time:
                         await asyncio.sleep(0)
@@ -9892,6 +9962,7 @@ script:
                         services=self.__services,
                         variables=job.variables,
                         switching_interval=DEFAULT_STATUS_UPDATE_INTERVAL,
+                        bypass_rate_limit=self.__settings.rate_limit_burst,
                     )
 
                 def __report_running(
@@ -9979,6 +10050,7 @@ script:
                                 services=self.__services,
                                 variables=job.variables,
                                 switching_interval=DEFAULT_STATUS_UPDATE_INTERVAL,
+                                bypass_rate_limit=self.__settings.rate_limit_burst,
                             )
                             await player.run('sequential', 1)
                             finished_jobs[job] = utc_timestamp()
@@ -10023,6 +10095,7 @@ script:
                 services=scenario.services,
                 variables=scenario.variables,
                 switching_interval=0,
+                bypass_rate_limit=False,
             )
             self.__jobs_player = JobsPlayer(
                 settings=settings,
