@@ -3983,8 +3983,6 @@ script:
             if self.__syslog_sender:
                 await self.__send_log_syslog(log)
 
-            await asyncio.sleep(0)   # Context switch
-
         async def flush(
             self
         ) -> None:
@@ -7452,7 +7450,7 @@ script:
                     ],
                     "weblink": "weblink"
                 },
-                ".weights": 0.5
+                ".weights": 5
             }
         ],
         "jobs": [
@@ -9271,6 +9269,7 @@ script:
             log_sender: LogSender,
             services: ServiceMap,
             variables: Variables,
+            no_context_switch: bool,
         ) -> None:
             """ Initialize the instance
 
@@ -9281,6 +9280,7 @@ script:
             :param log_sender: The log sender.
             :param services: The service map.
             :param variables: The variables.
+            :param no_context_switch: Set True not to switch the context with asyncio.sleep(0) for each sending log, otherwise False.
             """
             self.__settings = settings
             self.__props_generator = props_generator
@@ -9289,6 +9289,7 @@ script:
             self.__callables = callables
             self.__services = services
             self.__variables = variables
+            self.__no_context_switch = no_context_switch
 
         def __new(
             self,
@@ -9332,6 +9333,8 @@ script:
                         break
 
                     await self.__log_sender.send_log(log_encoder)
+                    if not self.__no_context_switch:
+                        await asyncio.sleep(0)
 
         async def __process_dns_query(
             self,
@@ -9885,6 +9888,7 @@ script:
                         callables=self.__callables,
                         services=self.__services,
                         variables=job.variables,
+                        no_context_switch=True,
                     )
 
                 def __report_running(
@@ -9971,6 +9975,7 @@ script:
                                 callables=self.__callables,
                                 services=self.__services,
                                 variables=job.variables,
+                                no_context_switch=True,
                             )
                             await player.run('sequential', 1)
                             finished_jobs[job] = utc_timestamp()
@@ -10014,6 +10019,7 @@ script:
                 log_sender=self.__log_sender,
                 services=scenario.services,
                 variables=scenario.variables,
+                no_context_switch=False,
             )
             self.__jobs_player = JobsPlayer(
                 settings=settings,
