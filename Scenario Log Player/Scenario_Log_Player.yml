@@ -1704,7 +1704,7 @@ script:
             self.__xsiam_api_url = xsiam_api_url
             self.__xsiam_hc_api_key_raw = params.get('xsiam_hc_api_key_raw') or None
             self.__xsiam_hc_api_key_cef = params.get('xsiam_hc_api_key_cef') or None
-            self.__xsiam_hc_compression = argToBoolean(params.get('xsiam_hc_compression', True))
+            self.__xsiam_hc_compression = argToBoolean(params.get('xsiam_hc_compression', 'true'))
             self.__xsiam_hc_transportation_format = params.get('xsiam_hc_transportation_format')
             self.__xsiam_hc_enforce_log_spec_syslog_format = params.get('xsiam_hc_enforce_log_spec_syslog_format') or None
             self.__xsiam_hc_raw_log_to_cef = argToBoolean(params.get('xsiam_hc_raw_log_to_cef', 'true'))
@@ -5966,26 +5966,26 @@ script:
                 def __get_iter_vars(
                     val: Any,
                     variables: Variables,
-                ) -> list[dict[str, Any]] | None:
+                ) -> Iterator[dict[str, Any]] | None:
                     def __enum_vars(
                         val: Any,
                         variables: Variables,
                     ) -> Iterator[dict[str, Any]]:
                         if isinstance(val, dict):
                             yield val
-                        elif isinstance(val, list):
-                            for v in val:
-                                yield from __enum_vars(v, variables)
                         elif isinstance(val, str):
                             # Get variables from the variables
                             v = variables.get_value(val)
                             if v is None:
-                                raise DemistoException(f'No values in the variables - {variables.local_vars}')
+                                raise DemistoException(f'No values in the variables - {variables.global_vars}')
                             yield from __enum_vars(v, variables)
+                        elif hasattr(val, '__iter__'):
+                            for v in val:
+                                yield from __enum_vars(v, variables)
                         else:
-                            raise DemistoException(f'variables must be str, dict or list - {val}')
+                            raise DemistoException(f'variables must be str, dict or iterable - {val}')
 
-                    return None if val is None else list(__enum_vars(val, variables))
+                    return None if val is None else __enum_vars(val, variables)
 
                 r = Repeat()
                 repeat = source_template.get('.repeat')
@@ -8409,18 +8409,26 @@ script:
                         ".wait": 600
                     },
                     {
+                        ".variables": {
+                            "scan_range": {
+                                "type": "eval",
+                                "value": "({'dst_port': dst_port, 'o4': o4} for o4 in range(1, 199) for dst_port in range(1, 1024))"
+                            }
+                        },
                         "operation": "internal.outbound",
                         "type": "network",
                         "src": "{src_ip}",
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
-                        "dst": "172.16.78.{random.randint(1, 199)}",
-                        "dst_port": "{random.randint(1, 65534)}",
+                        "dst": "172.16.78.{o4}",
+                        "dst_port": "{dst_port}",
                         "ip_protocol": "tcp",
                         "app_protocol": "incomplete",
                         "fw_action": "allow",
-                        ".repeat": 600000
+                        ".repeat": {
+                            "iter_vars": "scan_range"
+                        }
                     },
                     {
                         ".variables": {
