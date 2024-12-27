@@ -2282,7 +2282,7 @@ script:
                 elif d.get('unix_log_datetime'):
                     return __build_unix_log_datetime(d)
                 elif d.get('epoch_timestamp'):
-                    return __build_timestamp(m[0])
+                    return __build_epoch_timestamp(m[0])
                 else:
                     return ''
 
@@ -5455,30 +5455,32 @@ script:
 
         def __extract_ports(
             self,
-            config: str | list[str | int]
-        ) -> set[int]:
+            config: int | str | list[str | int]
+        ) -> list[Tuple[int, int]]:
             """ Extract port numbers
 
             :param config: The settings to generate a port number.
-            :return: All candidate port numbers.
+            :return: List of candidate port ranges.
             """
-            if isinstance(config, str):
+            if isinstance(config, int):
+                return [(config, config)]
+            elif isinstance(config, str):
                 return self.__extract_ports(argToList(config))
             elif isinstance(config, list):
-                ports = set()
+                ports = []
                 for ent in config:
                     if isinstance(ent, int):
-                        ports.add(ent)
+                        ports.append((ent, ent))
                     elif ',' in ent:
-                        ports |= self.__generate_port(argToList(ent))
+                        ports.extend(self.__generate_port(argToList(ent)))
                     elif m := re.fullmatch(r'(\d+)-(\d+)$', ent):
                         port1, port2 = sorted([
                             min(max(int(m[1]), 0), 65535),
                             min(max(int(m[2]), 0), 65535)
                         ])
-                        ports |= set(range(port1, port2 + 1))
+                        ports.append((port1, port2))
                     else:
-                        ports.add(int(ent))
+                        ports.append((int(ent), int(ent)))
                 return ports
             else:
                 raise DemistoException(f'Invalid config for port number generation - {config}')
@@ -5492,18 +5494,11 @@ script:
             :param config: The settings to generate a port number.
             :return: A port number generated.
             """
-            if isinstance(config, int):
-                return config
-            if isinstance(config, str):
-                ports = self.__extract_ports(argToList(config))
-                return random.choice(list(ports))
-            elif isinstance(config, list):
-                port = random.choice(config)
-                if isinstance(port, int):
-                    return port
-                else:
-                    ports = self.__extract_ports(port)
-                    return random.choice(list(ports))
+            if isinstance(config, (int, str, list)):
+                ports = self.__extract_ports(config)
+                weights = [max(p[1] - p[0], 0) + 1 for p in ports]
+                port1, port2 = random.choices(ports, weights=weights)[0]
+                return random.randint(port1, port2)
             else:
                 raise DemistoException(f'Invalid config for port number generation - {config}')
 
