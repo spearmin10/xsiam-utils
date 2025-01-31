@@ -5174,84 +5174,32 @@ script:
 
                         target_sid = f'S-1-5-21-3732386465-1093955160-3641126785-{str(abs(hash(src_user)) % 7777)}'
                         service_sid = f'S-1-5-21-3732386465-1093955160-3641126785-{str(abs(hash(src_user)) % 666)}'
-                        event_result = props.get('event_result')
-                        status = {
-                            'success': '0x0',
-                            'failure': '0x18'
-                        }.get(event_result) or ''
-                        keywords = {
-                            'success': ['Audit Success'],
-                            'failure': ['Audit Failure']
-                        }.get(event_result) or []
 
                         record_id = self.__seq_no
                         self.__seq_no += 1
 
                         message = (
-                            'A Kerberos authentication ticket (TGT) was requested.'
-                            '\n\n'
-                            'Account Information:'
-                            '\n\t'
-                            'Account Name:'
-                            '\t\t'
-                            f'{src_user}'
-                            '\n\t'
-                            'Supplied Realm Name:'
-                            '\t'
-                            f'{src_domain}'
-                            '\n\t'
-                            'User ID:'
-                            '\t\t\t'
-                            f'{target_sid}'
-                            '\n\n'
-                            'Service Information:'
-                            '\n\t'
-                            'Service Name:'
-                            '\t\t'
-                            'krbtgt'
-                            '\n\t'
-                            'Service ID:'
-                            '\t\t'
-                            f'{service_sid}'
-                            '\n\n'
-                            'Network Information:'
-                            '\n\t'
-                            'Client Address:'
-                            '\t\t'
-                            f'{src_ip}'
-                            '\n\t'
-                            'Client Port:'
-                            '\t\t'
-                            f'{src_port}'
-                            '\n\n'
-                            'Additional Information:'
-                            '\n\t'
-                            'Ticket Options:'
-                            '\t\t'
-                            '0x40810010'
-                            '\n\t'
-                            'Result Code:'
-                            '\t\t'
-                            f'{status}'
-                            '\n\t'
-                            'Ticket Encryption Type:'
-                            '\t'
-                            '0x12'
-                            '\n\t'
-                            'Pre-Authentication Type:'
-                            '\t'
-                            '2'
-                            '\n\n'
-                            'Certificate Information:'
-                            '\n\t'
-                            'Certificate Issuer Name:'
-                            '\t\t\n\t'
-                            'Certificate Serial Number:'
-                            '\t\n\t'
-                            'Certificate Thumbprint:'
-                            '\t\t\n\n'
-                            'Certificate information is only provided if a certificate was used for pre-authentication.'
-                            '\n\n'
+                            'A Kerberos authentication ticket (TGT) was requested.\n\n'
+                            'Account Information:\n\t'
+                            f'Account Name:\t\t{src_user}\n\t'
+                            f'Supplied Realm Name:\t{src_domain}\n\t'
+                            f'User ID:\t\t\t{target_sid}\n\n'
+                            'Service Information:\n\t'
+                            'Service Name:\t\tkrbtgt\n\t'
+                            f'Service ID:\t\t{service_sid}\n\n'
+                            'Network Information:\n\t'
+                            f'Client Address:\t\t{src_ip}\n\t'
+                            f'Client Port:\t\t{src_port}\n\n'
+                            'Additional Information:\n\t'
+                            'Ticket Options:\t\t0x40810010\n\t'
+                            'Result Code:\t\t0x0\n\t'
+                            'Ticket Encryption Type:\t0x12\n\t'
+                            'Pre-Authentication Type:\t2\n\n'
+                            'Certificate Information:\n\t'
+                            'Certificate Issuer Name:\t\t\n\t'
+                            'Certificate Serial Number:\t\n\t'
+                            'Certificate Thumbprint:\t\t\n\n'
+                            'Certificate information is only provided if a certificate was used for pre-authentication.\n\n'
                             'Pre-authentication types, ticket options, encryption types and result codes are defined in RFC 4120.'
                         )
 
@@ -5263,7 +5211,7 @@ script:
                             'event_data': {
                                 'PreAuthType': '2',
                                 'TicketOptions': '0x40810010',
-                                'Status': status,
+                                'Status': '0x0',
                                 'TargetUserName': src_user,
                                 'ServiceName': 'krbtgt',
                                 'TicketEncryptionType': '0x12',
@@ -5274,9 +5222,9 @@ script:
                                 'ServiceSid': service_sid
                             },
                             'event_id': int(event_id),
-                            'event_result': event_result,
+                            'event_result': 'success',
                             'host_name': dst_host,
-                            'keywords': keywords,
+                            'keywords': ['Audit Success'],
                             'log_level': 'information',
                             'message': message,
                             'op_code': None,
@@ -5304,24 +5252,108 @@ script:
                             params['event_data'].update(event_data)
                         params.update(event)
 
-                        yield LogEncoder(
-                            settings=self.__settings,
-                            preferred_log_format='microsoft-windows-json',
-                            preferred_syslog_header=(
-                                self.__settings.syslog_preferred_headers.get('windows-event-ad') or None
-                            ),
-                            cef_version=0,
-                            cef_vendor='Microsoft',
-                            cef_product='Windows',
-                            cef_device_version='1.0',
-                            cef_device_event_class_id=event_id,
-                            cef_name=f'event_log',
-                            cef_severity='1',
-                            log_params=params
+                    case '4771':
+                        src_user = props.get('src_user') or ''
+                        if src_ip := (props.get('src_ip') or ''):
+                            src_ip = f'::ffff:{src_ip}'
+                        src_domain = props.get('src_domain') or ''
+                        src_domain = src_domain.split('.', maxsplit=1)[0]
+                        src_port = str(props.get('src_port') or '')
+                        dst_host = props.get('dst_host')
+
+                        target_sid = f'S-1-5-21-3732386465-1093955160-3641126785-{str(abs(hash(src_user)) % 7777)}'
+                        security_id = f'S-1-5-21-3732386465-1093955160-3641126785-{str(abs(hash(src_user)) % 55555)}'
+
+                        record_id = self.__seq_no
+                        self.__seq_no += 1
+
+                        message = (
+                            'Account Information:\n\t'
+                            f'Security ID:\t\t{security_id}\n\t'
+                            f'Account Name:\t\t{src_user}\n\n'
+                            'Service Information:\n\t'
+                            f'Service Name:\t\tkrbtgt/{src_domain}\n\n'
+                            'Network Information:\n\t'
+                            f'Client Address:\t\t{src_ip}\n\t'
+                            f'Client Port:\t\t{src_port}\n\n'
+                            'Additional Information:\n\t'
+                            'Ticket Options:\t\t0x40810010\n\t'
+                            'Failure Code:\t\t0x18\n\t'
+                            'Pre-Authentication Type:\t2\n\n'
+                            'Certificate Information:\n\t'
+                            'Certificate Issuer Name:\t\t\n\t'
+                            'Certificate Serial Number: \t\n\t'
+                            'Certificate Thumbprint:\t\t\n\n'
+                            'Certificate information is only provided if a certificate was used for pre-authentication.\n\n'
+                            'Pre-authentication types, ticket options and failure codes are defined in RFC 4120.\n\n'
+                            'If the ticket was malformed or damaged during transit and could not be decrypted, then many fields in this event might not be present.'
                         )
+
+                        params = {
+                            'activity_id': None,
+                            'channel': 'Security',
+                            'computer_name': dst_host,
+                            'culture': None,
+                            'event_action': 'Kerberos Authentication Service',
+                            'event_data': {
+                                'TargetUserName': src_user,
+                                'TargetSid': target_sid,
+                                'ServiceName': f'krbtgt/{src_domain}',
+                                'TicketOptions': '0x40810010',
+                                'Status': '0x18',
+                                'PreAuthType': '2',
+                                'IpAddress': src_ip,
+                                'IpPort': src_port
+                            },
+                            'event_id': int(event_id),
+                            'event_result': 'failure',
+                            'host_name': dst_host,
+                            'keywords': ['Audit Failure'],
+                            'log_level': 'information',
+                            'message': message,
+                            'op_code': '0',
+                            'opcode': 'Info',
+                            'os_subtype': None,
+                            'process_cmd': None,
+                            'process_md5': None,
+                            'process_name': None,
+                            'process_path': None,
+                            'process_pid': 616,
+                            'process_sha256': None,
+                            'process_thread_id': 6384,
+                            'provider_guid': '{54849625-5478-4994-a5ba-3e3b0328c30d}',
+                            'provider_name': 'Microsoft-Windows-Security-Auditing',
+                            'record_id': record_id,
+                            'source_user': src_user,
+                            'task': 'Kerberos Authentication Service',
+                            'time_created': utcnow.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
+                            'user': None,
+                            'user_data': None,
+                            'version': '0',
+                        }
+                        event = dict(props.get('event') or {})
+                        if event_data := event.pop('event_data', None):
+                            params['event_data'].update(event_data)
+                        params.update(event)
 
                     case _:
                         return None
+
+                yield LogEncoder(
+                    settings=self.__settings,
+                    preferred_log_format='microsoft-windows-json',
+                    preferred_syslog_header=(
+                        self.__settings.syslog_preferred_headers.get('windows-event-ad') or None
+                    ),
+                    cef_version=0,
+                    cef_vendor='Microsoft',
+                    cef_product='Windows',
+                    cef_device_version='1.0',
+                    cef_device_event_class_id=event_id,
+                    cef_name=f'event_log',
+                    cef_severity='1',
+                    log_params=params
+                )
 
             else:
                 raise DemistoException(f'Invalid log type - {self.__log_type}')
@@ -7768,7 +7800,6 @@ script:
                                 "type": "windows-event-ad",
                                 "src_ip": "{src_ip}",
                                 "dst_host": "slp-ad.corp.cortex.lan",
-                                "event_result": "success",
                                 "event_id": 4768
                             }
                         ]
@@ -7830,8 +7861,7 @@ script:
                                 "type": "windows-event-ad",
                                 "src_ip": "{src_ip}",
                                 "dst_host": "slp-ad.corp.cortex.lan",
-                                "event_result": "failure",
-                                "event_id": 4768
+                                "event_id": 4771
                             }
                         ]
                     }
@@ -9200,7 +9230,7 @@ script:
 
         @staticmethod
         def __match_ip_networks(
-            ip_netwroks: list[ipaddress.IPv4Network | str],
+            ip_netwroks: list[ipaddress.IPv4Network | ipaddress.IPv6Network | str],
             ip: str
         ) -> bool:
             """ Check if the IP address given is in the list of IP netwroks.
@@ -9209,11 +9239,11 @@ script:
             :param ip: An IP address to check.
             :return: Set True if it's in the list of IP networks, otherwise False.
             """
-            ip = ipaddress.IPv4Address(ip)
+            ip = ipaddress.ip_address(ip)
             for ip_network in ip_netwroks:
                 if isinstance(ip_network, str):
                     if SourceTemplateUnitsPlayer.__match_ip_networks(
-                        [ipaddress.IPv4Network(x, False) for x in argToList(ip_network)],
+                        [ipaddress.ip_network(x, False) for x in argToList(ip_network)],
                         ip
                     ):
                         return True
