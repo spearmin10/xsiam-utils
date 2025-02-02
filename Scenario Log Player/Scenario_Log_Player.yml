@@ -411,11 +411,8 @@ script:
     import gzip
     import time
     import copy
-    import uuid
     import enum
-    import queue
     import socket
-    import base64
     import string
     import random
     import hashlib
@@ -425,14 +422,14 @@ script:
     import datetime
     import threading
     import ipaddress
-    import functools
     import itertools
     import traceback
     import urllib.parse
     from collections import defaultdict, namedtuple
     from abc import ABCMeta, abstractmethod
     from collections.abc import Iterator
-    from typing import Tuple, Any, NamedTuple, DefaultDict, Callable, Self, Coroutine, Awaitable
+    from typing import Any, Self
+    from collections.abc import Callable
     from types import TracebackType
 
 
@@ -1545,7 +1542,7 @@ script:
         @staticmethod
         def __get_credentials(
             creds: dict[str, Any]
-        ) -> Tuple[str, str] | None:
+        ) -> tuple[str, str] | None:
             if creds.get('credential'):
                 password = demisto.get(creds, 'credentials.password')
                 if username := demisto.get(creds, 'credentials.user'):
@@ -1598,7 +1595,7 @@ script:
             :param error_prefix: The prefix text for error messages.
             :return: Rate in Mbps
             """
-            if isinstance(rate, (int, float)):
+            if isinstance(rate, int | float):
                 return float(rate)
             elif not (m := re.fullmatch(r'\s*(\d+(?:\.\d+)?)\s*([KMG]?[bB]ps)?\s*', rate)):
                 error_prefix = error_prefix or ''
@@ -1631,7 +1628,7 @@ script:
                 'kern': 0,
                 'user': 1,
                 'mail': 2,
-                'daemon':3,
+                'daemon': 3,
                 'auth': 4,
                 'syslog': 5,
                 'lpr': 6,
@@ -1883,7 +1880,7 @@ script:
         @property
         def syslog_transport_address(
             self,
-        ) -> Tuple[str, int] | None:
+        ) -> tuple[str, int] | None:
             return self.__syslog_transport_address
 
         @property
@@ -1985,7 +1982,7 @@ script:
         @property
         def custom_scenario_url_creds(
             self,
-        ) -> Tuple[str, str] | None:
+        ) -> tuple[str, str] | None:
             return self.__custom_scenario_url_creds
 
         @property
@@ -2021,7 +2018,7 @@ script:
 
         def log_now2(
             self,
-        ) -> Tuple[datetime.datetime, datetime.datetime]:
+        ) -> tuple[datetime.datetime, datetime.datetime]:
             """ Get the current time in UTC and in the timezone configured
 
             :return: The current time in UTC and in the timezone configured
@@ -2063,7 +2060,7 @@ script:
 
         return datetime.datetime.fromtimestamp(
             timestamp,
-            tz=datetime.timezone.utc
+            tz=datetime.UTC
         ).astimezone(
             datetime.timezone(
                 datetime.timedelta(
@@ -2108,17 +2105,17 @@ script:
                         out[f'Log Stats - HEC {hec_type.upper()} (queued)'] = f'{prefix}{nlogs_queued:,}'
                         out[f'Log Stats - HEC {hec_type.upper()} (sent)'] = f'{prefix}{nlogs_sent:,}'
 
-                if attrs := v.get(f'syslog'):
+                if attrs := v.get('syslog'):
                     finished = attrs.get('finished')
                     nlogs_sent = int(attrs.get('sent') or 0)
                     prefix = '' if finished or nlogs_sent == 0 else '> '
-                    out[f'Log Stats - Syslog'] = f'{prefix}{nlogs_sent:,}'
+                    out['Log Stats - Syslog'] = f'{prefix}{nlogs_sent:,}'
 
             elif value_type == 'jobs' and isinstance(v, dict):
                 if waiting_jobs := list(filter(lambda x: 'next_time' in x, to_list(v.get('waiting')))):
-                    next_job = min(waiting_jobs, key=lambda x:x.get('next_time'))
-                    out[f'Jobs - Next Job'] = next_job.get('label') or '<NO LABEL>'
-                    out[f'Jobs - Next Run'] = format_timestamp_to_display(next_job.get('next_time'), tz_offset)
+                    next_job = min(waiting_jobs, key=lambda x: x.get('next_time'))
+                    out['Jobs - Next Job'] = next_job.get('label') or '<NO LABEL>'
+                    out['Jobs - Next Run'] = format_timestamp_to_display(next_job.get('next_time'), tz_offset)
 
                 if running_jobs := to_list(v.get('running')):
                     runnings_label = ', '.join([
@@ -2127,8 +2124,8 @@ script:
                     ])
                     if len(running_jobs) > 3:
                         runnings_label += ', and more'
-                    out[f'Jobs - Running'] = runnings_label
-            elif value_type == 'time' and isinstance(v, (int, float)):
+                    out['Jobs - Running'] = runnings_label
+            elif value_type == 'time' and isinstance(v, int | float):
                 out[k] = format_timestamp_to_display(v, tz_offset)
             else:
                 out[k] = v
@@ -2175,9 +2172,9 @@ script:
                     m: dict[str, Any],
                 ) -> str:
                     out = (
-                        "{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d" +
-                        (m.get('hyphen_separeted_datetime_t') or '') +
-                        "%H:%M:%S"
+                        "{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d"
+                        + (m.get('hyphen_separeted_datetime_t') or '')
+                        + "%H:%M:%S"
                     )
                     if fraction := m.get('hyphen_separeted_datetime_fraction'):
                         if len(fraction) < 6:
@@ -2203,9 +2200,9 @@ script:
                     m: dict[str, Any],
                 ) -> str:
                     out = (
-                        "{datetime.datetime.now(datetime.UTC).strftime('%Y/%m/%d" +
-                        (m.get('slash_separeted_datetime_t') or '') +
-                        "%H:%M:%S"
+                        "{datetime.datetime.now(datetime.UTC).strftime('%Y/%m/%d"
+                        + (m.get('slash_separeted_datetime_t') or '')
+                        + "%H:%M:%S"
                     )
                     if fraction := m.get('slash_separeted_datetime_fraction'):
                         if len(fraction) < 6:
@@ -2231,9 +2228,9 @@ script:
                     m: dict[str, Any],
                 ) -> str:
                     out = (
-                        "{datetime.datetime.now(datetime.UTC).strftime('%b %d " +
-                        ('%Y ' if m.get('abbreviated_english_datetime_year') else '') +
-                        '%H:%M:%S'
+                        "{datetime.datetime.now(datetime.UTC).strftime('%b %d "
+                        + ('%Y ' if m.get('abbreviated_english_datetime_year') else '')
+                        + '%H:%M:%S'
                     )
                     if tz := m.get('abbreviated_english_datetime_tz'):
                         tz_leading = m.get('abbreviated_english_datetime_tz_leading') or ''
@@ -2310,55 +2307,55 @@ script:
         pattern = re.compile(
             r'\b(?:' + '|'.join(
                 [
-                    r'(?P<hyphen_separeted_datetime>' +
-                        (
-                            r'(?:20[0-4]\d|19[7-9]\d)-(?:0[1-9]|1[012])-(?:0[1-9]|[12]\d|3[01])'
-                            r'(?P<hyphen_separeted_datetime_t>[T ])'
-                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                            r'(?P<hyphen_separeted_datetime_fraction>.\d{1,9})?'
-                            r'(?P<hyphen_separeted_datetime_tz>Z|'
-                            r'(?P<hyphen_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
-                        ) +
-                    ')',
-                    r'(?P<slash_separeted_datetime>' +
-                        (
-                            r'(?:20[0-4]\d|19[7-9]\d)/(?:0[1-9]|1[012])/(?:0[1-9]|[12]\d|3[01])'
-                            r'(?P<slash_separeted_datetime_t>[T ])'
-                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                            r'(?P<slash_separeted_datetime_fraction>.\d{1,9})?'
-                            r'(?P<slash_separeted_datetime_tz>Z|'
-                            r'(?P<slash_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
-                        ) +
-                    ')',
-                    r'(?P<abbreviated_english_datetime>' +
-                        (
-                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                            r' '
-                            r'(?:0[1-9]|[12]\d|3[01])'
-                            r' '
-                            r'(?P<abbreviated_english_datetime_year>(?:20[0-4]\d|19[7-9]\d) )?'
-                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                            r'(?:(?P<abbreviated_english_datetime_tz_leading> )?'
-                            r'(?P<abbreviated_english_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
-                        ) +
-                    ')',
-                    r'(?P<unix_log_datetime>' +
-                        (
-                            r'(?:0[1-9]|[12]\d|3[01])'
-                            r'/'
-                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
-                            r'/'
-                            r'(?:20[0-4]\d|19[7-9]\d)'
-                            r':'
-                            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
-                            r'(?:(?P<unix_log_datetime_tz_leading> )?'
-                            r'(?P<unix_log_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
-                        ) +
-                    ')',
-                    r'(?P<epoch_timestamp>' +
-                        (
-                            r'(?:1[6-9](?:\d{8}|\d{11}|\d{14}))'
-                        ) +
+                    r'(?P<hyphen_separeted_datetime>'
+                    + (
+                        r'(?:20[0-4]\d|19[7-9]\d)-(?:0[1-9]|1[012])-(?:0[1-9]|[12]\d|3[01])'
+                        r'(?P<hyphen_separeted_datetime_t>[T ])'
+                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                        r'(?P<hyphen_separeted_datetime_fraction>.\d{1,9})?'
+                        r'(?P<hyphen_separeted_datetime_tz>Z|'
+                        r'(?P<hyphen_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
+                    )
+                    + ')',
+                    r'(?P<slash_separeted_datetime>'
+                    + (
+                        r'(?:20[0-4]\d|19[7-9]\d)/(?:0[1-9]|1[012])/(?:0[1-9]|[12]\d|3[01])'
+                        r'(?P<slash_separeted_datetime_t>[T ])'
+                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                        r'(?P<slash_separeted_datetime_fraction>.\d{1,9})?'
+                        r'(?P<slash_separeted_datetime_tz>Z|'
+                        r'(?P<slash_separeted_datetime_tz_leading> )?[+-]\d\d:?\d\d)'
+                    )
+                    + ')',
+                    r'(?P<abbreviated_english_datetime>'
+                    + (
+                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+                        r' '
+                        r'(?:0[1-9]|[12]\d|3[01])'
+                        r' '
+                        r'(?P<abbreviated_english_datetime_year>(?:20[0-4]\d|19[7-9]\d) )?'
+                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                        r'(?:(?P<abbreviated_english_datetime_tz_leading> )?'
+                        r'(?P<abbreviated_english_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
+                    )
+                    + ')',
+                    r'(?P<unix_log_datetime>'
+                    + (
+                        r'(?:0[1-9]|[12]\d|3[01])'
+                        r'/'
+                        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+                        r'/'
+                        r'(?:20[0-4]\d|19[7-9]\d)'
+                        r':'
+                        r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d'
+                        r'(?:(?P<unix_log_datetime_tz_leading> )?'
+                        r'(?P<unix_log_datetime_tz>GMT|[+-]\d\d:?\d\d))?'
+                    )
+                    + ')',
+                    r'(?P<epoch_timestamp>'
+                    + (
+                        r'(?:1[6-9](?:\d{8}|\d{11}|\d{14}))'
+                    ) +
                     ')',
                 ]
             ) + r')\b'
@@ -2393,7 +2390,7 @@ script:
             def __to_incident_value(
                 value: Any
             ) -> Any:
-                if isinstance(value, (type(None), bool, int, str, dict, list)):
+                if value is None or isinstance(value, bool | int | str | dict | list):
                     return value
                 elif isinstance(value, float):
                     # incident field values doesn't support float
@@ -2419,7 +2416,7 @@ script:
 
         @staticmethod
         def load(
-        ) -> Tuple[dict[str, Any], int]:
+        ) -> tuple[dict[str, Any], int]:
             """ Get the integration context with the current version
 
             :return: The integration context, with the current version.
@@ -2525,26 +2522,26 @@ script:
                             for k in ['last_update', 'started', 'message'] if k in status
                         }
                         if cls.__enable_alert_creation:
-                            incident = dict(
-                                name=f'{INTEGRATION_NAME} Health Alert - Error',
-                                status=dict(status, **{
+                            incident = {
+                                'name': f'{INTEGRATION_NAME} Health Alert - Error',
+                                'status': dict(status, **{
                                     'instance_name': demisto.integrationInstance(),
                                     'last_run': json.dumps(last_run)
                                 })
-                            )
+                            }
                     elif (
-                        new and
-                        cls.__enable_alert_creation and
-                        label != IntegrationContextUtils.Status.FINISHED
+                        new
+                        and cls.__enable_alert_creation
+                        and label != IntegrationContextUtils.Status.FINISHED
                     ):
-                        incident = dict(
-                            name=f'{INTEGRATION_NAME} Health Alert - Restarted without finishing',
-                            status=dict(status, **{
+                        incident = {
+                            'name': f'{INTEGRATION_NAME} Health Alert - Restarted without finishing',
+                            'status': dict(status, **{
                                 'instance_name': demisto.integrationInstance(),
                                 'last_run': json.dumps(last_run),
                                 'message': status.get('message') or 'Restarted without finishing'
                             })
-                        )
+                        }
 
                 cls.__cache['status'] = status
 
@@ -2552,14 +2549,13 @@ script:
                 if sync:
                     if x is None:
                         x, xversion = IntegrationContextUtils.load()
-                        if status := x.get('status'):
-                            if status.get('status') == IntegrationContextUtils.Status.RESET:
-                                # Clear status and exit when the reset is requested
-                                x.pop('status', None)
-                                x.pop('last_run', None)
-                                x.pop('last_error', None)
-                                IntegrationContextUtils.save(x, version=xversion)
-                                sys.exit(0)
+                        if demisto.get(x, 'status.status') == IntegrationContextUtils.Status.RESET:
+                            # Clear status and exit when the reset is requested
+                            x.pop('status', None)
+                            x.pop('last_run', None)
+                            x.pop('last_error', None)
+                            IntegrationContextUtils.save(x, version=xversion)
+                            sys.exit(0)
 
                     x.update(cls.__cache)
                     IntegrationContextUtils.save(x, version=xversion)
@@ -2676,7 +2672,7 @@ script:
         def inherit(
             self,
             gvars: dict[str, Any] | None,
-        ) -> Self:
+        ) -> 'Variables':
             """ Inherit with new variables
 
             :param gvars: New global variables (will be evaluated)
@@ -2830,10 +2826,12 @@ script:
             :param ip: An IP address.
             :return: The FQDN associated with the IP.
             """
-            if ent := self.__ents.get(ip):
-                if host := ent.get('host'):
-                    if domain := ent.get('internal_domain'):
-                        return f'{host}.{domain}'
+            if (
+                (ent := self.__ents.get(ip))
+                and (host := ent.get('host'))
+                and (domain := ent.get('internal_domain'))
+            ):
+                return f'{host}.{domain}'
             return None
 
         def build_users(
@@ -2861,12 +2859,13 @@ script:
     class AsyncHttpClient:
         """ Async HTTP Client
         """
+
         def __init__(
             self,
             base_url: str,
             insecure: bool,
             proxies: dict[str, str] | None,
-            credentials: Tuple[str, str] | None,
+            credentials: tuple[str, str] | None,
             timeout: int | None,
             retries: int = 0,
         ) -> None:
@@ -2966,9 +2965,7 @@ script:
                     return resp
                 except (aiohttp.ConnectionTimeoutError, aiohttp.SocketTimeoutError, asyncio.TimeoutError) as e:
                     last_error = e
-                    pass
-            else:
-                raise last_error
+            raise last_error
 
         async def get(
             self,
@@ -3022,12 +3019,13 @@ script:
     class AsyncHttpClientProvider:
         """ Async HTTP Client Provider
         """
+
         def __init__(
             self,
             base_url: str,
             insecure: bool,
             proxies: dict[str, str] | None,
-            credentials: Tuple[str, str] | None,
+            credentials: tuple[str, str] | None,
             timeout: int | None,
             retries: int = 0,
         ) -> None:
@@ -3054,6 +3052,7 @@ script:
     class RateLimiter:
         """ Rate Limiter
         """
+
         def __init__(
             self,
             rate_limit: float | None = None
@@ -3107,7 +3106,7 @@ script:
                 val = json.dumps(val)
 
             m = {'|': r'\|', '\\': '\\\\'}
-            return re.sub(r'[|\\]', lambda x:m[x[0]], val)
+            return re.sub(r'[|\\]', lambda x: m[x[0]], val)
 
         @staticmethod
         def __encode_cef_value(
@@ -3119,7 +3118,7 @@ script:
                 val = json.dumps(val)
 
             m = {'\n': r'\n', '\r': r'\r', '\t': r'\t', '=': r'\=', '\\': '\\\\'}
-            return re.sub(r'[=\\\r\n]', lambda x:m[x[0]], val)
+            return re.sub(r'[=\\\r\n]', lambda x: m[x[0]], val)
 
         def __init__(
             self,
@@ -3291,7 +3290,7 @@ script:
             """
             match self.__preferred_log_format:
                 case 'raw':
-                    if isinstance(self.__log_params, (dict, list)):
+                    if isinstance(self.__log_params, dict | list):
                         msg = json.dumps(self.__log_params)
                     else:
                         msg = str(self.__log_params)
@@ -3325,9 +3324,11 @@ script:
             """
             if enforcement_level == SyslogHeaderTypeEnforcement.ALWAYS:
                 return self.__preferred_syslog_header or default_syslog_format
-            elif enforcement_level == SyslogHeaderTypeEnforcement.ADAPTIVE:
-                if self.__preferred_syslog_header and default_syslog_format:
-                    return self.__preferred_syslog_header
+
+            if enforcement_level == SyslogHeaderTypeEnforcement.ADAPTIVE and \
+               self.__preferred_syslog_header and default_syslog_format:
+                return self.__preferred_syslog_header
+
             return default_syslog_format
 
         def build_json_dict(
@@ -3388,6 +3389,7 @@ script:
         class BufferedSender:
             """ Buffered Log sender for XDR/XSIAM HTTP Collector
             """
+
             def __init__(
                 self,
                 client: AsyncHttpClient,
@@ -3525,7 +3527,6 @@ script:
                 ) as resp:
                     await resp.json()
 
-
         def __init__(
             self,
             provider: AsyncHttpClientProvider,
@@ -3656,6 +3657,7 @@ script:
     class SyslogLogSender:
         """ Log sender for syslog
         """
+
         def __init__(
             self,
             protocol: str,
@@ -3737,7 +3739,7 @@ script:
             :return: The length of the log message written.
             """
             if not self.__dtgram:
-                raise DemistoException('This sender has already been closed.');
+                raise DemistoException('This sender has already been closed.')
 
             data = log.encode()
             loop = asyncio.get_running_loop()
@@ -3757,7 +3759,7 @@ script:
             :return: The length of the log message written.
             """
             if not self.__stream:
-                raise DemistoException('This sender has already been closed.');
+                raise DemistoException('This sender has already been closed.')
 
             payload = log.encode()
             data = f'{len(payload)} '.encode() + payload
@@ -3818,6 +3820,7 @@ script:
     class LogSender:
         """ Log Sender for HEC and Broker VM
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -3840,15 +3843,15 @@ script:
                     timeout=settings.socket_timeout,
                     retries=DEFAULT_HTTP_RETRIES,
                 )
-                self.__hc_raw_sender, self.__hc_cef_sender = map(
-                    lambda api_key: HecLogSender(
+                self.__hc_raw_sender, self.__hc_cef_sender = tuple(
+                    HecLogSender(
                         provider=provider,
                         api_key=api_key,
                         compression=settings.xsiam_hc_compression,
                         buffer_size=settings.xsiam_hc_buffer_size,
                         rate_limit=settings.rate_limit,
-                    ) if api_key else None,
-                    [
+                    ) if api_key else None
+                    for api_key in [
                         settings.xsiam_hc_api_key_raw,
                         settings.xsiam_hc_api_key_cef,
                     ]
@@ -4015,9 +4018,9 @@ script:
                     bypass_rate_limit=bypass_rate_limit,
                 )
             elif (
-                self.__hc_cef_sender and
-                log.preferred_log_format == 'raw' and
-                self.__settings.xsiam_hc_raw_log_to_cef
+                self.__hc_cef_sender
+                and log.preferred_log_format == 'raw'
+                and self.__settings.xsiam_hc_raw_log_to_cef
             ):
                 await self.__send_log_hc_cef(
                     log,
@@ -4117,6 +4120,7 @@ script:
     class GetHostByName:
         """ Translate a host name to IPv4 address format.
         """
+
         def __init__(
             self,
             hostname: str,
@@ -4171,7 +4175,7 @@ script:
     ''' LogGenerator CLASSES '''
 
 
-    class LogGenerator(object):
+    class LogGenerator:
         """ Log Generator
         """
         __metaclass__ = ABCMeta
@@ -4187,6 +4191,7 @@ script:
     class CheckPointLogGenerator(LogGenerator):
         """ Check Point Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4238,6 +4243,7 @@ script:
     class FortiGateLogGenerator(LogGenerator):
         """ FortiGate Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4267,9 +4273,9 @@ script:
                     'https': 'https',
                     'dns': 'dns'
                 }.get(props.get('app_protocol')) or (
-                    (props.get('ip_protocol') or 'tcp') +
-                    '/' +
-                    str(props.get('dst_port') or 0)
+                    (props.get('ip_protocol') or 'tcp')
+                    + '/'
+                    + str(props.get('dst_port') or 0)
                 ).lower()
 
                 action = {
@@ -4341,6 +4347,7 @@ script:
     class NGFWLogGenerator(LogGenerator):
         """ Palo Alto Networks NGFW Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4366,8 +4373,6 @@ script:
             props: dict[str, Any]
         ) -> Iterator[LogEncoder]:
             utcnow, now = self.__settings.log_now2()
-            local_TZ = now.strftime('%z')
-            local_tz = f'{local_TZ[:3]}:{local_TZ[3:]}'
             seq_no = self.__seq_no
             self.__seq_no += 1
             sess_id = self.__sess_id
@@ -4448,7 +4453,7 @@ script:
                 exts = {
                     '__firewall_type': 'firewall.traffic',
                     '__timestamp': now.strftime('%Y/%m/%d %H:%M:%S'),
-                    '__tz': now.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + local_tz,
+                    '__tz': now.isoformat(timespec='milliseconds'),
                     'action': action,
                     'app': app,
                     'app_category': 'networking',
@@ -4513,7 +4518,7 @@ script:
                     cef_product='NGFW_CEF',
                     cef_device_version='11.1.1',
                     cef_device_event_class_id='end',
-                    cef_name=f'TRAFFIC',
+                    cef_name='TRAFFIC',
                     cef_severity='1',
                     log_params=exts
                 )
@@ -4548,7 +4553,7 @@ script:
                 exts.update({
                     '__firewall_type': 'firewall.url',
                     '__timestamp': now.strftime('%Y/%m/%d %H:%M:%S'),
-                    '__tz': now.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + local_tz,
+                    '__tz': now.isoformat(timespec='milliseconds'),
                     'action': action,
                     'app': app,
                     'app_category': '',
@@ -4571,7 +4576,7 @@ script:
                     'log_source_id': self.__serial_no,
                     'log_source_name': 'panw-ngfw',
                     'log_time': utcnow.strftime('%b %d %Y %H:%M:%S GMT'),
-                    'log_type': 'THREAT',  ## not URL
+                    'log_type': 'THREAT',  # not URL
                     'nat_dest': '0.0.0.0',
                     'nat_dest_port': '0',
                     'nat_source': '0.0.0.0',
@@ -4616,7 +4621,7 @@ script:
                     cef_product='NGFW_CEF',
                     cef_device_version='11.1.1',
                     cef_device_event_class_id='end',
-                    cef_name=f'URL',
+                    cef_name='URL',
                     cef_severity='1',
                     log_params=exts
                 )
@@ -4626,7 +4631,7 @@ script:
                     for k, v in {
                         '__firewall_type': 'firewall.threat',
                         '__timestamp': now.strftime('%Y/%m/%d %H:%M:%S'),
-                        '__tz': now.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + local_tz,
+                        '__tz': now.isoformat(timespec='milliseconds'),
                         'action': 'alert',
                         'app': 'unknown-tcp' if props.get('protocol') == 'tcp' else 'unknown-udp',
                         'app_category': '',
@@ -4692,7 +4697,7 @@ script:
                     cef_product='NGFW_CEF',
                     cef_device_version='11.1.1',
                     cef_device_event_class_id='end',
-                    cef_name=f'THREAT',
+                    cef_name='THREAT',
                     cef_severity='4',
                     log_params=exts
                 )
@@ -4703,6 +4708,7 @@ script:
     class ZscalerLogGenerator(LogGenerator):
         """ Zscaler Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4737,7 +4743,7 @@ script:
                 src_domain = props.get('src_domain')
                 src_upn = f'{src_user}@{src_domain}' if src_user and src_domain else None
                 urlclass = 'Business Use'
-                action={
+                action = {
                     'allow': 'Allowed',
                     'deny': 'Blocked',
                 }.get(props.get('fw_action')) or 'Allowed'
@@ -4842,6 +4848,7 @@ script:
     class SquidLogGenerator(LogGenerator):
         """ Squid Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4915,7 +4922,7 @@ script:
                     '%{User-Agent}>h': props.get('http.user_agent') or '-',
                 }
 
-            regex = '|'.join([re.escape(x) for x in m.keys()])
+            regex = '|'.join([re.escape(x) for x in m])
             log = re.sub(regex, lambda x: str(m[x[0]]), template)
 
             yield LogEncoder(
@@ -4927,7 +4934,7 @@ script:
                 cef_product='squid',
                 cef_device_version='1.0',
                 cef_device_event_class_id='0',
-                cef_name=f'access',
+                cef_name='access',
                 cef_severity='0',
                 log_params=log,
                 app_process_name='squid',
@@ -4938,6 +4945,7 @@ script:
     class ApacheHttpdLogGenerator(LogGenerator):
         """ Apache HTTPd Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -4975,7 +4983,7 @@ script:
                 '%{Referer}i': props.get('http.referer') or '-',
                 '%{User-agent}i': props.get('http.user_agent') or '-',
             }
-            regex = '|'.join([re.escape(x) for x in m.keys()])
+            regex = '|'.join([re.escape(x) for x in m])
             log = re.sub(regex, lambda x: str(m[x[0]]), template)
 
             yield LogEncoder(
@@ -4987,7 +4995,7 @@ script:
                 cef_product='httpd',
                 cef_device_version='0',
                 cef_device_event_class_id='0',
-                cef_name=f'access',
+                cef_name='access',
                 cef_severity='0',
                 log_params=log,
                 app_process_name='httpd',
@@ -4998,6 +5006,7 @@ script:
     class BindLogGenerator(LogGenerator):
         """ BIND Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -5034,7 +5043,7 @@ script:
                 cef_product='bind',
                 cef_device_version='0',
                 cef_device_event_class_id='0',
-                cef_name=f'query',
+                cef_name='query',
                 cef_severity='0',
                 log_params=log,
                 app_process_name='named',
@@ -5045,6 +5054,7 @@ script:
     class WindowsDHCPLogGenerator(LogGenerator):
         """ Windows DHCP Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -5129,7 +5139,7 @@ script:
                 cef_product='DHCP',
                 cef_device_version='MS-DHCP',
                 cef_device_event_class_id='0',
-                cef_name=f'DHCP',
+                cef_name='DHCP',
                 cef_severity='informational',
                 log_params=exts
             )
@@ -5138,6 +5148,7 @@ script:
     class WindowsEventLogGenerator(LogGenerator):
         """ Windows Event Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -5286,7 +5297,8 @@ script:
                             'Certificate Thumbprint:\t\t\n\n'
                             'Certificate information is only provided if a certificate was used for pre-authentication.\n\n'
                             'Pre-authentication types, ticket options and failure codes are defined in RFC 4120.\n\n'
-                            'If the ticket was malformed or damaged during transit and could not be decrypted, then many fields in this event might not be present.'
+                            'If the ticket was malformed or damaged during transit and could not be decrypted, '
+                            'then many fields in this event might not be present.'
                         )
 
                         params = {
@@ -5350,7 +5362,7 @@ script:
                     cef_product='Windows',
                     cef_device_version='1.0',
                     cef_device_event_class_id=event_id,
-                    cef_name=f'event_log',
+                    cef_name='event_log',
                     cef_severity='1',
                     log_params=params
                 )
@@ -5362,6 +5374,7 @@ script:
     class CustomLogGenerator(LogGenerator):
         """ Custom Log Generator
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -5391,9 +5404,8 @@ script:
                 log_params_list = [log_params_list]
 
             for log_params in log_params_list:
-                if log_format == 'raw':
-                    if not isinstance(log_params, str):
-                        log_params = json.dumps(log_params)
+                if log_format == 'raw' and not isinstance(log_params, str):
+                    log_params = json.dumps(log_params)
 
                 yield LogEncoder(
                     settings=self.__settings,
@@ -5413,6 +5425,7 @@ script:
     class LogPropertiesGenerator:
         """ This class generates meta data for logs.
         """
+
         def __init__(
             self,
             ip_entries: IpEntries
@@ -5446,7 +5459,7 @@ script:
         def __generate_ip(
             self,
             config: str | list[str | ipaddress.IPv4Network]
-        ) ->  str:
+        ) -> str:
             """ Generate an IP address
 
             :param config: The settings to generate an IP.
@@ -5476,19 +5489,19 @@ script:
             while True:
                 ip = ipaddress.IPv4Address(
                     (random.randint(0, 0xffffffff) & int(ip_network.hostmask))
-                    |
-                    int(ip_network.network_address)
+
+                    | int(ip_network.network_address)
                 )
                 if (
-                    ip_network.num_addresses <= 2 or
-                    ip not in (ip_network.network_address, ip_network.broadcast_address)
+                    ip_network.num_addresses <= 2
+                    or ip not in (ip_network.network_address, ip_network.broadcast_address)
                 ):
                     return str(ip)
 
         def __extract_ports(
             self,
             config: int | str | list[str | int]
-        ) -> list[Tuple[int, int]]:
+        ) -> list[tuple[int, int]]:
             """ Extract port numbers
 
             :param config: The settings to generate a port number.
@@ -5526,7 +5539,7 @@ script:
             :param config: The settings to generate a port number.
             :return: A port number generated.
             """
-            if isinstance(config, (int, str, list)):
+            if isinstance(config, int | str | list):
                 ports = self.__extract_ports(config)
                 weights = [max(p[1] - p[0], 0) + 1 for p in ports]
                 port1, port2 = random.choices(ports, weights=weights)[0]
@@ -5611,7 +5624,7 @@ script:
         def __generate_mac(
             self,
             config: str | list[str] | None
-        ) ->  str:
+        ) -> str:
             """ Generate a MAC address
 
             :param config: The settings to generate a MAC address.
@@ -5719,8 +5732,8 @@ script:
                 'action': template.get('action') or 'assign',
             }
             props['src_fqdn'] = (
-                template.get('src_fqdn') or
-                self.__ip_ents.get_internal_fqdn_by_ip(props.get('src_ip'))
+                template.get('src_fqdn')
+                or self.__ip_ents.get_internal_fqdn_by_ip(props.get('src_ip'))
             )
             props.update(assign_params(
                 src_user=(
@@ -5797,12 +5810,12 @@ script:
             }
             props.update({
                 'src_domain': (
-                    template.get('src_domain') or
-                    self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip')) or ''
+                    template.get('src_domain')
+                    or self.__ip_ents.get_internal_domain_by_ip(props.get('src_ip')) or ''
                 ),
                 'src_user': (
-                    template.get('src_user') or
-                    self.__ip_ents.get_user_id_by_ip(props.get('src_ip')) or ''
+                    template.get('src_user')
+                    or self.__ip_ents.get_user_id_by_ip(props.get('src_ip')) or ''
                 ),
             })
             return props
@@ -5906,13 +5919,13 @@ script:
             if isinstance(value, dict):
                 return {
                     k: v
-                        if k.startswith('.')
-                        else Template.__eval(
-                            value=v,
-                            variables=variables,
-                            eval_types=eval_types,
-                            path='.'.join(filter(None, [path, k])),
-                        )
+                    if k.startswith('.')
+                    else Template.__eval(
+                        value=v,
+                        variables=variables,
+                        eval_types=eval_types,
+                        path='.'.join(filter(None, [path, k])),
+                    )
                     for k, v in value.items()
                 }
             elif isinstance(value, list):
@@ -6016,21 +6029,19 @@ script:
 
                 r = Repeat()
                 repeat = source_template.get('.repeat')
-                if repeat is not None:
-                    if isinstance(repeat, dict):
-                        r.evaluate = variables.eval_str(repeat.get('eval', 'params'))
-                        if r.evaluate not in ('once', 'params', 'vars'):
-                            raise DemistoException('repeat.eval must be once, params or vars')
+                if isinstance(repeat, dict):
+                    r.evaluate = variables.eval_str(repeat.get('eval', 'params'))
+                    if r.evaluate not in ('once', 'params', 'vars'):
+                        raise DemistoException('repeat.eval must be once, params or vars')
 
-                        r.iter_vars = __get_iter_vars(
-                            repeat.get('iter_vars'),
-                            variables
-                        )
-                        repeat = repeat.get('count') or 1
+                    r.iter_vars = __get_iter_vars(
+                        repeat.get('iter_vars'),
+                        variables
+                    )
+                    repeat = repeat.get('count') or 1
 
                 r.count = max(int(variables.eval_str(repeat) or 1), 1)
                 return r
-
 
             if isinstance(source_templates, list):
                 for x in source_templates:
@@ -6093,6 +6104,7 @@ script:
     class CallableUnits:
         """ Callable Units
         """
+
         def __init__(
             self,
             callables: dict[str, dict[str, Any]],
@@ -6124,6 +6136,7 @@ script:
     class JobUnit:
         """ Job Unit object
         """
+
         def __init__(
             self,
             job: dict[str, Any],
@@ -6171,6 +6184,7 @@ script:
     class ServiceEntity:
         """ Service/Device Entity object
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -6300,6 +6314,7 @@ script:
     class ProxyServiceEntity(ServiceEntity):
         """ Service/Device Entity object for proxy
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -6353,6 +6368,7 @@ script:
     class DnsServiceEntity(ServiceEntity):
         """ Service/Device Entity object for DNS
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -6365,21 +6381,22 @@ script:
             """
             super().__init__(settings, service)
 
-            self.__forwarders: Tuple[str, int] = []
-            for forwarder in argToList(demisto.get(service, f'dns.forwarder')):
+            self.__forwarders: tuple[str, int] = []
+            for forwarder in argToList(demisto.get(service, 'dns.forwarder')):
                 ip, _, port = forwarder.partition(':')
                 self.__forwarders.append((ip, int(port or 53)))
 
         @property
         def forwarders(
             self,
-        ) -> list[Tuple[str, int]]:
+        ) -> list[tuple[str, int]]:
             return self.__forwarders
 
 
     class ServiceMap:
         """ Service/Device Map
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -6544,6 +6561,7 @@ script:
     class ScenarioStruct:
         """ Scenario JSON Structure
         """
+
         def __init__(
             self,
         ) -> None:
@@ -6571,8 +6589,8 @@ script:
             :param scenario: A new scenario in JSON.
             """
             self.__variables.update(scenario.get('variables') or {})
-            self.__sources.extend([x for x in to_list(scenario.get('sources'))])
-            self.__jobs.extend([x for x in to_list(scenario.get('jobs'))])
+            self.__sources.extend(to_list(scenario.get('sources')))
+            self.__jobs.extend(to_list(scenario.get('jobs')))
             self.__callables.update(scenario.get('callables') or {})
             self.__ip_ents.update(scenario.get('ip_entries') or {})
 
@@ -6585,7 +6603,7 @@ script:
                     if dst:
                         self.__services[location][service_type] = dst
 
-            if gw := demisto.get(services, f'internal.gw'):
+            if gw := demisto.get(services, 'internal.gw'):
                 self.__services['internal']['gw'] = gw
 
         def build(
@@ -8522,6 +8540,14 @@ script:
                             "eval": "vars",
                             "count": "{random.randint(10, 20)}"
                         }
+                    },
+                    {
+                        "operation": "log",
+                        "type": "windows-event-ad",
+                        "src_ip": "{src_ip}",
+                        "dst_host": "slp-ad.corp.cortex.lan",
+                        "event_id": 4771,
+                        ".repeat": 50
                     }
                 ]
             },
@@ -8776,7 +8802,7 @@ script:
         @staticmethod
         def build_default(
             settings: Settings,
-        ) -> Self:
+        ) -> 'DefaultScenario':
             """ Create the default scenario
 
             :param settings: The instance settings.
@@ -9128,7 +9154,7 @@ script:
     ''' Player CLASSES '''
 
 
-    class Player(object):
+    class Player:
         """ Player
         """
         __metaclass__ = ABCMeta
@@ -9144,7 +9170,6 @@ script:
             :param mode: The run mode. 'random' or 'sequential'
             :param nrepeat: How many times to run the scenario. None = endless.
             """
-            pass
 
 
     class SourceTemplateUnitsPlayer(Player):
@@ -9153,6 +9178,7 @@ script:
         class ProxyProps:
             """ This class manages both of behind proxy properties and outsice proxy properties.
             """
+
             def __init__(
                 self,
                 proxy: ServiceEntity,
@@ -9192,6 +9218,7 @@ script:
         class SegmentEntries:
             """ This class manages entries in a network segment.
             """
+
             def __init__(
                 self,
                 proxy: list[ProxyServiceEntity],
@@ -9290,26 +9317,26 @@ script:
             for proxy in proxies:
                 if (
                     props.get('app_protocol') in argToList(proxy.protocol or 'http, https')
-                    and
-                    (
-                        not proxy.rules_src or
-                        SourceTemplateUnitsPlayer.__match_ip_networks(
+
+                    and (
+                        not proxy.rules_src
+                        or SourceTemplateUnitsPlayer.__match_ip_networks(
                             proxy.rules_src, props.get('src_ip')
                         )
                     )
-                    and
-                    (
-                        not proxy.rules_dst or
-                        SourceTemplateUnitsPlayer.__match_ip_networks(
+
+                    and (
+                        not proxy.rules_dst
+                        or SourceTemplateUnitsPlayer.__match_ip_networks(
                             proxy.rules_dst, props.get('dst_ip')
                         )
                     )
-                    and
-                    not SourceTemplateUnitsPlayer.__match_ip_networks(
+
+                    and not SourceTemplateUnitsPlayer.__match_ip_networks(
                         proxy.exceptions_src, props.get('src_ip')
                     )
-                    and
-                    not SourceTemplateUnitsPlayer.__match_ip_networks(
+
+                    and not SourceTemplateUnitsPlayer.__match_ip_networks(
                         proxy.exceptions_dst, props.get('dst_ip')
                     )
                 ):
@@ -9396,7 +9423,7 @@ script:
             self,
             sources: list[SourceTemplateUnit],
             variables: Variables,
-        ) -> Self:
+        ) -> 'SourceTemplateUnitsPlayer':
             """ Create a new instance with the new template sources and variables.
 
             :param sources: The new source template units for sources.
@@ -9492,10 +9519,10 @@ script:
 
                     # DNS -> DNS Forwarders
                     if (
-                        ( forwarders or dns_service.forwarders ) and
-                        (
-                            not dns_service.domain or
-                            not fqdn.lower().endswith('.' + dns_service.domain.lower())
+                        (forwarders or dns_service.forwarders)
+                        and (
+                            not dns_service.domain
+                            or not fqdn.lower().endswith('.' + dns_service.domain.lower())
                         )
                     ):
                         if dns_service.forwarders:
@@ -9561,7 +9588,7 @@ script:
                             # DNS log: Proxy -> Next Proxy
                             await self.__process_dns_query(
                                 dns=entries.dns,
-                                forwarders=next(map(lambda s:s.dns, route), []),
+                                forwarders=next((s.dns for s in route), []),
                                 tap=entries.tap,
                                 props=next_pxprops.behind
                             )
@@ -9583,7 +9610,7 @@ script:
                         # DNS log: Proxy -> External
                         await self.__process_dns_query(
                             dns=entries.dns,
-                            forwarders=next(map(lambda s:s.dns, route), []),
+                            forwarders=next((s.dns for s in route), []),
                             tap=entries.tap,
                             props=pxprops.outside
                         )
@@ -9604,7 +9631,7 @@ script:
                     # DNS log: Client -> Next Proxy
                     await self.__process_dns_query(
                         dns=entries.dns,
-                        forwarders=next(map(lambda s:s.dns, route), []),
+                        forwarders=next((s.dns for s in route), []),
                         tap=entries.tap,
                         props=next_pxprops.behind
                     )
@@ -9619,7 +9646,7 @@ script:
                 # DNS log: Client -> External
                 await self.__process_dns_query(
                     dns=entries.dns,
-                    forwarders=next(map(lambda s:s.dns, route), []),
+                    forwarders=next((s.dns for s in route), []),
                     tap=entries.tap,
                     props=props
                 )
@@ -9659,8 +9686,8 @@ script:
             # Access to internal web servers
             for service in self.__services.internal_web:
                 if (
-                    service.ip == props.get('dst_ip') and
-                    self.__match_ports(service.ports or [80, 443], props.get('dst_port'))
+                    service.ip == props.get('dst_ip')
+                    and self.__match_ports(service.ports or [80, 443], props.get('dst_port'))
                 ):
                     await self.__generate_and_send_log(service.generators, props)
 
@@ -9739,7 +9766,7 @@ script:
 
             if _wait := template.template.get('.wait'):
                 await asyncio.sleep(
-                    (max(int(template.variables.eval_str(_wait)), 0))
+                    max(int(template.variables.eval_str(_wait)), 0)
                 )
             if _next := template.template.get('.next'):
                 await self.__new(
@@ -9839,6 +9866,7 @@ script:
 
         """ Jobs Player
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -9891,6 +9919,7 @@ script:
                 class ScheduledJob:
                     """ Scheduled Job
                     """
+
                     def __init__(
                         self,
                         job: JobUnit,
@@ -10031,7 +10060,6 @@ script:
                     :param first_trigger_times: The job label with the time to trigger for the first time.
                     """
                     async with asyncio.TaskGroup() as tg:
-                        now = utc_timestamp()
                         for job in jobs:
                             tg.create_task(
                                 self.ScheduledJob(
@@ -10042,7 +10070,6 @@ script:
                                     first_trigger_time=first_trigger_times.get(job.label),
                                 ).run()
                             )
-
 
             if not self.__jobs:
                 return
@@ -10105,6 +10132,7 @@ script:
     class ScenarioPlayer:
         """ Scenario Player
         """
+
         def __init__(
             self,
             settings: Settings,
@@ -10191,8 +10219,8 @@ script:
             """ Test connectivity
             """
             await self.__log_sender.test()
-            #IntegrationContextUtils.update_status({})
-            #await self.run()
+            # IntegrationContextUtils.update_status({})
+            # await self.run()
 
 
     ''' COMMAND FUNCTIONS '''
@@ -10375,7 +10403,7 @@ script:
         entry_id = args.get('entry_id')
 
         res = demisto.getFilePath(entry_id)
-        with open(res['path'], 'r') as f:
+        with open(res['path']) as f:
             out = replace_datetime_with_utcnowvar(json.load(f))
 
         return fileResult(res['name'], json.dumps(out, indent=2))
@@ -10410,10 +10438,10 @@ script:
                 individual: bool,
                 var_datetime: bool,
             ) -> Iterator[
-                str |
-                dict[str, Any] |
-                list[str] |
-                list[dict[str, Any]]
+                str
+                | dict[str, Any]
+                | list[str]
+                | list[dict[str, Any]]
             ]:
                 def __escape_for_fstrings(
                     val: Any,
@@ -10424,7 +10452,7 @@ script:
                         return [__escape_for_fstrings(v) for v in val]
                     elif isinstance(val, str):
                         m = {'{': '{{', '}': '}}'}
-                        return re.sub(r'[{}]', lambda x:m[x[0]], val)
+                        return re.sub(r'[{}]', lambda x: m[x[0]], val)
                     else:
                         return val
 
@@ -10438,8 +10466,7 @@ script:
                     log_params = replace_datetime_with_utcnowvar(log_params)
 
                 if individual:
-                    for x in log_params:
-                        yield x
+                    yield from log_params
                 else:
                     yield log_params
 
@@ -10496,7 +10523,7 @@ script:
                 name, _ = os.path.splitext(res['name'])
                 save_as = f'{name}.zip'
         else:
-            with open(res['path'], 'r') as log_reader:
+            with open(res['path']) as log_reader:
                 scenario = __build_scenario(
                     log_format=log_format,
                     log_reader=log_reader,
@@ -10524,10 +10551,10 @@ script:
         try:
             status = IntegrationContextUtils.get_status()
             if status.get('status') == IntegrationContextUtils.Status.FINISHED:
-                demisto.info((
+                demisto.info(
                     'The scenario has already finished.'
                     ' Please reset the status to replay again or play other scenarios.'
-                ))
+                )
                 while status.get('status') == IntegrationContextUtils.Status.FINISHED:
                     time.sleep(5)
                     status = IntegrationContextUtils.get_status()
@@ -10535,8 +10562,8 @@ script:
             # Get waiting + running jobs with the scheduled time in the last run to resume
             first_trigger_times = None
             if (
-                settings.scenario_enable_resume_scheduled_jobs and
-                settings.scenario_run_mode == 'random'
+                settings.scenario_enable_resume_scheduled_jobs
+                and settings.scenario_run_mode == 'random'
             ):
                 try:
                     if status.get('status') != IntegrationContextUtils.Status.FINISHED:
@@ -10544,22 +10571,21 @@ script:
                             label: float(next_time)
                             for job in to_list(demisto.get(status, 'jobs.waiting'))
                             if (
-                                job.get('type') == 'scheduled_job' and
-                                (label := job.get('label')) and
-                                (next_time := job.get('next_time'))
+                                job.get('type') == 'scheduled_job'
+                                and (label := job.get('label'))
+                                and (next_time := job.get('next_time'))
                             )
                         }
                         first_trigger_times.update({
                             label: utc_timestamp()
                             for job in to_list(demisto.get(status, 'jobs.running'))
                             if (
-                                job.get('type') == 'scheduled_job' and
-                                (label := job.get('label'))
+                                job.get('type') == 'scheduled_job'
+                                and (label := job.get('label'))
                             )
                         })
                 except Exception as e:
                     demisto.error(f'Failed to resume scheduled jobs - {e}')
-                    pass
 
             scenario = await Scenario.load(settings)
 
@@ -10601,7 +10627,7 @@ script:
         """ Main
         """
         command = demisto.command()
-        demisto.debug('Command being called is {}'.format(command))
+        demisto.debug(f'Command being called is {command}')
         commands = {
             'test-module': test_module,
             'slp-get-running-status': command_get_running_status,
@@ -10740,7 +10766,7 @@ script:
     - name: save_as
       description: The name to give the scenario template file to save.
     description: Build a scenario template from a log file
-  dockerimage: demisto/py3-tools:1.0.0.116158
+  dockerimage: demisto/py3-tools:1.0.0.2072021
   runonce: false
   longRunning: true
   subtype: python3
