@@ -148,7 +148,7 @@ configuration:
   required: false
 - display: Fetch logs in chunk
   name: chunk_mode
-  defaultvalue: "false"
+  defaultvalue: "true"
   type: 8
   required: false
 - section: Collect
@@ -259,7 +259,7 @@ script:
                     (params.get('extract_fields') or '').split(',')
                 )
             )
-            self.__chunk_mode = argToBoolean(params.get('chunk_mode', False))
+            self.__chunk_mode = argToBoolean(params.get('chunk_mode', "true"))
 
         @property
         def xsiam_api_url(
