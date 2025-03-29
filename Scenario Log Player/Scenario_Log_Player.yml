@@ -4552,7 +4552,7 @@ script:
 
                 exts.update({
                     '__firewall_type': 'firewall.url',
-                    '__timestamp': now.strftime('%Y/%m/%d %H:%M:%S'),
+                    '__timestamp': utcnow.strftime('%b %d %Y %H:%M:%S GMT'),
                     '__tz': now.isoformat(timespec='milliseconds'),
                     'action': action,
                     'app': app,
@@ -4630,7 +4630,7 @@ script:
                     k: v if k.startswith('__') else props.get(k) or v
                     for k, v in {
                         '__firewall_type': 'firewall.threat',
-                        '__timestamp': now.strftime('%Y/%m/%d %H:%M:%S'),
+                        '__timestamp': utcnow.strftime('%b %d %Y %H:%M:%S GMT'),
                         '__tz': now.isoformat(timespec='milliseconds'),
                         'action': 'alert',
                         'app': 'unknown-tcp' if props.get('protocol') == 'tcp' else 'unknown-udp',
