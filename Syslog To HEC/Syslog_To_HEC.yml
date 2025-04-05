@@ -88,6 +88,7 @@ script:
     import re
     import time
     import socket
+    import select
     import datetime
     import traceback
     import threading
@@ -381,6 +382,58 @@ script:
     class LogForwardingHandler(BaseRequestHandler):
         """ Log Forwarding Handler
         """
+        @staticmethod
+        def __read_all(
+            s: socket.socket,
+            size: int,
+            timeout: int | None = None,
+        ) -> bytes:
+            """Receive exactly bufsize bytes from the socket.
+
+            :param s: The socket from which data will be received.
+            :param size: The number of bytes to read.
+            :param timeout: The timeout duration in seconds.
+            :return: The data that was read from the socket.
+            """
+            buf = bytearray(size)
+            view = memoryview(buf)
+            pos = 0
+            while pos < size:
+                r, _, _ = select.select([s], [], [], timeout)
+                if s not in r:
+                    raise RuntimeError('timed out - read')
+
+                n = s.recv_into(view[pos:])
+                if not n:
+                    raise IncompleteReadError(buf, size)
+                pos += n
+            return bytes(buf)
+
+        @staticmethod
+        def __read_syslog_payload_size(
+            s: socket.socket,
+        ) -> int | None:
+            """Read the payload size in bytes from a TCP syslog message.
+
+            :param s: The socket from which data will be received.
+            :return: The number of bytes representing the payload of the TCP syslog message.
+            """
+            size = s.recv(1)
+            if not size:
+                return None
+            elif not size.isdigit():
+                raise DemistoException('Invalid syslog payload')
+
+            while True:
+                c = s.recv(1)
+                if c.isdigit():
+                    size += c
+                elif c == b' ':
+                    break
+                else:
+                    raise DemistoException('Invalid syslog payload')
+            return int(size)
+
         def __init__(
             self,
             request,
@@ -492,13 +545,14 @@ script:
             self
         ) -> None:
             try:
-                ss = self.request.makefile('r', encoding='utf-8')
+                ss = self.request
                 while True:
-                    log = ss.readline()
-                    if len(log) == 0:
-                        break
+                    log_size = LogForwardingHandler.__read_syslog_payload_size(ss)
+                    if log_size is None:
+                        return
 
-                    if log := log.rstrip('\r\n'):
+                    log = LogForwardingHandler.__read_all(ss, log_size)
+                    if log := log.decode().rstrip('\r\n'):
                         self.__send_log(log)
 
             except Exception:
