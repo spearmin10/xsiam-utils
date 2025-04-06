@@ -651,6 +651,8 @@ def main(
     settings = Settings()
     log_forwarder = LogForwarder(settings)
     try:
+        print('Starting the server...')
+
         if settings.syslog_protocol == 'udp':
             ThreadingUDPServer.allow_reuse_address = True
             with ThreadingUDPServer(('', settings.syslog_port), UdpLogForwardingHandler) as server:
