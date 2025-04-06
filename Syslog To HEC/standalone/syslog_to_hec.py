@@ -623,7 +623,7 @@ class UdpLogForwardingHandler(BaseRequestHandler):
     ) -> None:
         log, s = self.request
         try:
-            if log := log.decode().rstrip('\r\n'):
+            if log := log.decode(errors='ignore').rstrip('\r\n'):
                 self.__log_forwarder.send_log(log)
         except Exception:
             traceback.print_exc()
@@ -682,7 +682,7 @@ class TcpLogForwardingHandler(BaseRequestHandler):
                         raise IncompleteReadError(log, length)
                     pos += n
 
-                if log := log.decode().rstrip('\r\n'):
+                if log := log.decode(errors='ignore').rstrip('\r\n'):
                     self.__log_forwarder.send_log(log)
 
         except Exception:
