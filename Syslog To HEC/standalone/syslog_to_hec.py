@@ -395,6 +395,7 @@ class LogSender:
                 body=data
             )
             nlogs = self.__buffered_nlogs
+            print(f'* {nlogs} logs have been sent to HEC.')
 
             # Re-initialize the cache
             self.__buffer = io.BytesIO()
