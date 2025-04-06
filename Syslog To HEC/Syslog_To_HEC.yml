@@ -92,6 +92,8 @@ script:
     import datetime
     import traceback
     import threading
+    import functools
+    from asyncio import IncompleteReadError
     from socketserver import BaseServer, BaseRequestHandler, ThreadingTCPServer
     from typing import Tuple, Any
 
@@ -382,58 +384,6 @@ script:
     class LogForwardingHandler(BaseRequestHandler):
         """ Log Forwarding Handler
         """
-        @staticmethod
-        def __read_all(
-            s: socket.socket,
-            size: int,
-            timeout: int | None = None,
-        ) -> bytes:
-            """Receive exactly bufsize bytes from the socket.
-
-            :param s: The socket from which data will be received.
-            :param size: The number of bytes to read.
-            :param timeout: The timeout duration in seconds.
-            :return: The data that was read from the socket.
-            """
-            buf = bytearray(size)
-            view = memoryview(buf)
-            pos = 0
-            while pos < size:
-                r, _, _ = select.select([s], [], [], timeout)
-                if s not in r:
-                    raise RuntimeError('timed out - read')
-
-                n = s.recv_into(view[pos:])
-                if not n:
-                    raise IncompleteReadError(buf, size)
-                pos += n
-            return bytes(buf)
-
-        @staticmethod
-        def __read_syslog_payload_size(
-            s: socket.socket,
-        ) -> int | None:
-            """Read the payload size in bytes from a TCP syslog message.
-
-            :param s: The socket from which data will be received.
-            :return: The number of bytes representing the payload of the TCP syslog message.
-            """
-            size = s.recv(1)
-            if not size:
-                return None
-            elif not size.isdigit():
-                raise DemistoException('Invalid syslog payload')
-
-            while True:
-                c = s.recv(1)
-                if c.isdigit():
-                    size += c
-                elif c == b' ':
-                    break
-                else:
-                    raise DemistoException('Invalid syslog payload')
-            return int(size)
-
         def __init__(
             self,
             request,
@@ -547,11 +497,30 @@ script:
             try:
                 ss = self.request
                 while True:
-                    log_size = LogForwardingHandler.__read_syslog_payload_size(ss)
-                    if log_size is None:
-                        return
+                    # Read payload length
+                    length = None
+                    for c in iter(functools.partial(ss.recv, 1), b''):
+                        if c.isdigit():
+                            length = ((length or 0) * 10) + int(c)
+                        elif c == b' ' and length is not None:
+                            break
+                        else:
+                            raise DemistoException('Invalid syslog payload')
+                    else:
+                        if length is None:
+                            return
+                        raise DemistoException('Invalid syslog payload')
 
-                    log = LogForwardingHandler.__read_all(ss, log_size)
+                    # Read syslog payload
+                    log = bytearray(length)
+                    view = memoryview(log)
+                    pos = 0
+                    while pos < length:
+                        n = ss.recv_into(view[pos:])
+                        if not n:
+                            raise IncompleteReadError(log, length)
+                        pos += n
+
                     if log := log.decode().rstrip('\r\n'):
                         self.__send_log(log)
 
