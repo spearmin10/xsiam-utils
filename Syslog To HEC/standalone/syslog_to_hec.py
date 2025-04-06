@@ -1,6 +1,7 @@
 import os
 import io
 import re
+import sys
 import time
 import gzip
 import socket
@@ -24,6 +25,38 @@ HEC_UPLOAD_SIZE_THRESHOLD = 1 * 1024 * 1024
 
 
 class Settings:
+    def __get_pass(
+        self,
+        prompt: str,
+    ) -> str:
+        if os.name == 'nt' and sys.stdin is sys.__stdin__:
+            import msvcrt
+
+            for c in prompt:
+                msvcrt.putwch(c)
+            pw = ''
+            while 1:
+                c = msvcrt.getwch()
+                if c == '\r' or c == '\n':
+                    break
+                elif c == '\003':
+                    raise KeyboardInterrupt
+                elif c == '\b':
+                    if pw:
+                        pw = pw[:-1]
+                        msvcrt.putwch('\b')
+                        msvcrt.putwch(' ')
+                        msvcrt.putwch('\b')
+                else:
+                    pw = pw + c
+                    msvcrt.putwch('*')
+
+            msvcrt.putwch('\r')
+            msvcrt.putwch('\n')
+            return pw
+        else:
+            return getpass.getpass(prompt)
+
     def __init__(
         self,
     ) -> None:
@@ -94,12 +127,12 @@ class Settings:
         self.__syslog_port = args.syslog_port
         self.__hec_api_url = args.hec_api_url
         if args.hec_api_key_raw == '*':
-            self.__hec_api_key_raw = getpass.getpass('API key for RAW logs: ') or None
+            self.__hec_api_key_raw = self.__get_pass('API key for RAW logs: ') or None
         else:
             self.__hec_api_key_raw = args.hec_api_key_raw or None
 
         if args.hec_api_key_cef == '*':
-            self.__hec_api_key_cef = getpass.getpass('API key for CEF logs: ') or None
+            self.__hec_api_key_cef = self.__get_pass('API key for CEF logs: ') or None
         else:
             self.__hec_api_key_cef = args.hec_api_key_cef or None
 
