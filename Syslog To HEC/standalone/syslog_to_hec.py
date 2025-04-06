@@ -61,14 +61,13 @@ class Settings:
         )
         ap.add_argument(
             '--hec_compression',
-            default=True,
             action='store_true',
-            help='Enables or disables compression for HEC messages. The default is enable.'
+            help='Enables compression for HEC messages.'
         )
         ap.add_argument(
             '--insecure',
             action='store_true',
-            help='Disables SSL/TLS certificate verification. The default is disable.'
+            help='Disables SSL/TLS certificate verification.'
         )
         ap.add_argument(
             '--proxy',
@@ -78,9 +77,8 @@ class Settings:
         )
         ap.add_argument(
             '--ignore_non_syslog_message',
-            type=bool,
-            default=False,
-            help='If set to True, non-syslog messages will be ignored. The default is False.'
+            action='store_true',
+            help='Ignores non-syslog messages.'
         )
         ap.add_argument(
             '--new_syslog_header',
