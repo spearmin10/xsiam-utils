@@ -120,7 +120,12 @@ class Settings:
             default='',
             help='Specifies the syslog header format to be used when forwarding received syslog messages.'
         )
-        
+        ap.add_argument(
+            '--print_logs',
+            action='store_true',
+            help='Enable printing of log messages queued.'
+        )
+
         args = ap.parse_args()
 
         self.__syslog_protocol = args.syslog_protocol
@@ -140,6 +145,7 @@ class Settings:
         self.__insecure = args.insecure
         self.__ignore_non_syslog_message = args.ignore_non_syslog_message
         self.__new_syslog_header = args.new_syslog_header or None
+        self.__print_logs = args.print_logs
         self.__socket_timeout = DEFAULT_SOCKET_TIMEOUT
 
         if args.proxy:
@@ -215,6 +221,12 @@ class Settings:
         self
     ) -> str | None:
         return self.__new_syslog_header
+
+    @property
+    def print_logs(
+        self
+    ) -> bool:
+        return self.__print_logs
 
 
 class RestApiClient:
@@ -555,10 +567,14 @@ class LogForwarder:
 
         if self.__hec_cef and (syslog_message or '').startswith('CEF:'):
             self.__hec_cef.send_log(log)
+            if self.__settings.print_logs:
+                print(f'[CEF] {log}')
             return
 
         if self.__hec_raw:
             self.__hec_raw.send_log(log)
+            if self.__settings.print_logs:
+                print(f'[RAW] {log}')
 
     def flush(
         self,
