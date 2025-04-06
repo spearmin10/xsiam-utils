@@ -651,7 +651,7 @@ def main(
     settings = Settings()
     log_forwarder = LogForwarder(settings)
     try:
-        print('Starting the server...')
+        print(f'Starting the syslog_to_hec server on port {settings.syslog_port} ...')
 
         if settings.syslog_protocol == 'udp':
             ThreadingUDPServer.allow_reuse_address = True
