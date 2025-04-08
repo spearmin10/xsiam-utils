@@ -138,8 +138,8 @@ class Settings:
             args_stdin = json.loads(sys.stdin.read())
             if not isinstance(args_stdin, list):
                 raise ValueError('The argument parameters given in stdin must be array.')
-            
-            args = ap.parse_args(args=sys.argv + args_stdin)
+
+            args = ap.parse_args(args=sys.argv[1:] + args_stdin)
 
         self.__syslog_protocol = args.syslog_protocol
         self.__syslog_port = args.syslog_port
@@ -733,8 +733,6 @@ def main(
             raise ValueError(f'Invalid syslog protocol - {settings.syslog_protocol}')
     finally:
         log_forwarder.finish()
-
-    input('Press ENTER to exit...')
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
