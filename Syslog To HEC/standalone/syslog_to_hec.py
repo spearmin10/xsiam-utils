@@ -137,7 +137,7 @@ class Settings:
         if args.args_stdin:
             args_stdin = json.loads(sys.stdin.read())
             if not isinstance(args_stdin, list):
-                raise ValueError('The argument parameters given in stdin must be array.'.)
+                raise ValueError('The argument parameters given in stdin must be array.')
             
             args = ap.parse_args(args=sys.argv + args_stdin)
 
