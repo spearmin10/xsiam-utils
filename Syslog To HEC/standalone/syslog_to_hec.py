@@ -19,6 +19,7 @@ import urllib.parse
 from asyncio import IncompleteReadError
 from socketserver import BaseServer, BaseRequestHandler, ThreadingTCPServer, ThreadingUDPServer
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 DEFAULT_SOCKET_TIMEOUT = 30
