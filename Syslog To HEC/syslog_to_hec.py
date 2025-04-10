@@ -147,14 +147,14 @@ class Settings:
         if args.hec_api_key_raw == '*':
             self.__hec_api_key_raw = self.__get_pass('API key for RAW logs: ') or None
         elif m := re.fullmatch(r'\$env:(.+)', args.hec_api_key_raw):
-            self.__hec_api_key_raw = os.getenv(m[1])
+            self.__hec_api_key_raw = os.getenv(m[1]) or None
         else:
             self.__hec_api_key_raw = args.hec_api_key_raw or None
 
         if args.hec_api_key_cef == '*':
             self.__hec_api_key_cef = self.__get_pass('API key for CEF logs: ') or None
         elif m := re.fullmatch(r'\$env:(.+)', args.hec_api_key_cef):
-            self.__hec_api_key_cef = os.getenv(m[1])
+            self.__hec_api_key_cef = os.getenv(m[1]) or None
         else:
             self.__hec_api_key_cef = args.hec_api_key_cef or None
 
