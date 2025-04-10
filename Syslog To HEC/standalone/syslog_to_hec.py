@@ -385,11 +385,21 @@ class LogSender:
             if not self.__buffered_nlogs:
                 return 0
 
+            nlogs = self.__buffered_nlogs
+            self.__buffered_nlogs = 0
+
+            # Flush the cache
             if self.__compression:
                 self.__log_writer.close()
 
-            # Flush the cache
             data = self.__buffer.getvalue()
+            self.__buffer = io.BytesIO()
+
+            if self.__compression:
+                self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+            else:
+                self.__log_writer = self.__buffer
+
             _ = self.__client.request(
                 url_suffix='/logs/v1/event',
                 method='POST',
@@ -399,17 +409,7 @@ class LogSender:
                 },
                 body=data
             )
-            nlogs = self.__buffered_nlogs
             print(f'* {nlogs} logs have been sent to HEC.')
-
-            # Re-initialize the cache
-            self.__buffer = io.BytesIO()
-            self.__buffered_nlogs = 0
-            if self.__compression:
-                self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
-            else:
-                self.__log_writer = self.__buffer
-
             return nlogs
 
     def __init__(
