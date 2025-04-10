@@ -127,19 +127,7 @@ class Settings:
             action='store_true',
             help='Enable printing of log messages queued.'
         )
-        ap.add_argument(
-            '--args_stdin',
-            action='store_true',
-            help='Read the argument parameters specified in JSON array format from stdin.'
-        )
         args = ap.parse_args()
-
-        if args.args_stdin:
-            args_stdin = json.loads(sys.stdin.read())
-            if not isinstance(args_stdin, list):
-                raise ValueError('The argument parameters given in stdin must be array.')
-
-            args = ap.parse_args(args=sys.argv[1:] + args_stdin)
 
         self.__syslog_protocol = args.syslog_protocol
         self.__syslog_port = args.syslog_port
