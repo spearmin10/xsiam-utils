@@ -12,8 +12,8 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
 
 [RULE: minoue_skv2kvobj]
 /***
- * This rule transforms a separated keyed-value text to a json object.
- * Any of a charactor can be usable except for backslash and double quotation as the separator.
+ * This rule transforms a separated key-value text into a JSON object.
+ * Any single character can be used as a separator, except for the backslash (`\`) and the double quotation mark (`"`).
  * The standard pattern is:
  *    key<kv-separator>value[<ent-separator> key<kv-separator>value]*
  *
@@ -21,21 +21,21 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *    key1=val1, key2=val2, key3=val3
  *    key1:val1; key2:val2; key3:val3
  *
- * ### Supported Syntax/Formats
- *  - The key-value separator (<kv-separator>) must be a charactor (length=1).
- *  - The entry separator (<ent-separator>) must be a charactor (length=1).
- *  - The key-value separator and the entry separator must be a different charactor.
- *  - 'key' and 'value' can be quoted with a double quotation mark.
- *  - 'key' and 'value' between a key-value separator allows any spaces to be inserted.
- *  - `value` can contain any spaces.
- *  - A backslash escapes a following charactor in quoted text.
- *  - Any spaces can be allowed between a value and a key-value separator.
- *  - The following escape sequences are treated as control codes.
- *      * \b : backspace
- *      * \f : form feed
- *      * \n : line feed
- *      * \r : carriage return
- *      * \t : tab
+ * ### Supported Syntax/Formats  
+ *  - The key-value separator (`<kv-separator>`) must be a single character.
+ *  - The entry separator (`<ent-separator>`) must also be a single character.
+ *  - The key-value separator and the entry separator must be different characters.
+ *  - 'key' and 'value' can be enclosed in double quotation marks.
+ *  - Spaces are allowed around the key-value separator between the 'key' and 'value'.
+ *  - 'value' can contain any number of spaces.
+ *  - A backslash (`\`) escapes the following character in quoted text.
+ *  - Spaces are allowed between the value and the key-value separator.
+ *  - The following escape sequences are interpreted as control characters:
+ *      * `\b` : backspace
+ *      * `\f` : form feed
+ *      * `\n` : line feed
+ *      * `\r` : carriage return
+ *      * `\t` : tab
  *
  *   e.g.
  *    - "key":"value"
@@ -44,22 +44,24 @@ PATTERN_IPV4 = "^(?:(?:25[0-5]|(?:2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$";
  *    - "k\"ey" : "va\\lue"
  *    - key1:v a l 1; key2: v a l 2
  *
- *  It also supports text separated with any entry separators and without an entry separator if `value` is quoted with a double quotation mark.
+ * It also supports text separated using any entry separator, or even without an entry separator,
+ * as long as each `value` is enclosed in double quotation marks.
  *
  *   e.g.
  *    - key1:"v a l 1" key2:"v a l 2"; key3:val3
  *    - key1:"v a l 1"key2:"v a l 2"
  *    - key1:"v a l 1""key2":"v a l 2"
  *
- * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * It's responsible for you to make sure the text is in the correct pattern.
- * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ * You may get unexpected results if the input text contains incorrect patterns, as the parser does not perform validation.
+ * It is your responsibility to ensure that the text follows the correct format.
+ * That said, the parser will still return a JSON object without raising errors, even if the text is improperly formatted.
+ * You can input any text, but it's recommended to use `_raw_kvobj->{}` to retrieve the full JSON object and verify its correctness,
+ * especially when dealing with potentially invalid input.
  *
- * :param __kvtext: A separated keyed-value text
- * :param __ent_separator: An entry separator
- * :param __kv_separator: A key-value separator
- * :return _raw_kvobj: JSON object text
+ * :param __kvtext: A string of separated key-value pairs
+ * :param __ent_separator: The character used to separate entries
+ * :param __kv_separator: The character used to separate keys and values
+ * :return _raw_kvobj: A JSON object generated from the key-value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -133,7 +135,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_cskv2kvobj]
 /***
- * This rule transforms a comma separated key=value text to a json object.
+ * This rule transforms a comma-separated key=value text into a JSON object.
  * The standard pattern is:
  *    key=value[, key=value]*
  *
@@ -141,17 +143,18 @@ alter _raw_kvobj = format_string(
  *    - key1=val1, key2=val2, key3=val3
  *
  * ### Supported Syntax/Formats
- *  - 'key' and 'value' can be quoted with a double quotation mark.
- *  - 'key' and 'value' between '=' allows any spaces to be inserted.
- *  - `value` can contain any spaces.
- *  - A backslash escapes a following charactor in quoted text.
- *  - Any spaces can be allowed between a value and a comma separator.
- *  - The following escape sequences are treated as control codes.
- *      * \b : backspace
- *      * \f : form feed
- *      * \n : line feed
- *      * \r : carriage return
+ *  - Both 'key' and 'value' can be enclosed in double quotation marks.  
+ *  - Spaces are allowed around the '=' between 'key' and 'value'.  
+ *  - The `value` can contain any number of spaces.  
+ *  - A backslash escapes the following character in quoted text.  
+ *  - Spaces are allowed between a value and the comma separator.  
+ *  - The following escape sequences are interpreted as control characters:  
+ *      * \b : backspace  
+ *      * \f : form feed  
+ *      * \n : line feed  
+ *      * \r : carriage return  
  *      * \t : tab
+ *
  *   e.g.
  *    - "key"="value"
  *    - key = value
@@ -159,21 +162,22 @@ alter _raw_kvobj = format_string(
  *    - "k\"ey" = "va\\lue"
  *    - key1=v a l 1, key2= v a l 2
  *
- *  It also supports text separated with any delimiters and without a delimiter if `value` is quoted with a double quotation mark.
- *  However $PATTERN_CSKV doesn't match the text because it is not comma separated keyed-value.
+ *  It also supports text separated by any delimiters, or without a delimiter, if the `value` is enclosed in double quotation marks.
+ *  However, $PATTERN_CSKV does not match the text because it is not a comma-separated key-value pair.
  *
  *   e.g.
  *    - key1="v a l 1" key2="v a l 2", key3=val3
  *    - key1="v a l 1"key2="v a l 2"
  *    - key1="v a l 1""key2"="v a l 2"
  *
- * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with $PATTERN_CSKV in advance.
- * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ * You may get unexpected results if you provide text containing incorrect patterns, as it does not perform validation.
+ * You should ensure that the text is in the correct format using $PATTERN_CSKV beforehand.
+ * That said, it will still successfully return a JSON object without raising errors, even if the text contains incorrect patterns.
+ * You can provide any text you like. However, it is recommended to use `_raw_kvobj->{}` to retrieve the full JSON object and
+ * verify its correctness, especially if the text may be incorrectly formatted.
  *
- * :param __kvtext: A comma separated key=value text
- * :return _raw_kvobj: JSON object text
+ * :param __kvtext: A comma-separated key=value text  
+ * :return _raw_kvobj: A JSON object generated from the key=value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -236,22 +240,23 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_sskv2kvobj]
 /***
- * This rule transforms a space separated key=value text to a json object.
+ * This rule transforms a space-separated key=value text into a JSON object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
  *  e.g.
  *    - key1=val1 key2=val2 key3=val3
  *
- * 'key' and 'value' can be quoted with a double quotation mark, 'key' and 'value' between '=' allows any spaces to be inserted,
- * and also a backslash escapes a following charactor in quoted text.
+ * 'key' and 'value' can be enclosed in double quotation marks. Spaces are allowed around the '=' between 'key' and 'value',
+ * and a backslash escapes the following character in quoted text.
+ *
  *   e.g.
  *    - "key"="value"
  *    - key = value
  *    - key = "value"
  *    - "k\"ey" = "va\\lue"
  *
- * If `value` is quoted with a double quotation mark, it supports text separated with any delimiters and without a delimiter.
+ * If the `value` is enclosed in double quotation marks, the text can be separated by any delimiters or even have no delimiter.
  *
  *   e.g.
  *    - key1="v a l 1" key2="v a l 2", key3=val3
@@ -260,7 +265,7 @@ alter _raw_kvobj = format_string(
  *    - key1="v a l 1""key2"="v a l 2"
  *    - key1="v a l 1","key2"="v a l 2"
  *
- * The following escape sequences are treated as control codes.
+ * The following escape sequences are interpreted as control characters.
  *
  *  - \b : backspace
  *  - \f : form feed
@@ -268,13 +273,14 @@ alter _raw_kvobj = format_string(
  *  - \r : carriage return
  *  - \t : tab
  *
- * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with $PATTERN_SSKV.
- * On the contrary, it will successfully return a JSON object without raising errors even if the text contains incorrect patterns.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
- *
- * :param __kvtext: A space separated key=value text
- * :return _raw_kvobj: JSON object text
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.  
+ * You should ensure the text is in the correct format using $PATTERN_SSKV.  
+ * That said, it will still return a JSON object without raising errors, even if the text contains incorrect patterns.  
+ * You can provide any text you like. However, it is recommended to use `_raw_kvobj->{}` to retrieve the entire JSON object and
+ * verify its correctness, especially when the text may be incorrectly formatted.  
+ *  
+ * :param __kvtext: A space-separated key=value text  
+ * :return _raw_kvobj: A JSON object generated from the key=value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -337,8 +343,8 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_xnqskv2kvobj]
 /***
- * This rule transforms a separated keyed-value text to a json object.
- * Any of a charactor can be usable except for backslash and double quotation as the separator.
+ * This rule transforms a separated key-value text into a JSON object.
+ * Any character can be used as a separator, except for the backslash and double quotation mark.
  * The standard pattern is:
  *    key<kv-separator>value[<ent-separator> key<kv-separator>value]*
  *
@@ -347,21 +353,21 @@ alter _raw_kvobj = format_string(
  *    key1:val1; key2:val2; key3:val3
  *
  * ### Supported Syntax/Formats
- *  - The Key-Value separator (<kv-separator>) must be a charactor (length=1).
- *  - The entry separator (<ent-separator>) must be a charactor (length=1).
- *  - The Key-Value separator and the entry separator must be a different charactor.
- *  - The Key-Value separator and the entry are unable to be backslash and double quotation mark.
- *  - A backslash escapes a following charactor in quoted text.
- *  - Any spaces can be allowed between a value and a comma separator.
- *  - 'key' and 'value' can be quoted with a double quotation mark.
- *  - 'key' and 'value' between <kv-separator> allows any spaces to be inserted.
- *  - 'value' can contain spaces regardless the quoted text.
- *  - 'value' can contain multiple tokens quoted with a double quotation mark.
- *  - 'value' can be an empty value regardless the quoted text.
- *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
- *  - 'key' of the next keyed-value can be placed immediately after the current keyed-value without a comma when at least one of the current 'value' or the next 'key' is quoted.
- *  - keyed-value can be delimited with any spaces when at least one of the current 'value' or the next 'key' is quoted.
- *  - The following escape sequences are treated as control codes.
+ *  - The Key-Value separator (<kv-separator>) must be a single character (length=1).
+ *  - The entry separator (<ent-separator>) must be a single character (length=1).
+ *  - The Key-Value separator and the entry separator must be different characters.
+ *  - Neither the Key-Value separator nor the entry separator can be a backslash or a double quotation mark.
+ *  - A backslash escapes the following character in quoted text.
+ *  - Spaces are allowed between a value and a comma separator.
+ *  - 'key' and 'value' can be enclosed in double quotation marks.
+ *  - Spaces are allowed between 'key' and 'value' around the <kv-separator>.
+ *  - 'value' can contain spaces, whether quoted or not.
+ *  - 'value' can contain multiple tokens enclosed in double quotation marks.
+ *  - 'value' can be empty, whether quoted or not.
+ *  - 'key' can contain spaces only if it is quoted or if the spaces are escaped.
+ *  - The 'key' of the next key-value pair can immediately follow the current pair without a comma, as long as at least one of the current 'value' or the next 'key' is quoted.
+ *  - Key-value pairs can be delimited by spaces when at least one of the current 'value' or the next 'key' is quoted.
+ *  - The following escape sequences are interpreted as control characters:
  *      * \b : backspace
  *      * \f : form feed
  *      * \n : line feed
@@ -381,15 +387,16 @@ alter _raw_kvobj = format_string(
  *    - "k e y 1" : "v a l 1"key2 : "v a l 2"
  *    - "key1":"val1" "key2":"val2"
  *
- * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * It's responsible for you to ensure the text in the correct format before giving it,
- * however you wouldn't be able to check the pattern only with RE2.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.
+ * It is your responsibility to ensure that the text is in the correct format before providing it.
+ * However, you will not be able to validate the pattern using only RE2.
+ * You can provide any text you like, but it is recommended to use `_raw_kvobj->{}` to retrieve the entire JSON object and
+ * verify its correctness, especially if the text is incorrectly formatted.
  *
- * :param __kvtext: A separated keyed-value text
+ * :param __kvtext: A separated key-value text
  * :param __ent_separator: An entry separator
  * :param __kv_separator: A key-value separator
- * :return _raw_kvobj: JSON object text
+ * :return _raw_kvobj: A JSON object generated from the key-value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -484,7 +491,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_nqsskv2kvobj]
 /***
- * This rule transforms a space separated key=value text to a json object.
+ * This rule transforms a space-separated key=value text into a JSON object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -492,13 +499,13 @@ alter _raw_kvobj = format_string(
  *    key1=val1 key2=val2 key3=val3
  *
  * ### Supported Syntax/Formats
- *  - A backslash charator escapes a following charactor.
+ *  - A backslash character escapes the following character.
  *  - 'value' can contain spaces.
- *  - 'value' starts at immediately after a '=' sign to separate key and value.
- *  - all spaces but the last space are treated as trailing spaces in the prior value in the key.
- *  - 'key' can contain any spaces only when it's escaped.
- *  - Trailing spaces between a key and a '=' sign are ignored.
- *  - The following escape sequences are treated as control codes.
+ *  - The 'value' starts immediately after the '=' sign that separates the key and value.
+ *  - All spaces, except for the last one, are treated as trailing spaces in the value of the key.
+ *  - 'key' can contain spaces only if they are escaped.
+ *  - Trailing spaces between a key and the '=' sign are ignored.
+ *  - The following escape sequences are interpreted as control characters:
  *      * \b : backspace
  *      * \f : form feed
  *      * \n : line feed
@@ -512,13 +519,14 @@ alter _raw_kvobj = format_string(
  *    - key1=val\=1 key2=val\=2
  *    - key1= key2= key3=
  *
- * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * It's responsible for you to ensure the text in the correct format before giving it,
- * however you wouldn't be able to check the pattern only with RE2.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.
+ * It is your responsibility to ensure the text is in the correct format before providing it.
+ * However, you will not be able to validate the pattern using only RE2.
+ * You can provide any text you like, but it is recommended to use `_raw_kvobj->{}` to retrieve the entire JSON object and
+ * verify its correctness, especially if the text is incorrectly formatted.
  *
- * :param __kvtext: A space separated key=value text
- * :return _raw_kvobj: JSON object text
+ * :param __kvtext: A space-separated key=value text
+ * :return _raw_kvobj: A JSON object generated from the key=value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -592,7 +600,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_xnqcskv2kvobj]
 /***
- * This rule transforms a comma separated key=value text to a json object.
+ * This rule transforms a comma-separated key=value text into a JSON object.
  * The standard pattern is:
  *    key=value[, key=value]*
  *
@@ -600,21 +608,21 @@ alter _raw_kvobj = format_string(
  *    key1=val1, key2=val2, key3=val3
  *
  * ### Supported Syntax/Formats
- *  - A backslash escapes a following charactor in quoted text.
+ *  - A backslash escapes the following character in quoted text.
  *  - Any spaces can be allowed between a value and a comma separator.
- *  - 'key' and 'value' can be quoted with a double quotation mark.
- *  - 'key' and 'value' between '=' allows any spaces to be inserted.
- *  - 'value' can contain spaces regardless the quoted text.
- *  - 'value' can contain multiple tokens quoted with a double quotation mark.
- *  - 'value' can be an empty value regardless the quoted text.
- *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
- *  - 'key' of the next key=value can be placed immediately after the current key=value without a comma when at least one of the current 'value' or the next 'key' is quoted.
- *  - key=value can be delimited with any spaces when at least one of the current 'value' or the next 'key' is quoted.
- *  - The following escape sequences are treated as control codes.
- *      * \b : backspace
- *      * \f : form feed
- *      * \n : line feed
- *      * \r : carriage return
+ *  - 'key' and 'value' can be enclosed in double quotation marks.
+ *  - Any spaces can be inserted between 'key' and 'value' around the '=' separator.
+ *  - 'value' can contain spaces, whether quoted or not.
+ *  - 'value' can contain multiple tokens enclosed in double quotation marks.
+ *  - 'value' can be empty, whether quoted or not.
+ *  - 'key' can contain spaces only if it is quoted or if the spaces are escaped.
+ *  - The 'key' of the next key=value pair can follow immediately after the current key=value pair without a comma, as long as at least one of the current 'value' or the next 'key' is quoted.
+ *  - Key=value pairs can be delimited by spaces when at least one of the current 'value' or the next 'key' is quoted.
+ *  - The following escape sequences are interpreted as control characters:
+ *      * \b : backspace  
+ *      * \f : form feed  
+ *      * \n : line feed  
+ *      * \r : carriage return  
  *      * \t : tab
  *
  *   e.g.
@@ -630,13 +638,14 @@ alter _raw_kvobj = format_string(
  *    - "k e y 1" = "v a l 1"key2 = "v a l 2"
  *    - "key1"="val1" "key2"="val2"
  *
- * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * It's responsible for you to ensure the text in the correct format before giving it,
- * however you wouldn't be able to check the pattern only with RE2.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.
+ * It is your responsibility to ensure the text is in the correct format before providing it.
+ * However, you will not be able to validate the pattern using only RE2.
+ * You can provide any text you like. It is recommended to use `_raw_kvobj->{}` to retrieve the entire JSON object and
+ * verify its correctness, especially if the text is incorrectly formatted.
  *
- * :param __kvtext: A space separated key=value text
- * :return _raw_kvobj: JSON object text
+ * :param __kvtext: A space-separated key=value text
+ * :return _raw_kvobj: A JSON object generated from the key=value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -713,7 +722,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_xnqsskv2kvobj]
 /***
- * This rule transforms a space separated key=value text to a json object.
+ * This rule transforms a space-separated key=value text into a JSON object.
  * The standard pattern is:
  *    key=value[ key=value]*
  *
@@ -721,19 +730,19 @@ alter _raw_kvobj = format_string(
  *    key1=val1 key2=val2 key3=val3
  *
  * ### Supported Syntax/Formats
- *  - A backslash charator escapes a following charactor.
- *  - 'key' and 'value' can be quoted with a double quotation mark.
- *  - 'value' can contain spaces regardless the quoted text.
- *  - 'value' can contain multiple tokens quoted with a double quotation mark.
- *  - 'value' can be an empty value regardless the quoted text.
- *  - 'key' can contain any spaces only when it's quoted or a space in it is escaped.
- *  - 'key' and 'value' between '=' allows any spaces to be inserted.
- *  - 'key' of the next key=value can be placed immediately after the current key=value without any spaces when at least one of the current 'value' or the next 'key' is quoted.
- *  - The following escape sequences are treated as control codes.
- *      * \b : backspace
- *      * \f : form feed
- *      * \n : line feed
- *      * \r : carriage return
+ *  - A backslash character escapes the following character.
+ *  - 'key' and 'value' can be enclosed in double quotation marks.
+ *  - 'value' can contain spaces, whether quoted or not.
+ *  - 'value' can contain multiple tokens enclosed in double quotation marks.
+ *  - 'value' can be empty, whether quoted or not.
+ *  - 'key' can contain spaces only if it is quoted or if the spaces are escaped.
+ *  - Any spaces can be inserted between 'key' and 'value' around the '=' sign.
+ *  - The 'key' of the next key=value pair can immediately follow the current key=value pair without any spaces, as long as at least one of the current 'value' or the next 'key' is quoted.
+ *  - The following escape sequences are interpreted as control characters:
+ *      * \b : backspace  
+ *      * \f : form feed  
+ *      * \n : line feed  
+ *      * \r : carriage return  
  *      * \t : tab
  *
  *   e.g.
@@ -752,13 +761,14 @@ alter _raw_kvobj = format_string(
  *    - key1="v1[1]" v1[2] "v1[3]" key2=v2[1] "v2[2]"
  *    - key1="" key2= key3=
  *
- * You will get unexpected results if you give a text in incorrect patterns as it doesn't check it.
- * It's responsible for you to ensure the text in the correct format before giving it,
- * however you wouldn't be able to check the pattern only with RE2.
- * You can give any texts if you want. It recommends to use `_raw_kvobj->{}` to get the entire JSON object in order to check if the return value is in the correct JSON object in case of incorrect text to be returned.
- *
- * :param __kvtext: A space separated key=value text
- * :return _raw_kvobj: JSON object text
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.  
+ * It is your responsibility to ensure the text is in the correct format before providing it.
+ * However, you will not be able to validate the pattern using only RE2.
+ * You can provide any text you like. It is recommended to use `_raw_kvobj->{}` to retrieve the entire JSON object and
+ * verify its correctness, especially if the text is incorrectly formatted.  
+ * 
+ * :param __kvtext: A space-separated key=value text
+ * :return _raw_kvobj: A JSON object generated from the key=value text
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -835,7 +845,7 @@ alter _raw_kvobj = format_string(
 
 [RULE: minoue_csv2array]
 /***
- * This rule transforms a comma separated value to an array.
+ * This rule transforms a comma-separated value into an array.
  * The standard pattern is:
  *    value[,value]*
  *
@@ -843,11 +853,11 @@ alter _raw_kvobj = format_string(
  *    val1,val2,val3
  *
  * ### Supported Syntax/Formats
- *  - A backslash charator escapes a following charactor.
- *  - 'value' can be quoted with a double quotation mark.
- *  - A double double quotation marks ("") in the quoted value is converted to a single double quotation mark.
+ *  - A backslash character escapes the following character.
+ *  - 'value' can be enclosed in double quotation marks.
+ *  - A pair of double quotation marks ("") within a quoted value is converted to a single double quotation mark.
  *  - Any spaces can be allowed between a value and a comma separator.
- *  - The following escape sequences are treated as control codes.
+ *  - The following escape sequences are treated as control characters:
  *      * \b : backspace
  *      * \f : form feed
  *      * \n : line feed
@@ -865,11 +875,11 @@ alter _raw_kvobj = format_string(
  *    - val1 , val2 , val3
  *    - " val1 " , " val2 " , val3
  *
- * You will get unexpected results if you give a text containing incorrect patterns as it doesn't check it.
- * You should ensure the text in the correct format with $PATTERN_CSV in advance if needed.
+ * You may get unexpected results if you provide text with incorrect patterns, as it does not perform validation.
+ * You should ensure the text is in the correct format using $PATTERN_CSV in advance, if necessary.
  *
- * :param __text: A comma separated text
- * :return _columns: Array of column values
+ * :param __text: A comma-separated text
+ * :return _columns: An array of column values
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -909,30 +919,29 @@ alter _columns = arraymap(
 
 [RULE: minoue_xssv2array]
 /***
- * This rule transforms a space separated value to an array.
+ * This rule transforms a space-separated value into an array.
  * The standard pattern is:
  *    value[ value]*
  *
  *  e.g.
  *    val1 val2 val3
  *
- * 'value' can be quoted with a double quotation mark, and also a backslash escapes a following charactor.
+ * 'value' can be enclosed in double quotation marks, and a backslash escapes the following character.
  *   e.g.
  *    - "value"
  *    - va\ lue
  *    - va\\lue
  *    - va\"lue
  *
- * The following escape sequences are treated as control codes.
- *
+ * The following escape sequences are interpreted as control codes.
  *  - \b : backspace
  *  - \f : form feed
  *  - \n : line feed
  *  - \r : carriage return
  *  - \t : tab
  *
- * :param __text: A space separated text
- * :return _columns: Array of column values
+ * :param __text: A space-separated text
+ * :return _columns: An array of column values
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -987,12 +996,12 @@ alter _columns = arraymap(
 [RULE: minoue_syslog_lite]
 /***
  * This rule extracts parameters from a syslog payload.
- * It supports both of RFC 3164 and 5424 log format.
+ * It supports both RFC 3164 and RFC 5424 log formats.
  *
- * The parameters extracted are saved to 'syslog' in JSON object with the following structure.
- * However 'syslog' will be null if the log is not the correct format.
- * It doesn't support to parse SD-PARAM of STRUCTURED-DATA in the RFC 5424 log,
- * so 'syslog.structured_data.params' is always empty.
+ * The extracted parameters are saved in the 'syslog' field of a JSON object with the following structure.
+ * However, 'syslog' will be null if the log is not in the correct format.
+ * It does not support parsing SD-PARAM from the STRUCTURED-DATA in the RFC 5424 log,
+ * so 'syslog.structured_data.params' will always be empty.
  *
  *  {
  *    "pri": {
@@ -1026,8 +1035,8 @@ alter _columns = arraymap(
  *    "message": <string>
  *  }
  *
- * :param __log: The log to parse
- * :return syslog: Parameters extracted from the log in JSON object.
+ * :param __log: The log to be parsed
+ * :return syslog: The parameters extracted from the log, in a JSON object.
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -1170,10 +1179,10 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 [RULE: minoue_syslog]
 /***
  * This rule extracts parameters from a syslog payload.
- * It supports both of RFC 3164 and 5424 log format.
+ * It supports both RFC 3164 and RFC 5424 log formats.
  *
- * The parameters extracted are saved to 'syslog' in JSON object with the following structure.
- * However 'syslog' will be null if the log is not the correct format.
+ * The extracted parameters are saved in the 'syslog' field of a JSON object with the following structure.
+ * However, 'syslog' will be null if the log is not in the correct format.
  *
  *  {
  *    "pri": {
@@ -1209,8 +1218,8 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  *    "message": <string>
  *  }
  *
- * :param __log: The log to parse
- * :return _syslog: Parameters extracted from the log in JSON object.
+ * :param __log: The log to be parsed
+ * :return _syslog: The parameters extracted from the log, in a JSON object.
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
@@ -1354,13 +1363,13 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
 
 [RULE: minoue_parse_cef]
 /***
- * This rule parses the CEF paramters by finding their pattern in the log message.
+ * This rule parses the CEF parameters by detecting their pattern in the log message.
  *
  * The pattern is:
  *    CEF:Version|Device Vendor|Device Product|Device Version|Device Event Class ID|Name|Severity|[Extension]
  *
- * The parameters extracted are saved to '_cef' in JSON object with the following structure.
- * However '_cef' will be null if it doesn't find the CEF pattern in the log message given.
+ * The extracted parameters are saved in the '_cef' field of a JSON object with the following structure.  
+ * However, '_cef' will be null if the CEF pattern is not found in the given log message.
  *
  *  {
  *    "_raw": <string>,
@@ -1380,7 +1389,7 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
  *  }
  *
  * :param __log: A log message
- * :return _cef: The CEF parameters extracted from the log
+ * :return _cef: The CEF parameters extracted from the log message
  *
  * @auther Masahiko Inoue
  * @url https://github.com/spearmin10/xsiam-utils/blob/main/parsing-rules/minoue-parsing-rules.xql
