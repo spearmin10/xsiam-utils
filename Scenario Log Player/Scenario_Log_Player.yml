@@ -2741,14 +2741,17 @@ script:
             entries: dict[str, dict[str, Any]] = None,
         ) -> dict[str, dict[str, str]]:
             return {
-                ip: assign_params(
-                    ip=ip,
-                    host=ent.get('host'),
-                    internal_domain=demisto.get(ent, 'domain.internal'),
-                    external_domain=demisto.get(ent, 'domain.external'),
-                    user_name=demisto.get(ent, 'user.name'),
-                    family_name=demisto.get(ent, 'user.family_name'),
-                    given_name=demisto.get(ent, 'user.given_name'),
+                ip: dict(
+                    ent,
+                    **assign_params(
+                        ip=ip,
+                        host=ent.get('host'),
+                        internal_domain=demisto.get(ent, 'domain.internal'),
+                        external_domain=demisto.get(ent, 'domain.external'),
+                        user_name=demisto.get(ent, 'user.name'),
+                        family_name=demisto.get(ent, 'user.family_name'),
+                        given_name=demisto.get(ent, 'user.given_name'),
+                    )
                 ) for ip, ent in (entries or {}).items()
             }
 
