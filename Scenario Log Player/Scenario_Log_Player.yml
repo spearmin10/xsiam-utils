@@ -6745,47 +6745,29 @@ script:
 
         def update(
             self,
-            scenario: dict[str, Any] | Self,
+            scenario: dict[str, Any],
         ) -> None:
             """ Add and update with the new scenario.
 
             :param scenario: A new scenario in JSON.
             """
-            if isinstance(scenario, ScenarioStruct):
-                self.__variables.update(scenario.__variables)
-                self.__sources.update(scenario.__sources)
-                self.__jobs.update(scenario.__jobs)
-                self.__callables.update(scenario.__callables)
-                self.__ip_ents.update(scenario.__ip_ents)
+            self.__variables.update(scenario.get('variables') or {})
+            self.__sources.extend(to_list(scenario.get('sources')))
+            self.__jobs.extend(to_list(scenario.get('jobs')))
+            self.__callables.update(scenario.get('callables') or {})
+            self.__ip_ents.update(scenario.get('ip_entries') or {})
 
-                for location in ['internal', 'external']:
-                    for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
-                        dservices = demisto.get(self.__services, f'{location}.{service_type}') or []
-                        sservices = demisto.get(scenario.__services, f'{location}.{service_type}') or []
-                        dservices.extend(sservices)
-                        if dservices:
-                            self.__services[location][service_type] = dservices
+            services = scenario.get('services') or {}
+            for location in ['internal', 'external']:
+                for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
+                    dst = to_list(demisto.get(self.__services, f'{location}.{service_type}'))
+                    src = to_list(demisto.get(services, f'{location}.{service_type}'))
+                    dst.extend(src)
+                    if dst:
+                        self.__services[location][service_type] = dst
 
-                if gw := demisto.get(scenario.__services, 'internal.gw'):
-                    self.__services['internal']['gw'] = gw
-            else:
-                self.__variables.update(scenario.get('variables') or {})
-                self.__sources.extend(to_list(scenario.get('sources')))
-                self.__jobs.extend(to_list(scenario.get('jobs')))
-                self.__callables.update(scenario.get('callables') or {})
-                self.__ip_ents.update(scenario.get('ip_entries') or {})
-
-                services = scenario.get('services') or {}
-                for location in ['internal', 'external']:
-                    for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
-                        dst = to_list(demisto.get(self.__services, f'{location}.{service_type}'))
-                        src = to_list(demisto.get(services, f'{location}.{service_type}'))
-                        dst.extend(src)
-                        if dst:
-                            self.__services[location][service_type] = dst
-
-                if gw := demisto.get(services, 'internal.gw'):
-                    self.__services['internal']['gw'] = gw
+            if gw := demisto.get(services, 'internal.gw'):
+                self.__services['internal']['gw'] = gw
 
         def build(
             self
@@ -9255,7 +9237,7 @@ script:
                         timeout=settings.socket_timeout,
                         retries=DEFAULT_HTTP_RETRIES,
                     ) as client:
-                        content = await client.get_content()
+                        content = await client.get_content('')
                         if content[:4] == b'PK\x03\x04':
                             with zipfile.ZipFile(io.BytesIO(content), 'r') as z:
                                 z.setpassword((settings.custom_scenario_urls_zip_password or '').encode())
