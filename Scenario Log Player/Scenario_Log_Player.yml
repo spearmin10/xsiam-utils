@@ -9333,6 +9333,7 @@ script:
             :param mode: The run mode. 'random' or 'sequential'
             :param nrepeat: How many times to run the scenario. None = endless.
             """
+            pass
 
 
     class SourceTemplateUnitsPlayer(Player):
