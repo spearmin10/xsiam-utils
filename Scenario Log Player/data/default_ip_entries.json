@@ -1,0 +1,1904 @@
+{
+    "ip_entries": {
+        "172.16.77.1": {
+            "host": "SLP-0001",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "lsears",
+                "given_name": "leroy",
+                "family_name": "sears"
+            }
+        },
+        "172.16.77.2": {
+            "host": "SLP-0002",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "fmayo",
+                "given_name": "francisco",
+                "family_name": "mayo"
+            }
+        },
+        "172.16.77.3": {
+            "host": "SLP-0003",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mdunlap",
+                "given_name": "marcus",
+                "family_name": "dunlap"
+            }
+        },
+        "172.16.77.4": {
+            "host": "SLP-0004",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mhayden",
+                "given_name": "micheal",
+                "family_name": "hayden"
+            }
+        },
+        "172.16.77.5": {
+            "host": "SLP-0005",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "twilder",
+                "given_name": "theodore",
+                "family_name": "wilder"
+            }
+        },
+        "172.16.77.6": {
+            "host": "SLP-0006",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cmckay",
+                "given_name": "clifford",
+                "family_name": "mckay"
+            }
+        },
+        "172.16.77.7": {
+            "host": "SLP-0007",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mcoffey",
+                "given_name": "miguel",
+                "family_name": "coffey"
+            }
+        },
+        "172.16.77.8": {
+            "host": "SLP-0008",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "omccarty",
+                "given_name": "oscar",
+                "family_name": "mccarty"
+            }
+        },
+        "172.16.77.9": {
+            "host": "SLP-0009",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jewing",
+                "given_name": "jay",
+                "family_name": "ewing"
+            }
+        },
+        "172.16.77.10": {
+            "host": "SLP-0010",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jcooley",
+                "given_name": "jim",
+                "family_name": "cooley"
+            }
+        },
+        "172.16.77.11": {
+            "host": "SLP-0011",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tvaughan",
+                "given_name": "tom",
+                "family_name": "vaughan"
+            }
+        },
+        "172.16.77.12": {
+            "host": "SLP-0012",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cbonner",
+                "given_name": "calvin",
+                "family_name": "bonner"
+            }
+        },
+        "172.16.77.13": {
+            "host": "SLP-0013",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "acotton",
+                "given_name": "alex",
+                "family_name": "cotton"
+            }
+        },
+        "172.16.77.14": {
+            "host": "SLP-0014",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jholder",
+                "given_name": "jon",
+                "family_name": "holder"
+            }
+        },
+        "172.16.77.15": {
+            "host": "SLP-0015",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rstark",
+                "given_name": "ronnie",
+                "family_name": "stark"
+            }
+        },
+        "172.16.77.16": {
+            "host": "SLP-0016",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "bferrell",
+                "given_name": "bill",
+                "family_name": "ferrell"
+            }
+        },
+        "172.16.77.17": {
+            "host": "SLP-0017",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "lcantrell",
+                "given_name": "lloyd",
+                "family_name": "cantrell"
+            }
+        },
+        "172.16.77.18": {
+            "host": "SLP-0018",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tfulton",
+                "given_name": "tommy",
+                "family_name": "fulton"
+            }
+        },
+        "172.16.77.19": {
+            "host": "SLP-0019",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "llynn",
+                "given_name": "leon",
+                "family_name": "lynn"
+            }
+        },
+        "172.16.77.20": {
+            "host": "SLP-0020",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dlott",
+                "given_name": "derek",
+                "family_name": "lott"
+            }
+        },
+        "172.16.77.21": {
+            "host": "SLP-0021",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "wcalderon",
+                "given_name": "warren",
+                "family_name": "calderon"
+            }
+        },
+        "172.16.77.22": {
+            "host": "SLP-0022",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "drosa",
+                "given_name": "darrell",
+                "family_name": "rosa"
+            }
+        },
+        "172.16.77.23": {
+            "host": "SLP-0023",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jpollard",
+                "given_name": "jerome",
+                "family_name": "pollard"
+            }
+        },
+        "172.16.77.24": {
+            "host": "SLP-0024",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "fhooper",
+                "given_name": "floyd",
+                "family_name": "hooper"
+            }
+        },
+        "172.16.77.25": {
+            "host": "SLP-0025",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "lburch",
+                "given_name": "leo",
+                "family_name": "burch"
+            }
+        },
+        "172.16.77.26": {
+            "host": "SLP-0026",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "amullen",
+                "given_name": "alvin",
+                "family_name": "mullen"
+            }
+        },
+        "172.16.77.27": {
+            "host": "SLP-0027",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tfry",
+                "given_name": "tim",
+                "family_name": "fry"
+            }
+        },
+        "172.16.77.28": {
+            "host": "SLP-0028",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "wriddle",
+                "given_name": "wesley",
+                "family_name": "riddle"
+            }
+        },
+        "172.16.77.29": {
+            "host": "SLP-0029",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "glevy",
+                "given_name": "gordon",
+                "family_name": "levy"
+            }
+        },
+        "172.16.77.30": {
+            "host": "SLP-0030",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ddavid",
+                "given_name": "dean",
+                "family_name": "david"
+            }
+        },
+        "172.16.77.31": {
+            "host": "SLP-0031",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "gduke",
+                "given_name": "greg",
+                "family_name": "duke"
+            }
+        },
+        "172.16.77.32": {
+            "host": "SLP-0032",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jodonnell",
+                "given_name": "jorge",
+                "family_name": "odonnell"
+            }
+        },
+        "172.16.77.33": {
+            "host": "SLP-0033",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dguy",
+                "given_name": "dustin",
+                "family_name": "guy"
+            }
+        },
+        "172.16.77.34": {
+            "host": "SLP-0034",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "pmichael",
+                "given_name": "pedro",
+                "family_name": "michael"
+            }
+        },
+        "172.16.77.35": {
+            "host": "SLP-0035",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dbritt",
+                "given_name": "derrick",
+                "family_name": "britt"
+            }
+        },
+        "172.16.77.36": {
+            "host": "SLP-0036",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dfrederick",
+                "given_name": "dan",
+                "family_name": "frederick"
+            }
+        },
+        "172.16.77.37": {
+            "host": "SLP-0037",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ldaugherty",
+                "given_name": "lewis",
+                "family_name": "daugherty"
+            }
+        },
+        "172.16.77.38": {
+            "host": "SLP-0038",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "zberger",
+                "given_name": "zachary",
+                "family_name": "berger"
+            }
+        },
+        "172.16.77.39": {
+            "host": "SLP-0039",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cdillard",
+                "given_name": "corey",
+                "family_name": "dillard"
+            }
+        },
+        "172.16.77.40": {
+            "host": "SLP-0040",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "halston",
+                "given_name": "herman",
+                "family_name": "alston"
+            }
+        },
+        "172.16.77.41": {
+            "host": "SLP-0041",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mjarvis",
+                "given_name": "maurice",
+                "family_name": "jarvis"
+            }
+        },
+        "172.16.77.42": {
+            "host": "SLP-0042",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "vfrye",
+                "given_name": "vernon",
+                "family_name": "frye"
+            }
+        },
+        "172.16.77.43": {
+            "host": "SLP-0043",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rriggs",
+                "given_name": "roberto",
+                "family_name": "riggs"
+            }
+        },
+        "172.16.77.44": {
+            "host": "SLP-0044",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cchaney",
+                "given_name": "clyde",
+                "family_name": "chaney"
+            }
+        },
+        "172.16.77.45": {
+            "host": "SLP-0045",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "godom",
+                "given_name": "glen",
+                "family_name": "odom"
+            }
+        },
+        "172.16.77.46": {
+            "host": "SLP-0046",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "hduffy",
+                "given_name": "hector",
+                "family_name": "duffy"
+            }
+        },
+        "172.16.77.47": {
+            "host": "SLP-0047",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "sfitzpatrick",
+                "given_name": "shane",
+                "family_name": "fitzpatrick"
+            }
+        },
+        "172.16.77.48": {
+            "host": "SLP-0048",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rvalenzuela",
+                "given_name": "ricardo",
+                "family_name": "valenzuela"
+            }
+        },
+        "172.16.77.49": {
+            "host": "SLP-0049",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "smerrill",
+                "given_name": "sam",
+                "family_name": "merrill"
+            }
+        },
+        "172.16.77.50": {
+            "host": "SLP-0050",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rmayer",
+                "given_name": "rick",
+                "family_name": "mayer"
+            }
+        },
+        "172.16.77.51": {
+            "host": "SLP-0051",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "lalford",
+                "given_name": "lester",
+                "family_name": "alford"
+            }
+        },
+        "172.16.77.52": {
+            "host": "SLP-0052",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "bmcpherson",
+                "given_name": "brent",
+                "family_name": "mcpherson"
+            }
+        },
+        "172.16.77.53": {
+            "host": "SLP-0053",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "racevedo",
+                "given_name": "ramon",
+                "family_name": "acevedo"
+            }
+        },
+        "172.16.77.54": {
+            "host": "SLP-0054",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cdonovan",
+                "given_name": "charlie",
+                "family_name": "donovan"
+            }
+        },
+        "172.16.77.55": {
+            "host": "SLP-0055",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tbarrera",
+                "given_name": "tyler",
+                "family_name": "barrera"
+            }
+        },
+        "172.16.77.56": {
+            "host": "SLP-0056",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "galbert",
+                "given_name": "gilbert",
+                "family_name": "albert"
+            }
+        },
+        "172.16.77.57": {
+            "host": "SLP-0057",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "gcote",
+                "given_name": "gene",
+                "family_name": "cote"
+            }
+        },
+        "172.16.77.58": {
+            "host": "SLP-0058",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mreilly",
+                "given_name": "marc",
+                "family_name": "reilly"
+            }
+        },
+        "172.16.77.59": {
+            "host": "SLP-0059",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rcompton",
+                "given_name": "reginald",
+                "family_name": "compton"
+            }
+        },
+        "172.16.77.60": {
+            "host": "SLP-0060",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rraymond",
+                "given_name": "ruben",
+                "family_name": "raymond"
+            }
+        },
+        "172.16.77.61": {
+            "host": "SLP-0061",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "bmooney",
+                "given_name": "brett",
+                "family_name": "mooney"
+            }
+        },
+        "172.16.77.62": {
+            "host": "SLP-0062",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "amcgowan",
+                "given_name": "angel",
+                "family_name": "mcgowan"
+            }
+        },
+        "172.16.77.63": {
+            "host": "SLP-0063",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ncraft",
+                "given_name": "nathaniel",
+                "family_name": "craft"
+            }
+        },
+        "172.16.77.64": {
+            "host": "SLP-0064",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rcleveland",
+                "given_name": "rafael",
+                "family_name": "cleveland"
+            }
+        },
+        "172.16.77.65": {
+            "host": "SLP-0065",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "lclemons",
+                "given_name": "leslie",
+                "family_name": "clemons"
+            }
+        },
+        "172.16.77.66": {
+            "host": "SLP-0066",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ewynn",
+                "given_name": "edgar",
+                "family_name": "wynn"
+            }
+        },
+        "172.16.77.67": {
+            "host": "SLP-0067",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mnielsen",
+                "given_name": "milton",
+                "family_name": "nielsen"
+            }
+        },
+        "172.16.77.68": {
+            "host": "SLP-0068",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rbaird",
+                "given_name": "raul",
+                "family_name": "baird"
+            }
+        },
+        "172.16.77.69": {
+            "host": "SLP-0069",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "bstanton",
+                "given_name": "ben",
+                "family_name": "stanton"
+            }
+        },
+        "172.16.77.70": {
+            "host": "SLP-0070",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "csnider",
+                "given_name": "chester",
+                "family_name": "snider"
+            }
+        },
+        "172.16.77.71": {
+            "host": "SLP-0071",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "crosales",
+                "given_name": "cecil",
+                "family_name": "rosales"
+            }
+        },
+        "172.16.77.72": {
+            "host": "SLP-0072",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dbright",
+                "given_name": "duane",
+                "family_name": "bright"
+            }
+        },
+        "172.16.77.73": {
+            "host": "SLP-0073",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "fwitt",
+                "given_name": "franklin",
+                "family_name": "witt"
+            }
+        },
+        "172.16.77.74": {
+            "host": "SLP-0074",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "astuart",
+                "given_name": "andre",
+                "family_name": "stuart"
+            }
+        },
+        "172.16.77.75": {
+            "host": "SLP-0075",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ehays",
+                "given_name": "elmer",
+                "family_name": "hays"
+            }
+        },
+        "172.16.77.76": {
+            "host": "SLP-0076",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "bholden",
+                "given_name": "brad",
+                "family_name": "holden"
+            }
+        },
+        "172.16.77.77": {
+            "host": "SLP-0077",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "grutledge",
+                "given_name": "gabriel",
+                "family_name": "rutledge"
+            }
+        },
+        "172.16.77.78": {
+            "host": "SLP-0078",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rkinney",
+                "given_name": "ron",
+                "family_name": "kinney"
+            }
+        },
+        "172.16.77.79": {
+            "host": "SLP-0079",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mclements",
+                "given_name": "mitchell",
+                "family_name": "clements"
+            }
+        },
+        "172.16.77.80": {
+            "host": "SLP-0080",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "rcastaneda",
+                "given_name": "roland",
+                "family_name": "castaneda"
+            }
+        },
+        "172.16.77.81": {
+            "host": "SLP-0081",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "aslater",
+                "given_name": "arnold",
+                "family_name": "slater"
+            }
+        },
+        "172.16.77.82": {
+            "host": "SLP-0082",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "hhahn",
+                "given_name": "harvey",
+                "family_name": "hahn"
+            }
+        },
+        "172.16.77.83": {
+            "host": "SLP-0083",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jemerson",
+                "given_name": "jared",
+                "family_name": "emerson"
+            }
+        },
+        "172.16.77.84": {
+            "host": "SLP-0084",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "aconrad",
+                "given_name": "adrian",
+                "family_name": "conrad"
+            }
+        },
+        "172.16.77.85": {
+            "host": "SLP-0085",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "kburks",
+                "given_name": "karl",
+                "family_name": "burks"
+            }
+        },
+        "172.16.77.86": {
+            "host": "SLP-0086",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cdelaney",
+                "given_name": "cory",
+                "family_name": "delaney"
+            }
+        },
+        "172.16.77.87": {
+            "host": "SLP-0087",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cpate",
+                "given_name": "claude",
+                "family_name": "pate"
+            }
+        },
+        "172.16.77.88": {
+            "host": "SLP-0088",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "elancaster",
+                "given_name": "erik",
+                "family_name": "lancaster"
+            }
+        },
+        "172.16.77.89": {
+            "host": "SLP-0089",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dsweet",
+                "given_name": "darryl",
+                "family_name": "sweet"
+            }
+        },
+        "172.16.77.90": {
+            "host": "SLP-0090",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jjustice",
+                "given_name": "jamie",
+                "family_name": "justice"
+            }
+        },
+        "172.16.77.91": {
+            "host": "SLP-0091",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "ntyson",
+                "given_name": "neil",
+                "family_name": "tyson"
+            }
+        },
+        "172.16.77.92": {
+            "host": "SLP-0092",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jsharpe",
+                "given_name": "jessie",
+                "family_name": "sharpe"
+            }
+        },
+        "172.16.77.93": {
+            "host": "SLP-0093",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cwhitfield",
+                "given_name": "christian",
+                "family_name": "whitfield"
+            }
+        },
+        "172.16.77.94": {
+            "host": "SLP-0094",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "jtalley",
+                "given_name": "javier",
+                "family_name": "talley"
+            }
+        },
+        "172.16.77.95": {
+            "host": "SLP-0095",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "fmacias",
+                "given_name": "fernando",
+                "family_name": "macias"
+            }
+        },
+        "172.16.77.96": {
+            "host": "SLP-0096",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "cirwin",
+                "given_name": "clinton",
+                "family_name": "irwin"
+            }
+        },
+        "172.16.77.97": {
+            "host": "SLP-0097",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tburris",
+                "given_name": "ted",
+                "family_name": "burris"
+            }
+        },
+        "172.16.77.98": {
+            "host": "SLP-0098",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "mratliff",
+                "given_name": "mathew",
+                "family_name": "ratliff"
+            }
+        },
+        "172.16.77.99": {
+            "host": "SLP-0099",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "tmccray",
+                "given_name": "tyrone",
+                "family_name": "mccray"
+            }
+        },
+        "172.16.77.100": {
+            "host": "SLP-0100",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            },
+            "user": {
+                "name": "dmadden",
+                "given_name": "darren",
+                "family_name": "madden"
+            }
+        },
+        "172.16.77.101": {
+            "host": "SLP-0101",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.102": {
+            "host": "SLP-0102",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.103": {
+            "host": "SLP-0103",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.104": {
+            "host": "SLP-0104",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.105": {
+            "host": "SLP-0105",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.106": {
+            "host": "SLP-0106",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.107": {
+            "host": "SLP-0107",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.108": {
+            "host": "SLP-0108",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.109": {
+            "host": "SLP-0109",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.110": {
+            "host": "SLP-0110",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.111": {
+            "host": "SLP-0111",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.112": {
+            "host": "SLP-0112",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.113": {
+            "host": "SLP-0113",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.114": {
+            "host": "SLP-0114",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.115": {
+            "host": "SLP-0115",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.116": {
+            "host": "SLP-0116",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.117": {
+            "host": "SLP-0117",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.118": {
+            "host": "SLP-0118",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.119": {
+            "host": "SLP-0119",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.120": {
+            "host": "SLP-0120",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.121": {
+            "host": "SLP-0121",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.122": {
+            "host": "SLP-0122",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.123": {
+            "host": "SLP-0123",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.124": {
+            "host": "SLP-0124",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.125": {
+            "host": "SLP-0125",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.126": {
+            "host": "SLP-0126",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.127": {
+            "host": "SLP-0127",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.128": {
+            "host": "SLP-0128",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.129": {
+            "host": "SLP-0129",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.130": {
+            "host": "SLP-0130",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.131": {
+            "host": "SLP-0131",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.132": {
+            "host": "SLP-0132",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.133": {
+            "host": "SLP-0133",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.134": {
+            "host": "SLP-0134",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.135": {
+            "host": "SLP-0135",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.136": {
+            "host": "SLP-0136",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.137": {
+            "host": "SLP-0137",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.138": {
+            "host": "SLP-0138",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.139": {
+            "host": "SLP-0139",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.140": {
+            "host": "SLP-0140",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.141": {
+            "host": "SLP-0141",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.142": {
+            "host": "SLP-0142",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.143": {
+            "host": "SLP-0143",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.144": {
+            "host": "SLP-0144",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.145": {
+            "host": "SLP-0145",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.146": {
+            "host": "SLP-0146",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.147": {
+            "host": "SLP-0147",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.148": {
+            "host": "SLP-0148",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.149": {
+            "host": "SLP-0149",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.150": {
+            "host": "SLP-0150",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.151": {
+            "host": "SLP-0151",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.152": {
+            "host": "SLP-0152",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.153": {
+            "host": "SLP-0153",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.154": {
+            "host": "SLP-0154",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.155": {
+            "host": "SLP-0155",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.156": {
+            "host": "SLP-0156",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.157": {
+            "host": "SLP-0157",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.158": {
+            "host": "SLP-0158",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.159": {
+            "host": "SLP-0159",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.160": {
+            "host": "SLP-0160",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.161": {
+            "host": "SLP-0161",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.162": {
+            "host": "SLP-0162",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.163": {
+            "host": "SLP-0163",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.164": {
+            "host": "SLP-0164",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.165": {
+            "host": "SLP-0165",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.166": {
+            "host": "SLP-0166",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.167": {
+            "host": "SLP-0167",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.168": {
+            "host": "SLP-0168",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.169": {
+            "host": "SLP-0169",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.170": {
+            "host": "SLP-0170",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.171": {
+            "host": "SLP-0171",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.172": {
+            "host": "SLP-0172",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.173": {
+            "host": "SLP-0173",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.174": {
+            "host": "SLP-0174",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.175": {
+            "host": "SLP-0175",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.176": {
+            "host": "SLP-0176",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.177": {
+            "host": "SLP-0177",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.178": {
+            "host": "SLP-0178",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.179": {
+            "host": "SLP-0179",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.180": {
+            "host": "SLP-0180",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.181": {
+            "host": "SLP-0181",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.182": {
+            "host": "SLP-0182",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.183": {
+            "host": "SLP-0183",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.184": {
+            "host": "SLP-0184",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.185": {
+            "host": "SLP-0185",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.186": {
+            "host": "SLP-0186",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.187": {
+            "host": "SLP-0187",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.188": {
+            "host": "SLP-0188",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.189": {
+            "host": "SLP-0189",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.190": {
+            "host": "SLP-0190",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.191": {
+            "host": "SLP-0191",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.192": {
+            "host": "SLP-0192",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.193": {
+            "host": "SLP-0193",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.194": {
+            "host": "SLP-0194",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.195": {
+            "host": "SLP-0195",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.196": {
+            "host": "SLP-0196",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.197": {
+            "host": "SLP-0197",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.198": {
+            "host": "SLP-0198",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.199": {
+            "host": "SLP-0199",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        },
+        "172.16.77.200": {
+            "host": "SLP-0200",
+            "domain": {
+                "internal": "corp.cortex.lan",
+                "external": "cortex.lan"
+            }
+        }
+    }
+}
