@@ -3056,18 +3056,21 @@ script:
 
         def __build_url(
             self,
-            suffix: str,
+            suffix: str | None,
         ) -> str:
-            url = self.__base_url if self.__base_url[-1:] == '/' else self.__base_url + '/'
-            if suffix.startswith('/'):
-                return url + suffix[1:]
+            if not suffix:
+                return self.__base_url
             else:
-                return url + suffix
+                url = self.__base_url if self.__base_url[-1:] == '/' else self.__base_url + '/'
+                if suffix.startswith('/'):
+                    return url + suffix[1:]
+                else:
+                    return url + suffix
 
         async def __request(
             self,
             method: str,
-            url_suffix: str,
+            url_suffix: str | None = None,
             params: dict[str, str] | None = None,
             headers: dict[str, str] | None = None,
             data: bytes | None = None,
@@ -3095,7 +3098,7 @@ script:
 
         async def get(
             self,
-            url_suffix: str,
+            url_suffix: str | None = None,
             headers: dict[str, str] = None,
             ok_codes: set[int] = {200,},
         ) -> aiohttp.ClientResponse:
@@ -3108,7 +3111,7 @@ script:
 
         async def get_content(
             self,
-            url_suffix: str,
+            url_suffix: str | None = None,
             headers: dict[str, str] = None,
             ok_codes: set[int] = {200,},
         ) -> bytes:
@@ -3121,7 +3124,7 @@ script:
 
         async def post(
             self,
-            url_suffix: str,
+            url_suffix: str | None = None,
             params: dict[str, str] | None = None,
             headers: dict[str, str] | None = None,
             data: bytes | None = None,
@@ -9252,7 +9255,7 @@ script:
                         timeout=settings.socket_timeout,
                         retries=DEFAULT_HTTP_RETRIES,
                     ) as client:
-                        content = await client.get_content('')
+                        content = await client.get_content()
                         if content[:4] == b'PK\x03\x04':
                             with zipfile.ZipFile(io.BytesIO(content), 'r') as z:
                                 z.setpassword((settings.custom_scenario_urls_zip_password or '').encode())
