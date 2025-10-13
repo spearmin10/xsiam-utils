@@ -538,7 +538,7 @@
                 "zip_filenames": ["project_files", "documents", "photos", "images", "report_data", "backup", "presentation", "contract_files", "work_docs", "archive", "invoice_data", "proposal_files", "client_documents", "sales_data", "marketing_materials", "financial_reports", "source_code", "project_backup", "team_documents", "tax_documents", "product_images", "order_data", "application_files", "software", "meeting_notes", "documents_backup", "business_reports", "project_pictures", "images_backup", "data_archive", "payment_files", "customer_data", "vendor_files", "employee_data", "research_data", "product_manual", "product_images", "event_photos", "event_files", "marketing_files", "contract_backup", "financial_data", "sales_reports", "documents_archive", "code_files", "proposal_archive", "order_invoices", "video_files", "business_documents", "software_update", "client_reports", "meeting_pictures", "press_releases", "project_archives", "system_files", "presentation_files", "backup_files", "purchase_orders", "company_docs", "proposal_files", "event_archive", "customer_files", "project_materials", "time_tracking", "product_catalog", "product_data", "invoice_files", "files_for_review", "financial_archive", "product_design", "job_applications", "staff_schedule", "employee_forms", "purchase_data", "system_backup", "meeting_docs", "proposal_documents", "product_information", "order_documents", "customer_reports", "resource_files", "software_tools", "team_files", "backup_data", "event_documents", "client_feedback", "photo_archive", "task_files", "financial_documents", "monthly_reports", "presentation_data", "event_files_backup", "research_files", "vendor_reports", "client_agreements", "product_info", "files_for_upload", "meeting_agenda", "archive_data", "contract_documents"],
 
                 "attachment_sources": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": [
                         {
                             "#": "'.pdf'",
@@ -645,7 +645,7 @@
                     ]
                 },
                 "attachments": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": "random.sample([x['params'] for x in attachment_sources], counts=[x['weight'] for x in attachment_sources], k=random.choices([0,1,2,3], [1000, 50, 20, 10])[0])"
                 },
 
@@ -660,7 +660,7 @@
                 "external_email_address": "{external_account_name}@{external_domain}",
 
                 "internal_user": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": "random.choice(list(__users.values()))"
                 },
                 "internal_domain": "{internal_user.get('external_domain', '')}",
@@ -669,7 +669,7 @@
                 "internal_email_address": "{internal_account_name}@{internal_domain}",
 
                 "sender_recipient": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": "random.sample([{'domain': internal_domain, 'display_name': internal_display_name, 'email_address': internal_email_address}, {'domain': external_domain, 'display_name': external_display_name, 'email_address': external_email_address}], k=2)"
                 },
                 "sender_domain": "{sender_recipient[0]['domain']}",
@@ -1226,7 +1226,7 @@
             "sources": {
                 ".variables": {
                     "x": {
-                        "type": "eval",
+                        "types": "eval",
                         "value": "random.randint(1, 199)"
                     }
                 },
@@ -1263,7 +1263,7 @@
             "sources": {
                 ".variables": {
                     "user_params": {
-                        "type": "eval",
+                        "types": "eval",
                         "value": "random.choices([{'n': n, 'user': user} for n, user in enumerate(__users)], k=30)"
                     }
                 },

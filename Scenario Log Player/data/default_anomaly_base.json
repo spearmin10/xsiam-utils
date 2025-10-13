@@ -46,7 +46,7 @@
         "Malicious_Email_To_User": {
             ".variables": {
                 "internal_user": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": "next((u for u in __users.values() if u.get('ip') == src_ip), {})"
                 },
                 "now_rfc1123_time": "{datetime.datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S %z')}",
@@ -55,7 +55,7 @@
                 "mta_host2_main": "{''.join(random.choices(string.ascii_uppercase, k=9))}{''.join(random.choices(string.digits, k=4))}",
                 "mta_host_sub": "{''.join(random.choices(string.ascii_uppercase, k=4))}{''.join(random.choices(string.digits, k=3))}",
                 "attachment_sources": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": [
                         {
                             "@odata.type": "'#microsoft.graph.fileAttachment'",
@@ -86,7 +86,7 @@
                     ]
                 },
                 "attachments": {
-                    "type": "eval",
+                    "types": "eval",
                     "value": "[random.choice(attachment_sources)]"
                 },
                 "sender_domain": "{random.choice(['x.co', 'vodpool.ga', 'mecofficial.com'])}",
@@ -501,7 +501,7 @@
                 {
                     ".variables": {
                         "scan_range": {
-                            "type": "eval",
+                            "types": "eval",
                             "value": "({'dst_port': dst_port, 'o4': o4} for o4 in range(1, 199) for dst_port in range(1, 1024))"
                         }
                     },
