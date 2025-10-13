@@ -263,22 +263,29 @@ configuration:
   required: false
 - section: Custom Scenario
   advanced: true
-  display: Scenario URL
-  name: custom_scenario_url
-  type: 0
+  display: Scenario URLs
+  name: custom_scenario_urls
+  type: 12
   required: false
 - section: Custom Scenario
   advanced: true
   display: Username
   displaypassword: Password
-  name: custom_scenario_url_creds
+  name: custom_scenario_urls_creds
   type: 9
   required: false
 - section: Custom Scenario
   advanced: true
   display: ZIP Password
-  name: custom_scenario_zip_password
+  name: custom_scenario_urls_zip_password
   type: 4
+  required: false
+- section: Custom Scenario
+  advanced: true
+  display: Merge with the default scenario
+  name: custom_scenario_merge
+  defaultvalue: "false"
+  type: 8
   required: false
 - section: Scenario
   advanced: true
@@ -401,6 +408,109 @@ configuration:
   type: 19
   required: false
 script:
+  commands:
+  - name: slp-get-running-status
+    arguments:
+    - name: show_only
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      defaultValue: "true"
+    outputs:
+    - contextPath: ScenarioLogPlayer.RunningStatus
+      description: The running status information
+    description: Get the running information
+  - name: slp-var-datetime
+    arguments:
+    - name: entry_id
+      required: true
+      description: The entry ID of a file
+    description: Replace date time values with date time variables
+  - name: slp-get-last-error
+    arguments:
+    - name: show_only
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      defaultValue: "true"
+    outputs:
+    - contextPath: ScenarioLogPlayer.LastError
+      description: The last error information
+    description: Get the last error information
+  - name: slp-get-last-run
+    arguments:
+    - name: show_only
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      defaultValue: "true"
+    outputs:
+    - contextPath: ScenarioLogPlayer.LastRun
+      description: The last run information
+    description: Get the last run information
+  - name: slp-get-jobs-status
+    arguments:
+    - name: show_only
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      defaultValue: "true"
+    outputs:
+    - contextPath: ScenarioLogPlayer.JobsStatus
+      description: The information about running and scheduled jobs
+      type: unknown
+    description: Get the information about running and scheduled jobs
+  - name: slp-reset-status
+    arguments: []
+    description: Reset all the status information
+  - name: slp-get-default-scenario
+    arguments:
+    - name: save_as
+      description: The name to give the file to save
+      defaultValue: default-scenario.json
+    description: Get the default scenario template
+  - name: slp-build-scenario-from-logs
+    arguments:
+    - name: entry_id
+      required: true
+      description: The entry ID of a log file
+    - name: var_datetime
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      description: Set true to replace date time values with date time variables,
+        otherwise set false.
+      defaultValue: "true"
+    - name: individual
+      auto: PREDEFINED
+      predefined:
+      - "true"
+      - "false"
+      description: Set to true to make an individual entry for each log, otherwise
+        set to false.
+      defaultValue: "true"
+    - name: log_format
+      auto: PREDEFINED
+      predefined:
+      - raw
+      - cef
+      - json
+      description: Log Format
+      defaultValue: raw
+    - name: cef_vendor
+      description: Preferred CEF vendor
+      defaultValue: unknown
+    - name: cef_product
+      description: Preferred CEF product
+      defaultValue: unknown
+    - name: save_as
+      description: The name to give the scenario template file to save.
+    description: Build a scenario template from a log file
   script: |
     import os
     import os.path
@@ -410,8 +520,10 @@ script:
     import ssl
     import gzip
     import time
+    import uuid
     import copy
     import enum
+    import base64
     import socket
     import string
     import random
@@ -1624,7 +1736,7 @@ script:
             facility: str,
             severity: str,
         ) -> int:
-            facility = {
+            facility_n = {
                 'kern': 0,
                 'user': 1,
                 'mail': 2,
@@ -1647,7 +1759,7 @@ script:
                 'local7': 23,
             }.get(facility) or 0
 
-            severity = {
+            severity_n = {
                 'emerg': 0,
                 'alert': 1,
                 'crit': 2,
@@ -1658,7 +1770,7 @@ script:
                 'debug': 7
             }.get(severity) or 0
 
-            return facility * 8 + severity
+            return facility_n * 8 + severity_n
 
         def __init__(
             self,
@@ -1719,7 +1831,7 @@ script:
                     port = int(m['port'] or 514)
                     if port > 65535:
                         raise DemistoException(f'Invalid port number of the syslog address - {port}')
-                    self.__syslog_transport_address = (host, port)
+                    self.__syslog_transport_address: tuple[str, int] | None = (host, port)
                 else:
                     raise DemistoException(f'Invalid syslog address - {addr}')
             else:
@@ -1744,10 +1856,12 @@ script:
 
             ''' SECTION: Custom Scenario '''
             self.__custom_scenario_enable = argToBoolean(params.get('custom_scenario_enable', 'false'))
+            self.__custom_scenario_merge = argToBoolean(params.get('custom_scenario_merge', 'false'))
             self.__custom_scenario_json = params.get('custom_scenario_json') or None
-            self.__custom_scenario_url = params.get('custom_scenario_url') or None
-            self.__custom_scenario_url_creds = Settings.__get_credentials(params.get('custom_scenario_url_creds') or {})
-            self.__custom_scenario_url_zip_password = params.get('custom_scenario_url_zip_password') or None
+            urls = params.get('custom_scenario_urls') or ''
+            self.__custom_scenario_urls = [x for x in [x.strip() for x in urls.splitlines()] if x]
+            self.__custom_scenario_urls_creds = Settings.__get_credentials(params.get('custom_scenario_urls_creds') or {})
+            self.__custom_scenario_urls_zip_password = params.get('custom_scenario_urls_zip_password') or None
 
             ''' SECTION: Scenario '''
             self.__scenario_enable_resume_scheduled_jobs = argToBoolean(params.get('scenario_enable_resume_scheduled_jobs', 'true'))
@@ -1868,7 +1982,7 @@ script:
         @property
         def xsiam_hc_buffer_size(
             self,
-        ) -> bool:
+        ) -> int:
             return self.__xsiam_hc_buffer_size
 
         @property
@@ -1968,28 +2082,34 @@ script:
             return self.__custom_scenario_enable
 
         @property
+        def custom_scenario_merge(
+            self,
+        ) -> bool:
+            return self.__custom_scenario_merge
+
+        @property
         def custom_scenario_json(
             self,
         ) -> str | None:
             return self.__custom_scenario_json
 
         @property
-        def custom_scenario_url(
+        def custom_scenario_urls(
             self,
-        ) -> str | None:
-            return self.__custom_scenario_url
+        ) -> list[str]:
+            return self.__custom_scenario_urls
 
         @property
-        def custom_scenario_url_creds(
+        def custom_scenario_urls_creds(
             self,
         ) -> tuple[str, str] | None:
-            return self.__custom_scenario_url_creds
+            return self.__custom_scenario_urls_creds
 
         @property
-        def custom_scenario_url_zip_password(
+        def custom_scenario_urls_zip_password(
             self,
         ) -> str | None:
-            return self.__custom_scenario_url_zip_password
+            return self.__custom_scenario_urls_zip_password
 
         @property
         def syslog_preferred_headers(
@@ -2091,7 +2211,7 @@ script:
             'log_stats': 'log_stats',
             'jobs': 'jobs',
         }
-        out = {}
+        out: dict[str, str | None] = {}
         for k, value_type in ordered_params.items():
             if not (v := info.get(k)):
                 continue
@@ -2366,7 +2486,7 @@ script:
     class IntegrationContextUtils:
         """ Integration Context Utilities
         """
-        __last_sync: int = 0
+        __last_sync: float = 0.0
         __cache: dict[str, Any] = defaultdict(dict)
         __lock: threading.Lock = threading.Lock()
         __enable_alert_creation: bool = False
@@ -2562,7 +2682,10 @@ script:
                     cls.__last_sync = now
 
                 if incident:
-                    IntegrationContextUtils.__create_incident(**incident)
+                    IntegrationContextUtils.__create_incident(
+                        name=incident['name'],
+                        status=incident['status']
+                    )
 
         @classmethod
         def reset_status(
@@ -2948,7 +3071,7 @@ script:
             params: dict[str, str] | None = None,
             headers: dict[str, str] | None = None,
             data: bytes | None = None,
-            ok_codes: set[int] = (200,),
+            ok_codes: set[int] = {200,},
         ) -> aiohttp.ClientResponse:
             last_error = None
             for _ in range(self.__retries + 1):
@@ -2974,7 +3097,7 @@ script:
             self,
             url_suffix: str,
             headers: dict[str, str] = None,
-            ok_codes: set[int] = (200,),
+            ok_codes: set[int] = {200,},
         ) -> aiohttp.ClientResponse:
             return await self.__request(
                 method='GET',
@@ -2987,7 +3110,7 @@ script:
             self,
             url_suffix: str,
             headers: dict[str, str] = None,
-            ok_codes: set[int] = (200,),
+            ok_codes: set[int] = {200,},
         ) -> bytes:
             async with await self.get(
                 url_suffix=url_suffix,
@@ -3002,7 +3125,7 @@ script:
             params: dict[str, str] | None = None,
             headers: dict[str, str] | None = None,
             data: bytes | None = None,
-            ok_codes: set[int] = (200,),
+            ok_codes: set[int] = {200,},
         ) -> aiohttp.ClientResponse:
             return await self.__request(
                 method='POST',
@@ -3064,10 +3187,10 @@ script:
 
             :param rate_limit: The rate limit in Mbps.
             """
-            self.__rate_limit = max(rate_limit, 0) if rate_limit else rate_limit
-            self.__last_rating_time = 0
-            self.__next_rating_time = 0
-            self.__total_bytes_in_window = 0
+            self.__rate_limit: float = max(rate_limit, 0) if rate_limit else rate_limit
+            self.__last_rating_time: float = 0.0
+            self.__next_rating_time: float = 0.0
+            self.__total_bytes_in_window: int = 0
 
         async def transmit(
             self,
@@ -3208,7 +3331,7 @@ script:
 
         def __format_syslog(
             self,
-            log_format: str,
+            log_format: str | None,
             log_message: str,
         ) -> str:
             """ Build a syslog message.
@@ -3250,8 +3373,7 @@ script:
                             '__raw_json': self.__log_params
                         }
 
-                case _:
-                    raise DemistoException(f'Invalid preferred_log_format log type - {self.__preferred_log_format}')
+            raise DemistoException(f'Invalid preferred_log_format log type - {self.__preferred_log_format}')
 
         def __build_cef(
             self,
@@ -3305,8 +3427,7 @@ script:
                 case x if x.endswith('-json') or x == 'json':
                     return self.__format_syslog(syslog_format, self.build_cef(None))
 
-                case _:
-                    raise DemistoException(f'Invalid preferred log type - {self.__preferred_log_format}')
+            raise DemistoException(f'Invalid preferred log type - {self.__preferred_log_format}')
 
         @property
         def preferred_log_format(
@@ -3386,6 +3507,42 @@ script:
             return log
 
 
+    class LogSender(metaclass = ABCMeta):
+        """ Log Sender
+        """
+        @abstractmethod
+        async def send_log(
+            self,
+            log: str,
+            bypass_rate_limit: bool = False,
+        ) -> None:
+            """ Send an event log
+
+            :param log: An event log
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
+            """
+            pass
+
+        @abstractmethod
+        async def flush(
+            self,
+            bypass_rate_limit: bool = False,
+        ) -> None:
+            """ Flush buffered logs
+
+            :param bypass_rate_limit: Set to True to bypass the rate limit for the log, otherwise set to False.
+            """
+            pass
+
+        @abstractmethod
+        async def finish(
+            self,
+        ) -> None:
+            """ Finish sending logs
+            """
+            pass
+
+
     class HecLogSender:
         """ Log sender for XDR/XSIAM HTTP Collector
         """
@@ -3419,7 +3576,7 @@ script:
                 self.__nlogs_buffered = 0
                 self.__nlogs_sent = 0
                 if compression:
-                    self.__log_writer = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
+                    self.__log_writer: io.IOBase = gzip.GzipFile(mode='wb', fileobj=self.__buffer)
                     self.__content_type = 'application/gzip'
                     self.__content_encoding = 'gzip'
                 else:
@@ -3684,8 +3841,8 @@ script:
             self.__timeout = timeout
             self.__insecure = insecure
             self.__remote_addr = (host, port)
-            self.__dtgram = None
-            self.__stream = None
+            self.__dtgram: socket.socket | None = None
+            self.__stream: asyncio.StreamWriter | None = None
             self.__init, self.__send_log = {
                 'udp': (self.__init_udp, self.__send_log_dtgram),
                 'tcp': (self.__init_tcp, self.__send_log_stream),
@@ -3755,7 +3912,7 @@ script:
         async def __send_log_stream(
             self,
             log: str,
-        ) -> None:
+        ) -> int:
             """ Send an log message over TCP or SSL
 
             :param log: A log message.
@@ -3810,7 +3967,8 @@ script:
             """
             async with self.__alock:
                 if self.__dtgram:
-                    self.__dtgram = self.__dtgram.close()
+                    self.__dtgram.close()
+                    self.__dtgram = None
                 if self.__stream:
                     self.__stream.close()
                     await asyncio.wait_for(
@@ -3820,7 +3978,7 @@ script:
                     self.__stream = None
 
 
-    class LogSender:
+    class LogClient:
         """ Log Sender for HEC and Broker VM
         """
 
@@ -3868,7 +4026,7 @@ script:
                     raise DemistoException('Syslog Address is not configured.')
 
                 syslog_host, syslog_port = settings.syslog_transport_address
-                self.__syslog_sender = SyslogLogSender(
+                self.__syslog_sender: SyslogLogSender | None = SyslogLogSender(
                     protocol=settings.syslog_transport_protocol,
                     host=syslog_host,
                     port=syslog_port,
@@ -4178,11 +4336,9 @@ script:
     ''' LogGenerator CLASSES '''
 
 
-    class LogGenerator:
+    class LogGenerator(metaclass = ABCMeta):
         """ Log Generator
         """
-        __metaclass__ = ABCMeta
-
         @abstractmethod
         def generate(
             self,
@@ -5176,7 +5332,7 @@ script:
             utcnow = datetime.datetime.now(datetime.UTC)
 
             if self.__log_type == 'ad':
-                event_id = props.get('event_id')
+                event_id = props.get('event_id') or ''
                 match str(event_id):
                     case '4768':
                         src_user = props.get('src_user') or ''
@@ -5520,7 +5676,8 @@ script:
                     if isinstance(ent, int):
                         ports.append((ent, ent))
                     elif ',' in ent:
-                        ports.extend(self.__generate_port(argToList(ent)))
+                        for port in argToList(ent):
+                            ports.append((port, port))
                     elif m := re.fullmatch(r'(\d+)-(\d+)$', ent):
                         port1, port2 = sorted([
                             min(max(int(m[1]), 0), 65535),
@@ -5536,7 +5693,7 @@ script:
         def __generate_port(
             self,
             config: int | str | list[str | int]
-        ) -> str:
+        ) -> int:
             """ Generate a port number
 
             :param config: The settings to generate a port number.
@@ -6585,29 +6742,47 @@ script:
 
         def update(
             self,
-            scenario: dict[str, Any],
+            scenario: dict[str, Any] | Self,
         ) -> None:
             """ Add and update with the new scenario.
 
             :param scenario: A new scenario in JSON.
             """
-            self.__variables.update(scenario.get('variables') or {})
-            self.__sources.extend(to_list(scenario.get('sources')))
-            self.__jobs.extend(to_list(scenario.get('jobs')))
-            self.__callables.update(scenario.get('callables') or {})
-            self.__ip_ents.update(scenario.get('ip_entries') or {})
+            if isinstance(scenario, ScenarioStruct):
+                self.__variables.update(scenario.__variables)
+                self.__sources.update(scenario.__sources)
+                self.__jobs.update(scenario.__jobs)
+                self.__callables.update(scenario.__callables)
+                self.__ip_ents.update(scenario.__ip_ents)
 
-            services = scenario.get('services') or {}
-            for location in ['internal', 'external']:
-                for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
-                    dst = to_list(demisto.get(self.__services, f'{location}.{service_type}'))
-                    src = to_list(demisto.get(services, f'{location}.{service_type}'))
-                    dst.extend(src)
-                    if dst:
-                        self.__services[location][service_type] = dst
+                for location in ['internal', 'external']:
+                    for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
+                        dservices = demisto.get(self.__services, f'{location}.{service_type}') or []
+                        sservices = demisto.get(scenario.__services, f'{location}.{service_type}') or []
+                        dservices.extend(sservices)
+                        if dservices:
+                            self.__services[location][service_type] = dservices
 
-            if gw := demisto.get(services, 'internal.gw'):
-                self.__services['internal']['gw'] = gw
+                if gw := demisto.get(scenario.__services, 'internal.gw'):
+                    self.__services['internal']['gw'] = gw
+            else:
+                self.__variables.update(scenario.get('variables') or {})
+                self.__sources.extend(to_list(scenario.get('sources')))
+                self.__jobs.extend(to_list(scenario.get('jobs')))
+                self.__callables.update(scenario.get('callables') or {})
+                self.__ip_ents.update(scenario.get('ip_entries') or {})
+
+                services = scenario.get('services') or {}
+                for location in ['internal', 'external']:
+                    for service_type in ['tap', 'proxy', 'web', 'dns', 'dhcp']:
+                        dst = to_list(demisto.get(self.__services, f'{location}.{service_type}'))
+                        src = to_list(demisto.get(services, f'{location}.{service_type}'))
+                        dst.extend(src)
+                        if dst:
+                            self.__services[location][service_type] = dst
+
+                if gw := demisto.get(services, 'internal.gw'):
+                    self.__services['internal']['gw'] = gw
 
         def build(
             self
@@ -9056,34 +9231,37 @@ script:
             :param settings: The instance settings.
             :return: The scenario loaded.
             """
+            if not settings.custom_scenario_enable or settings.custom_scenario_merge:
+                scenario = DefaultScenario.build_default(settings).build()
+            else:
+                scenario = ScenarioStruct()
+
             if settings.custom_scenario_enable:
-                if not (settings.custom_scenario_url or settings.custom_scenario_json):
+                if not (settings.custom_scenario_urls or settings.custom_scenario_json):
                     raise DemistoException('No custom scenarios are configured.')
 
-                scenario = ScenarioStruct()
                 if settings.custom_scenario_json:
                     scenario.update(json.loads(settings.custom_scenario_json))
 
-                if settings.custom_scenario_url:
+                for url in settings.custom_scenario_urls:
                     async with AsyncHttpClient(
-                        base_url=settings.custom_scenario_url,
+                        base_url=url,
                         insecure=settings.insecure,
                         proxies=settings.proxies or None,
-                        credentials=settings.custom_scenario_url_creds,
+                        credentials=settings.custom_scenario_urls_creds,
                         timeout=settings.socket_timeout,
                         retries=DEFAULT_HTTP_RETRIES,
                     ) as client:
                         content = await client.get_content('')
                         if content[:4] == b'PK\x03\x04':
                             with zipfile.ZipFile(io.BytesIO(content), 'r') as z:
-                                z.setpassword((settings.custom_scenario_url_zip_password or '').encode())
+                                z.setpassword((settings.custom_scenario_urls_zip_password or '').encode())
                                 for fname in sorted([i.filename for i in z.infolist()]):
                                     scenario.update(json.loads(z.read(fname).decode()))
                         else:
                             scenario.update(json.loads(content.decode()))
-                return scenario
-            else:
-                return DefaultScenario.build_default(settings).build()
+
+            return scenario
 
         @staticmethod
         async def load(
@@ -9157,11 +9335,9 @@ script:
     ''' Player CLASSES '''
 
 
-    class Player:
+    class Player(metaclass = ABCMeta):
         """ Player
         """
-        __metaclass__ = ABCMeta
-
         @abstractmethod
         def run(
             self,
@@ -9393,7 +9569,7 @@ script:
             sources: list[SourceTemplateUnit],
             callables: CallableUnits,
             props_generator: LogPropertiesGenerator,
-            log_sender: LogSender,
+            log_client: LogClient,
             services: ServiceMap,
             variables: Variables,
             switching_interval: int,
@@ -9405,7 +9581,7 @@ script:
             :param sources: List of source template units to play.
             :param callables: The callable units.
             :param props_generator: The log properties generator.
-            :param log_sender: The log sender.
+            :param log_client: The log client.
             :param services: The service map.
             :param variables: The variables.
             :param switching_interval: The interval time in seconds to check and switch the CPU context when sending a log.
@@ -9413,7 +9589,7 @@ script:
             """
             self.__settings = settings
             self.__props_generator = props_generator
-            self.__log_sender = log_sender
+            self.__log_client = log_client
             self.__sources = sources
             self.__callables = callables
             self.__services = services
@@ -9463,7 +9639,7 @@ script:
                         }, sync=True)
                         break
 
-                    await self.__log_sender.send_log(
+                    await self.__log_client.send_log(
                         log_encoder,
                         bypass_rate_limit=self.__bypass_rate_limit
                     )
@@ -9830,7 +10006,7 @@ script:
                 case _:
                     raise DemistoException(f'Invalid run mode - {mode}')
 
-            await self.__log_sender.flush()
+            await self.__log_client.flush()
 
 
     class JobsPlayer(Player):
@@ -9876,7 +10052,7 @@ script:
             jobs: list[JobUnit],
             callables: CallableUnits,
             props_generator: LogPropertiesGenerator,
-            log_sender: LogSender,
+            log_client: LogClient,
             services: ServiceMap,
         ) -> None:
             """ Initialize the instance
@@ -9885,12 +10061,12 @@ script:
             :param jobs: List of job units to play.
             :param callables: The callable units.
             :param props_generator: The log properties generator.
-            :param log_sender: The log sender.
+            :param log_client: The log sender.
             :param services: The service map.
             """
             self.__settings = settings
             self.__props_generator = props_generator
-            self.__log_sender = log_sender
+            self.__log_client = log_client
             self.__jobs = jobs
             self.__callables = callables
             self.__services = services
@@ -9976,13 +10152,13 @@ script:
                     nrepeat: int,
                     callables: CallableUnits,
                     props_generator: LogPropertiesGenerator,
-                    log_sender: LogSender,
+                    log_client: LogClient,
                     services: ServiceMap,
                 ) -> None:
                     self.__settings = settings
                     self.__callables = callables
                     self.__props_generator = props_generator
-                    self.__log_sender = log_sender
+                    self.__log_client = log_client
                     self.__services = services
                     self.__countdown = itertools.repeat(*([1] if nrepeat is None else [1, nrepeat]))
                     self.__waiting_jobs: map[JobUnit, int] = {}
@@ -10021,7 +10197,7 @@ script:
                     return SourceTemplateUnitsPlayer(
                         settings=self.__settings,
                         props_generator=self.__props_generator,
-                        log_sender=self.__log_sender,
+                        log_client=self.__log_client,
                         sources=job.sources,
                         callables=self.__callables,
                         services=self.__services,
@@ -10084,7 +10260,7 @@ script:
                         nrepeat=nrepeat,
                         callables=self.__callables,
                         props_generator=self.__props_generator,
-                        log_sender=self.__log_sender,
+                        log_client=self.__log_client,
                         services=self.__services
                     ) as sche_jobs:
                         await sche_jobs.run(self.__jobs, self.__first_trigger_times)
@@ -10107,7 +10283,7 @@ script:
                             player = SourceTemplateUnitsPlayer(
                                 settings=self.__settings,
                                 props_generator=self.__props_generator,
-                                log_sender=self.__log_sender,
+                                log_client=self.__log_client,
                                 sources=job.sources,
                                 callables=self.__callables,
                                 services=self.__services,
@@ -10147,7 +10323,7 @@ script:
             :param scenario: The scenario to play.
             """
             self.__settings = settings
-            self.__log_sender = LogSender(settings)
+            self.__log_client = LogClient(settings)
             props_generator = LogPropertiesGenerator(scenario.ip_entries)
 
             self.__main_player = SourceTemplateUnitsPlayer(
@@ -10155,7 +10331,7 @@ script:
                 sources=scenario.sources,
                 callables=scenario.callables,
                 props_generator=props_generator,
-                log_sender=self.__log_sender,
+                log_client=self.__log_client,
                 services=scenario.services,
                 variables=scenario.variables,
                 switching_interval=0,
@@ -10166,7 +10342,7 @@ script:
                 jobs=scenario.jobs,
                 callables=scenario.callables,
                 props_generator=props_generator,
-                log_sender=self.__log_sender,
+                log_client=self.__log_client,
                 services=scenario.services
             )
 
@@ -10181,7 +10357,7 @@ script:
             exc_val: BaseException | None,
             traceback: TracebackType | None,
         ) -> None:
-            await self.__log_sender.finish()
+            await self.__log_client.finish()
 
         def set_first_trigger_times(
             self,
@@ -10199,7 +10375,7 @@ script:
             """ Run the process to generate and send logs
             """
             async with asyncio.TaskGroup() as tg:
-                task_bgp = tg.create_task(self.__log_sender.run_bg_process())
+                task_bgp = tg.create_task(self.__log_client.run_bg_process())
                 task_main = tg.create_task(
                     self.__main_player.run(
                         self.__settings.scenario_run_mode,
@@ -10214,14 +10390,14 @@ script:
                 )
                 await asyncio.wait([task_main, task_jobs], return_when=asyncio.FIRST_EXCEPTION)
                 task_bgp.cancel()
-                await self.__log_sender.finish()
+                await self.__log_client.finish()
 
         async def test(
             self
         ) -> None:
             """ Test connectivity
             """
-            await self.__log_sender.test()
+            await self.__log_client.test()
             # IntegrationContextUtils.update_status({})
             # await self.run()
 
@@ -10666,111 +10842,8 @@ script:
     if __name__ in ('__main__', '__builtin__', 'builtins'):
         main()
   type: python
-  commands:
-  - name: slp-get-running-status
-    arguments:
-    - name: show_only
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      defaultValue: "true"
-    outputs:
-    - contextPath: ScenarioLogPlayer.RunningStatus
-      description: The running status information
-    description: Get the running information
-  - name: slp-var-datetime
-    arguments:
-    - name: entry_id
-      required: true
-      description: The entry ID of a file
-    description: Replace date time values with date time variables
-  - name: slp-get-last-error
-    arguments:
-    - name: show_only
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      defaultValue: "true"
-    outputs:
-    - contextPath: ScenarioLogPlayer.LastError
-      description: The last error information
-    description: Get the last error information
-  - name: slp-get-last-run
-    arguments:
-    - name: show_only
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      defaultValue: "true"
-    outputs:
-    - contextPath: ScenarioLogPlayer.LastRun
-      description: The last run information
-    description: Get the last run information
-  - name: slp-get-jobs-status
-    arguments:
-    - name: show_only
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      defaultValue: "true"
-    outputs:
-    - contextPath: ScenarioLogPlayer.JobsStatus
-      description: The information about running and scheduled jobs
-      type: unknown
-    description: Get the information about running and scheduled jobs
-  - name: slp-reset-status
-    arguments: []
-    description: Reset all the status information
-  - name: slp-get-default-scenario
-    arguments:
-    - name: save_as
-      description: The name to give the file to save
-      defaultValue: default-scenario.json
-    description: Get the default scenario template
-  - name: slp-build-scenario-from-logs
-    arguments:
-    - name: entry_id
-      required: true
-      description: The entry ID of a log file
-    - name: var_datetime
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      description: Set true to replace date time values with date time variables,
-        otherwise set false.
-      defaultValue: "true"
-    - name: individual
-      auto: PREDEFINED
-      predefined:
-      - "true"
-      - "false"
-      description: Set to true to make an individual entry for each log, otherwise
-        set to false.
-      defaultValue: "true"
-    - name: log_format
-      auto: PREDEFINED
-      predefined:
-      - raw
-      - cef
-      - json
-      description: Log Format
-      defaultValue: raw
-    - name: cef_vendor
-      description: Preferred CEF vendor
-      defaultValue: unknown
-    - name: cef_product
-      description: Preferred CEF product
-      defaultValue: unknown
-    - name: save_as
-      description: The name to give the scenario template file to save.
-    description: Build a scenario template from a log file
-  dockerimage: demisto/py3-tools:1.0.0.2072021
+  dockerimage: demisto/py3-tools:1.0.0.5312700
+  subtype: python3
   runonce: false
   longRunning: true
-  subtype: python3
 sourcemoduleid: ExportIndicators
