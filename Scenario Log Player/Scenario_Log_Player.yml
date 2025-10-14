@@ -2771,16 +2771,21 @@ script:
 
         @staticmethod
         def __eval(
-            gvars: dict[str, Any] | None,
-            nvars: dict[str, Any] | None,
+            cur_vars: dict[str, Any] | None,
+            new_vars: dict[str, Any] | None,
         ) -> dict[str, Any] | None:
-            if nvars is None:
-                return gvars
+            if new_vars is None:
+                return cur_vars
 
-            gvars = dict(gvars or {})
-            for k, v in nvars.items():
-                gvars[k] = Variables.__eval_val(v, gvars)
-            return gvars
+            cur_vars = dict(cur_vars or {})
+            for k, v in new_vars.items():
+                if not (
+                    isinstance(v, dict) and
+                    k in cur_vars and
+                    argToBoolean(v.get('default', 'false'))
+                ):
+                    cur_vars[k] = Variables.__eval_val(v, cur_vars)
+            return cur_vars
 
         def __init__(
             self,
@@ -3954,6 +3959,7 @@ script:
             """
             if not log:
                 return
+            print(log)
 
             async with self.__alock:
                 if self.__init:
@@ -6751,7 +6757,14 @@ script:
 
             :param scenario: A new scenario in JSON.
             """
-            self.__variables.update(scenario.get('variables') or {})
+            for k, v in (scenario.get('variables') or {}).items():
+                if not (
+                    isinstance(v, dict) and
+                    k in self.__variables and
+                    argToBoolean(v.get('default', 'false'))
+                ):
+                    self.__variables[k] = v
+
             self.__sources.extend(to_list(scenario.get('sources')))
             self.__jobs.extend(to_list(scenario.get('jobs')))
             self.__callables.update(scenario.get('callables') or {})
