@@ -3959,7 +3959,6 @@ script:
             """
             if not log:
                 return
-            print(log)
 
             async with self.__alock:
                 if self.__init:
