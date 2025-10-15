@@ -2834,11 +2834,15 @@ script:
         def eval_obj(
             self,
             value: Any,
+            values_only: bool = True,
         ) -> Any:
             if isinstance(value, str):
                 return self.__eval_val(value, self.__gvars)
             elif isinstance(value, dict):
-                return {k: self.eval_obj(v) for k, v in value.items()}
+                return {
+                    k if values_only else self.eval_obj(k): self.eval_obj(v)
+                    for k, v in value.items()
+                }
             elif isinstance(value, list):
                 return [self.eval_obj(v) for v in value]
             else:
@@ -8867,8 +8871,7 @@ script:
     '''
 
         @staticmethod
-        def build_ip_entries(
-            ip_prefix: str,
+        def __build_ip_entries(
         ) -> dict[str, Any]:
             users = [
                 {
@@ -8979,7 +8982,7 @@ script:
                 ]
             ]
             return {
-                f'{ip_prefix}.{i}': assign_params(
+                f'{{_corp_client_segment_ip_prefix}}.{i}': assign_params(
                     host=f'SLP-{i:04}',
                     domain={
                         'internal': 'corp.cortex.lan',
@@ -9201,15 +9204,14 @@ script:
 
         def build(
             self,
-            no_ip_entries: bool,
         ) -> ScenarioStruct:
             """ Build a scenario.
 
-            :param no_ip_entries: Set to True to prevent the setting of ip_entries; otherwise, set to False.
             :return: A default scenario.
             """
             scenario = ScenarioStruct()
             scenario.update({'variables': self.__variables})
+            scenario.update({'ip_entries': DefaultScenario.__build_ip_entries()})
             scenario.update(self.__normal_scenario or {})
             scenario.update(self.__anomaly_scenario or {})
             scenario.update({
@@ -9230,11 +9232,6 @@ script:
                     ),
                 )
             })
-            if not no_ip_entries:
-                variables = Variables(scenario.variables)
-                if prefix := variables.get_value('_corp_client_segment_ip_prefix'):
-                    scenario.update({'ip_entries': DefaultScenario.build_ip_entries(prefix)})
-
             return scenario
 
 
@@ -9251,7 +9248,7 @@ script:
             :return: The scenario loaded.
             """
             if not settings.custom_scenario_enable or settings.custom_scenario_merge:
-                scenario = DefaultScenario.build_default(settings).build(no_ip_entries=True)
+                scenario = DefaultScenario.build_default(settings).build()
             else:
                 scenario = ScenarioStruct()
 
@@ -9280,16 +9277,6 @@ script:
                         else:
                             scenario.update(json.loads(content.decode()))
 
-            if not settings.custom_scenario_enable or settings.custom_scenario_merge:
-                variables = Variables(scenario.variables)
-                if prefix := variables.get_value('_corp_client_segment_ip_prefix'):
-                    ip_entries = {
-                        k: ent
-                        for k, ent in DefaultScenario.build_ip_entries(prefix).items()
-                        if k not in scenario.ip_entries
-                    }
-                    scenario.update({'ip_entries': ip_entries})
-
             return scenario
 
         @staticmethod
@@ -9313,12 +9300,14 @@ script:
             :param settings: The instance settings.
             :param scenario: The scenario.
             """
+            variables = Variables(scenario.variables)
             self.__settings = settings
-            self.__ip_ents = IpEntries(scenario.ip_entries)
-            self.__variables = Variables(scenario.variables)
-            self.__variables.update_global_vars({'__ips': self.__ip_ents.entries})
-            self.__variables.update_global_vars({'__users': self.__ip_ents.build_users()})
-
+            self.__ip_ents = IpEntries(
+                variables.eval_obj(scenario.ip_entries, values_only=False)
+            )
+            variables.update_global_vars({'__ips': self.__ip_ents.entries})
+            variables.update_global_vars({'__users': self.__ip_ents.build_users()})
+            self.__variables = variables
             self.__sources = [SourceTemplateUnit(tunit) for tunit in scenario.sources]
             self.__jobs = [JobUnit(junit, self.__variables) for junit in scenario.jobs]
             self.__callables = CallableUnits(scenario.callables)
@@ -10581,7 +10570,7 @@ script:
         :param args: The argument parameters
         :param settings: The instance settings
         """
-        scenario = DefaultScenario.build_default(settings).build(no_ip_entries=False)
+        scenario = DefaultScenario.build_default(settings).build()
         return fileResult(
             args.get('save_as') or 'default-scenario.json',
             json.dumps(scenario.build(), indent=4)
