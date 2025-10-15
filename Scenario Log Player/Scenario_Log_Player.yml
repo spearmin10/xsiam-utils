@@ -9115,7 +9115,10 @@ script:
                         'src': ['{_corp_client_segment_ip_prefix}.0/27', '{_corp_client_segment_ip_prefix}.128/27']
                     },
                     'exception': {
-                        'dst': '172.16.0.0/16'
+                        'dst': [
+                            '{_corp_client_segment_ip_prefix}.0/24',
+                            '{_corp_server_segment_ip_prefix}.0/24'
+                        ]
                     }
                 },
                 'squid': {
