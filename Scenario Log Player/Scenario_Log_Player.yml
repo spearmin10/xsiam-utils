@@ -6846,7 +6846,7 @@ script:
         "_corp_server_segment_ip_prefix": {
             "default": true,
             "types": "raw",
-            "value": "172.16.78"
+            "value": "172.16.77"
         },
         "_corp_internal_ad_ip": "{_corp_server_segment_ip_prefix}.241",
         "_corp_internal_dns_ip": "{_corp_server_segment_ip_prefix}.242",
@@ -9063,17 +9063,17 @@ script:
                 if service := {
                     'ngfw': {
                         'product': 'ngfw',
-                        'ip': '{_corp_client_segment_ip_prefix}.251',
+                        'ip': '{_corp_server_segment_ip_prefix}.251',
                         'fqdn': 'ngfw.corp.cortex.lan'
                     },
                     'checkpoint-fw': {
                         'product': 'checkpoint-fw',
-                        'ip': '{_corp_client_segment_ip_prefix}.252',
+                        'ip': '{_corp_server_segment_ip_prefix}.252',
                         'fqdn': 'checkpoint.corp.cortex.lan'
                     },
                     'fortigate': {
                         'product': 'fortigate',
-                        'ip': '{_corp_client_segment_ip_prefix}.253',
+                        'ip': '{_corp_server_segment_ip_prefix}.253',
                         'fqdn': 'fortigate.corp.cortex.lan'
                     }
                 }.get(name):
@@ -9096,7 +9096,7 @@ script:
 
             self.__internal_proxy_squid = {
                 'product': 'squid',
-                'ip': '{_corp_client_segment_ip_prefix}.250',
+                'ip': '{_corp_server_segment_ip_prefix}.250',
                 'port': 8080,
                 'fqdn': 'squid.corp.cortex.lan',
                 'protocol': ['http', 'https'],
