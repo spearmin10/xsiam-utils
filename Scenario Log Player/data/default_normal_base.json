@@ -1,14 +1,9 @@
 {
-    "variables": {
-        "_internal_ad_ip": "172.16.77.240",
-        "_internal_dns_ip": "172.16.78.2",
-        "_corp_portal_ip": "172.16.78.10"
-    },
     "sources": [
         {
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -34,7 +29,7 @@
         {
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -80,7 +75,7 @@
         {
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -372,7 +367,7 @@
             },
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -399,7 +394,7 @@
             },
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -425,7 +420,7 @@
             },
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -450,7 +445,7 @@
             "#": "Corporate Potal",
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -486,11 +481,11 @@
             "#": "endpoints -> endpoints",
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
-            "dst": "172.16.77.0/24",
+            "dst": "{_corp_client_segment_ip_prefix}.0/24",
             "dst_port": "137, 138",
             "ip_protocol": "udp",
             "fw_action": "allow",
@@ -500,11 +495,11 @@
             "#": "endpoints -> AD",
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
-            "dst": "{_internal_ad_ip}",
+            "dst": "{_corp_internal_ad_ip}",
             "dst_port": "137, 138",
             "ip_protocol": "udp",
             "fw_action": "allow",
@@ -514,11 +509,11 @@
             "#": "endpoints -> AD",
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
-            "dst": "{_internal_ad_ip}",
+            "dst": "{_corp_internal_ad_ip}",
             "dst_port": "88, 135, 389, 445",
             "ip_protocol": "tcp",
             "fw_action": "allow",
@@ -536,7 +531,6 @@
                 "docx_filenames": ["invoice", "document", "proposal", "report", "resume", "cover_letter", "contract", "application", "meeting_notes", "project_plan", "agreement", "letter", "report_final", "business_plan", "application_form", "feedback", "budget", "contract_final", "meeting_minutes", "letter_of_recommendation", "job_description", "employee_manual", "proposal_final", "task_list", "assignment", "letter_of_intent", "client_feedback", "employee_performance", "research_paper", "invoice_details", "sales_report", "project_report", "annual_report", "employee_survey", "feedback_form", "terms_and_conditions", "meeting_agenda", "policy_document", "case_study", "product_description", "confidentiality_agreement", "school_report", "expense_report", "non_disclosure_agreement", "purchase_order", "marketing_plan", "research_summary", "team_schedule", "sales_invoice", "legal_notice", "product_specification", "user_guide", "project_update", "client_proposal", "statement_of_work", "training_material", "tax_form", "work_schedule", "company_profile", "contract_template", "travel_itinerary", "event_agenda", "travel_plan", "proposal_letter", "employee_guide", "statement", "press_release", "reference_letter", "client_report", "legal_documents", "press_kit", "research_report", "meeting_report", "service_agreement", "action_plan", "invoice_template", "financial_statement", "report_template", "inventory_report", "asset_report", "proposal_document", "product_review", "risk_assessment", "supplier_agreement", "travel_expenses", "customer_feedback", "end_of_year_report", "performance_review", "marketing_report", "customer_report", "annual_performance", "employee_report", "service_report", "timeline", "business_summary", "letter_of_offer", "staff_schedule", "onboarding_documents", "invitation_letter", "task_report"],
                 "xlsx_filenames": ["invoice", "budget", "sales_report", "financial_statement", "project_schedule", "expense_report", "client_list", "payroll", "inventory", "timesheet", "monthly_report", "profit_loss", "business_plan", "employee_schedule", "forecast", "quarterly_report", "balance_sheet", "sales_invoice", "tax_report", "project_budget", "marketing_plan", "revenue_report", "cash_flow", "product_sales", "meeting_schedule", "order_summary", "project_plan", "task_list", "audit_report", "financial_analysis", "expense_summary", "investment_plan", "customer_data", "capital_budget", "profit_margin", "company_budget", "product_inventory", "team_schedule", "employee_data", "sales_forecast", "meeting_minutes", "supplier_invoice", "project_progress", "event_budget", "performance_review", "customer_feedback", "service_report", "business_summary", "client_invoice", "financial_projection", "purchase_order", "marketing_report", "vendor_list", "product_list", "work_plan", "expense_details", "profit_and_loss", "income_statement", "product_price_list", "order_tracking", "contract_summary", "cash_report", "asset_report", "risk_assessment", "project_overview", "account_statement", "employee_performance", "contract_payment", "product_cost", "supplier_report", "year_end_report", "investment_report", "financial_forecast", "customer_invoice", "purchase_report", "time_tracking", "holiday_schedule", "supplier_payment", "training_schedule", "operational_report", "product_launch", "marketing_budget", "service_invoice", "event_schedule", "business_forecast", "stock_report", "recruitment_schedule", "performance_metrics", "vendor_report", "cost_breakdown", "bonus_report", "service_plan", "budget_template", "annual_plan", "partner_invoice", "department_budget", "sales_pipeline", "client_schedule", "subscription_report", "proposal_budget"],
                 "zip_filenames": ["project_files", "documents", "photos", "images", "report_data", "backup", "presentation", "contract_files", "work_docs", "archive", "invoice_data", "proposal_files", "client_documents", "sales_data", "marketing_materials", "financial_reports", "source_code", "project_backup", "team_documents", "tax_documents", "product_images", "order_data", "application_files", "software", "meeting_notes", "documents_backup", "business_reports", "project_pictures", "images_backup", "data_archive", "payment_files", "customer_data", "vendor_files", "employee_data", "research_data", "product_manual", "product_images", "event_photos", "event_files", "marketing_files", "contract_backup", "financial_data", "sales_reports", "documents_archive", "code_files", "proposal_archive", "order_invoices", "video_files", "business_documents", "software_update", "client_reports", "meeting_pictures", "press_releases", "project_archives", "system_files", "presentation_files", "backup_files", "purchase_orders", "company_docs", "proposal_files", "event_archive", "customer_files", "project_materials", "time_tracking", "product_catalog", "product_data", "invoice_files", "files_for_review", "financial_archive", "product_design", "job_applications", "staff_schedule", "employee_forms", "purchase_data", "system_backup", "meeting_docs", "proposal_documents", "product_information", "order_documents", "customer_reports", "resource_files", "software_tools", "team_files", "backup_data", "event_documents", "client_feedback", "photo_archive", "task_files", "financial_documents", "monthly_reports", "presentation_data", "event_files_backup", "research_files", "vendor_reports", "client_agreements", "product_info", "files_for_upload", "meeting_agenda", "archive_data", "contract_documents"],
-
                 "attachment_sources": {
                     "types": "eval",
                     "value": [
@@ -902,7 +896,7 @@
             "#": "Windows Executable Download - Windows Update [No Proxy]",
             ".interval": "{random.randint(3600, 7200)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                 "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
@@ -961,11 +955,11 @@
             "#": "Windows Executable Download - Windows Update [Outside Proxy]",
             ".interval": "{random.randint(3600, 7200)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                 "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
-                "proxy_ip": "172.16.77.250"
+                "proxy_ip": "{_corp_client_segment_ip_prefix}.250"
             },
             "sources": [
                 {
@@ -1021,11 +1015,11 @@
             "#": "Windows Executable Download - Windows Update [Outside/Bihind Proxy]",
             ".interval": "{random.randint(3600, 7200)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                 "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
-                "proxy_ip": "172.16.77.250",
+                "proxy_ip": "{_corp_client_segment_ip_prefix}.250",
                 "proxy_port": 8080
             },
             "sources": [
@@ -1103,8 +1097,8 @@
             ".interval": "{random.randint(0, 600)}",
             "sources": {
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(1, 199)}",
-                    "ad_ip": "{_internal_ad_ip}"
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}",
+                    "ad_ip": "{_corp_internal_ad_ip}"
                 },
                 ".next": {
                     "mode": "sequential",
@@ -1164,8 +1158,8 @@
             ".interval": "{random.randint(43200, 86400)}",
             "sources": {
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(1, 199)}",
-                    "ad_ip": "{_internal_ad_ip}"
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}",
+                    "ad_ip": "{_corp_internal_ad_ip}"
                 },
                 ".next": {
                     "mode": "sequential",
@@ -1236,7 +1230,7 @@
                         {
                             "operation": "internal.log",
                             "type": "dhcp",
-                            "src_ip": "172.16.77.{x}",
+                            "src_ip": "{_corp_client_segment_ip_prefix}.{x}",
                             "src_user": null,
                             "src_mac": "00:0c:29:dd:22:{x:02x}",
                             "action": "update-request"
@@ -1244,7 +1238,7 @@
                         {
                             "operation": "internal.log",
                             "type": "dhcp",
-                            "src_ip": "172.16.77.{x}",
+                            "src_ip": "{_corp_client_segment_ip_prefix}.{x}",
                             "src_mac": "00:0c:29:dd:22:{x:02x}",
                             "action": "renew"
                         }

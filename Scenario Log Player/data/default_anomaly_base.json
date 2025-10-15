@@ -1,14 +1,10 @@
 {
-    "variables": {
-        "_internal_ad_ip": "172.16.77.240",
-        "_internal_dns_ip": "172.16.78.2"
-    },
     "sources": [
         {
             "#": "Random-Looking Domain Names",
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -32,7 +28,7 @@
         {
             "operation": "internal.outbound",
             "type": "network",
-            "src": "172.16.77.0/24",
+            "src": "{_corp_client_segment_ip_prefix}.0/24",
             "src_user": null,
             "src_host": null,
             "src_domain": null,
@@ -318,7 +314,7 @@
                 "fqdn1": "www.{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.{random.choice(['com','net','org'])}",
                 "fqdn2": "{''.join(random.choices(string.ascii_lowercase + '_', k=16))}.{random.choice(['com','net','org'])}",
                 "fqdn": "{random.choice([fqdn1, fqdn2])}",
-                "src_ip": "172.16.77.{random.randint(1, 199)}"
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}"
             },
             "sources": {
                 "operation": "internal.outbound",
@@ -350,7 +346,7 @@
             "#": "DGA - Random Domain Name Queries",
             ".interval": "{random.randint(7200, 14400)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.randint(10, 14)}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
                 "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}"
@@ -370,7 +366,7 @@
                     "src_user": null,
                     "src_host": null,
                     "src_domain": null,
-                    "dst": "{_internal_dns_ip}",
+                    "dst": "{_corp_internal_dns_ip}",
                     "dst_port": 53,
                     "ip_protocol": "udp",
                     "app_protocol": "dns",
@@ -391,7 +387,7 @@
                         "source_ip": "{src_ip}",
                         "source_user": null,
                         "source_port": "{src_port}",
-                        "dest_ip": "{_internal_dns_ip}",
+                        "dest_ip": "{_corp_internal_dns_ip}",
                         "dest_port": 53,
                         "protocol": "udp",
                         "app": "dns-base",
@@ -409,7 +405,7 @@
             ".interval": "{random.randint(7200, 14400)}",
             "sources": {
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(1, 199)}"
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}"
                 },
                 "operation": "internal.outbound",
                 "type": "network",
@@ -427,8 +423,8 @@
             "#": "DNS tunneling",
             ".interval": "{random.randint(43200, 86400)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.randint(10, 14)}",
-                "dst_ip": "{_internal_dns_ip}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
+                "dst_ip": "{_corp_internal_dns_ip}",
                 "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
                 "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}"
             },
@@ -489,7 +485,7 @@
             "#": "Port Scan + SMB: User Password Brute Force Attempt",
             ".interval": "{random.randint(43200, 86400)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.randint(10, 14)}"
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}"
             },
             "sources": [
                 {
@@ -511,7 +507,7 @@
                     "src_user": null,
                     "src_host": null,
                     "src_domain": null,
-                    "dst": "172.16.78.{o4}",
+                    "dst": "{_corp_server_segment_ip_prefix}.{o4}",
                     "dst_port": "{dst_port}",
                     "ip_protocol": "tcp",
                     "app_protocol": "incomplete",
@@ -523,7 +519,7 @@
                 {
                     ".variables": {
                         "src_port": "{random.randint(10000, 65534)}",
-                        "dst_ip": "172.16.78.{random.randint(1, 199)}"
+                        "dst_ip": "{_corp_server_segment_ip_prefix}.{random.randint(1, 199)}"
                     },
                     ".next": {
                         "mode": "sequential",
@@ -602,7 +598,7 @@
             "#": "Malicious PowerShell Script [No Proxy]",
             ".interval": "{random.randint(43200, 86400)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.randint(32, 36)}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(32, 36)}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "dst_ip": "185.199.110.133"
             },
@@ -647,11 +643,11 @@
             "#": "Malicious PowerShell Script [Outside Proxy]",
             ".interval": "{random.randint(43200, 86400)}",
             ".variables": {
-                "src_ip": "172.16.77.{random.randint(10, 14)}",
+                "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
                 "src_port": "{random.randint(10000, 65534)}",
                 "dst_ip": "{ipaddress.IPv4Address(random.randint(0x01000001, 0x09ffff00))}",
                 "dst_path": "{''.join(random.choices(string.ascii_lowercase, k=4))}/{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.ps1",
-                "proxy_ip": "172.16.77.250"
+                "proxy_ip": "{_corp_client_segment_ip_prefix}.250"
             },
             "sources": [
                 {
