@@ -2591,7 +2591,7 @@ script:
         ) -> None:
             """ Set the alert creation mode.
 
-            :param: on: Set True to turn on the alert creation mode, otherwise False.
+            :param on: Set True to turn on the alert creation mode, otherwise False.
             """
             cls.__enable_alert_creation = on
 
@@ -2835,7 +2835,7 @@ script:
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_eval(value, self.__gvars)
+            return Variables.__eval_val(value, self.__gvars)
 
         def get_value(
             self,
@@ -6074,17 +6074,16 @@ script:
             :patam path: The current path from the root node.
             :return The output value from eval().
             """
-            if method := eval_types.get(path):
-                if method == 'f-string':
-                    return variables.eval_fstr(value)
-                elif method == 'eval':
-                    return variables.eval_eval(value)
-                elif method == 'raw':
-                    return value
-                else:
-                    raise DemistoException(f'Invalid evaluation type - {method}')
-
-            if isinstance(value, dict):
+            if methods := eval_types.get(path):
+                for method in argToList(methods):
+                    if method == 'f-string':
+                        value = variables.eval_fstr(value)
+                    elif method == 'eval':
+                        value = variables.eval_eval(value)
+                    elif method != 'raw':
+                        raise DemistoException(f'Invalid evaluation type - {method}')
+                return value
+            elif isinstance(value, dict):
                 return {
                     k: v
                     if k.startswith('.')
@@ -6837,18 +6836,31 @@ script:
     class DefaultScenario:
         """ Scenario JSON Structure
         """
+        VARIABLES = r'''
+    {
+        "_corp_client_segment_ip_prefix": {
+            "default": true,
+            "types": "raw",
+            "value": "172.16.77"
+        },
+        "_corp_server_segment_ip_prefix": {
+            "default": true,
+            "types": "raw",
+            "value": "172.16.78"
+        },
+        "_corp_internal_ad_ip": "{_corp_server_segment_ip_prefix}.241",
+        "_corp_internal_dns_ip": "{_corp_server_segment_ip_prefix}.242",
+        "_corp_portal_ip": "{_corp_server_segment_ip_prefix}.243"
+    }
+    '''
+
         SCENARIO_NORMAL = r'''
     {
-        "variables": {
-            "_internal_ad_ip": "172.16.77.240",
-            "_internal_dns_ip": "172.16.78.2",
-            "_corp_portal_ip": "172.16.78.10"
-        },
         "sources": [
             {
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -6874,7 +6886,7 @@ script:
             {
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -6920,7 +6932,7 @@ script:
             {
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -7212,7 +7224,7 @@ script:
                 },
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -7239,7 +7251,7 @@ script:
                 },
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -7265,7 +7277,7 @@ script:
                 },
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -7290,7 +7302,7 @@ script:
                 "#": "Corporate Potal",
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -7326,11 +7338,11 @@ script:
                 "#": "endpoints -> endpoints",
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "172.16.77.0/24",
+                "dst": "{_corp_client_segment_ip_prefix}.0/24",
                 "dst_port": "137, 138",
                 "ip_protocol": "udp",
                 "fw_action": "allow",
@@ -7340,11 +7352,11 @@ script:
                 "#": "endpoints -> AD",
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "{_internal_ad_ip}",
+                "dst": "{_corp_internal_ad_ip}",
                 "dst_port": "137, 138",
                 "ip_protocol": "udp",
                 "fw_action": "allow",
@@ -7354,11 +7366,11 @@ script:
                 "#": "endpoints -> AD",
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
-                "dst": "{_internal_ad_ip}",
+                "dst": "{_corp_internal_ad_ip}",
                 "dst_port": "88, 135, 389, 445",
                 "ip_protocol": "tcp",
                 "fw_action": "allow",
@@ -7741,7 +7753,7 @@ script:
                 "#": "Windows Executable Download - Windows Update [No Proxy]",
                 ".interval": "{random.randint(3600, 7200)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(32, 127), random.randint(160, 199)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                     "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com"
@@ -7800,11 +7812,11 @@ script:
                 "#": "Windows Executable Download - Windows Update [Outside Proxy]",
                 ".interval": "{random.randint(3600, 7200)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                     "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
-                    "proxy_ip": "172.16.77.250"
+                    "proxy_ip": "{_corp_client_segment_ip_prefix}.250"
                 },
                 "sources": [
                     {
@@ -7860,11 +7872,11 @@ script:
                 "#": "Windows Executable Download - Windows Update [Outside/Bihind Proxy]",
                 ".interval": "{random.randint(3600, 7200)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.choice([random.randint(1, 31), random.randint(127, 159)])}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{random.choice(['151.139.176.44', '151.139.176.36'])}",
                     "dst_path": "c/msdownload/update/software/defu/{datetime.datetime.now().year}/{datetime.datetime.now().month}/am_delta_patch_1.{random.randint(100,999)}.{random.randint(100,999)}.0_{''.join(random.choices(string.hexdigits.lower(), k=40))}.exe?cacheHostOrigin=au.download.windowsupdate.com",
-                    "proxy_ip": "172.16.77.250",
+                    "proxy_ip": "{_corp_client_segment_ip_prefix}.250",
                     "proxy_port": 8080
                 },
                 "sources": [
@@ -7942,8 +7954,8 @@ script:
                 ".interval": "{random.randint(0, 600)}",
                 "sources": {
                     ".variables": {
-                        "src_ip": "172.16.77.{random.randint(1, 199)}",
-                        "ad_ip": "{_internal_ad_ip}"
+                        "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}",
+                        "ad_ip": "{_corp_internal_ad_ip}"
                     },
                     ".next": {
                         "mode": "sequential",
@@ -8003,8 +8015,8 @@ script:
                 ".interval": "{random.randint(43200, 86400)}",
                 "sources": {
                     ".variables": {
-                        "src_ip": "172.16.77.{random.randint(1, 199)}",
-                        "ad_ip": "{_internal_ad_ip}"
+                        "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}",
+                        "ad_ip": "{_corp_internal_ad_ip}"
                     },
                     ".next": {
                         "mode": "sequential",
@@ -8075,7 +8087,7 @@ script:
                             {
                                 "operation": "internal.log",
                                 "type": "dhcp",
-                                "src_ip": "172.16.77.{x}",
+                                "src_ip": "{_corp_client_segment_ip_prefix}.{x}",
                                 "src_user": null,
                                 "src_mac": "00:0c:29:dd:22:{x:02x}",
                                 "action": "update-request"
@@ -8083,7 +8095,7 @@ script:
                             {
                                 "operation": "internal.log",
                                 "type": "dhcp",
-                                "src_ip": "172.16.77.{x}",
+                                "src_ip": "{_corp_client_segment_ip_prefix}.{x}",
                                 "src_mac": "00:0c:29:dd:22:{x:02x}",
                                 "action": "renew"
                             }
@@ -8126,16 +8138,12 @@ script:
 
         SCENARIO_ANOMALY = r'''
     {
-        "variables": {
-            "_internal_ad_ip": "172.16.77.240",
-            "_internal_dns_ip": "172.16.78.2"
-        },
         "sources": [
             {
                 "#": "Random-Looking Domain Names",
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -8159,7 +8167,7 @@ script:
             {
                 "operation": "internal.outbound",
                 "type": "network",
-                "src": "172.16.77.0/24",
+                "src": "{_corp_client_segment_ip_prefix}.0/24",
                 "src_user": null,
                 "src_host": null,
                 "src_domain": null,
@@ -8445,7 +8453,7 @@ script:
                     "fqdn1": "www.{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.{random.choice(['com','net','org'])}",
                     "fqdn2": "{''.join(random.choices(string.ascii_lowercase + '_', k=16))}.{random.choice(['com','net','org'])}",
                     "fqdn": "{random.choice([fqdn1, fqdn2])}",
-                    "src_ip": "172.16.77.{random.randint(1, 199)}"
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}"
                 },
                 "sources": {
                     "operation": "internal.outbound",
@@ -8477,7 +8485,7 @@ script:
                 "#": "DGA - Random Domain Name Queries",
                 ".interval": "{random.randint(7200, 14400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "domain": "{''.join(random.choices(string.ascii_lowercase, k=32))}.com",
                     "host": "{''.join(random.choices(string.ascii_lowercase, k=4))}"
@@ -8497,7 +8505,7 @@ script:
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
-                        "dst": "{_internal_dns_ip}",
+                        "dst": "{_corp_internal_dns_ip}",
                         "dst_port": 53,
                         "ip_protocol": "udp",
                         "app_protocol": "dns",
@@ -8518,7 +8526,7 @@ script:
                             "source_ip": "{src_ip}",
                             "source_user": null,
                             "source_port": "{src_port}",
-                            "dest_ip": "{_internal_dns_ip}",
+                            "dest_ip": "{_corp_internal_dns_ip}",
                             "dest_port": 53,
                             "protocol": "udp",
                             "app": "dns-base",
@@ -8536,7 +8544,7 @@ script:
                 ".interval": "{random.randint(7200, 14400)}",
                 "sources": {
                     ".variables": {
-                        "src_ip": "172.16.77.{random.randint(1, 199)}"
+                        "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(1, 199)}"
                     },
                     "operation": "internal.outbound",
                     "type": "network",
@@ -8554,8 +8562,8 @@ script:
                 "#": "DNS tunneling",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}",
-                    "dst_ip": "{_internal_dns_ip}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
+                    "dst_ip": "{_corp_internal_dns_ip}",
                     "domain1": "{random.choice(['go0gie.com','pawevi.com','anyconnect.stream','bigip.stream','fortiweb.download','kaspersky.science','microtik.stream','owa365.bid','symanteclive.download','windowsdefender.win'])}",
                     "domain2": "{''.join(random.choices(string.ascii_lowercase, k=4))}.{random.choice(['com','net','org','biz'])}"
                 },
@@ -8616,7 +8624,7 @@ script:
                 "#": "Port Scan + SMB: User Password Brute Force Attempt",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}"
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}"
                 },
                 "sources": [
                     {
@@ -8638,7 +8646,7 @@ script:
                         "src_user": null,
                         "src_host": null,
                         "src_domain": null,
-                        "dst": "172.16.78.{o4}",
+                        "dst": "{_corp_server_segment_ip_prefix}.{o4}",
                         "dst_port": "{dst_port}",
                         "ip_protocol": "tcp",
                         "app_protocol": "incomplete",
@@ -8650,7 +8658,7 @@ script:
                     {
                         ".variables": {
                             "src_port": "{random.randint(10000, 65534)}",
-                            "dst_ip": "172.16.78.{random.randint(1, 199)}"
+                            "dst_ip": "{_corp_server_segment_ip_prefix}.{random.randint(1, 199)}"
                         },
                         ".next": {
                             "mode": "sequential",
@@ -8729,7 +8737,7 @@ script:
                 "#": "Malicious PowerShell Script [No Proxy]",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(32, 36)}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(32, 36)}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "185.199.110.133"
                 },
@@ -8774,11 +8782,11 @@ script:
                 "#": "Malicious PowerShell Script [Outside Proxy]",
                 ".interval": "{random.randint(43200, 86400)}",
                 ".variables": {
-                    "src_ip": "172.16.77.{random.randint(10, 14)}",
+                    "src_ip": "{_corp_client_segment_ip_prefix}.{random.randint(10, 14)}",
                     "src_port": "{random.randint(10000, 65534)}",
                     "dst_ip": "{ipaddress.IPv4Address(random.randint(0x01000001, 0x09ffff00))}",
                     "dst_path": "{''.join(random.choices(string.ascii_lowercase, k=4))}/{''.join(random.choices(string.ascii_lowercase + '_', k=8))}.ps1",
-                    "proxy_ip": "172.16.77.250"
+                    "proxy_ip": "{_corp_client_segment_ip_prefix}.250"
                 },
                 "sources": [
                     {
@@ -8852,7 +8860,8 @@ script:
     '''
 
         @staticmethod
-        def __build_ip_entries(
+        def build_ip_entries(
+            ip_prefix: str,
         ) -> dict[str, Any]:
             users = [
                 {
@@ -8963,7 +8972,7 @@ script:
                 ]
             ]
             return {
-                f'172.16.77.{i}': assign_params(
+                f'{ip_prefix}.{i}': assign_params(
                     host=f'SLP-{i:04}',
                     domain={
                         'internal': 'corp.cortex.lan',
@@ -9016,6 +9025,7 @@ script:
         ) -> None:
             """ Initialize the scenario.
             """
+            self.__variables: dict[str, Any] = json.loads(self.VARIABLES)
             self.__internal_tap: list[dict[str, Any]] | None = None
             self.__internal_proxy_squid: dict[str, Any] | None = None
             self.__internal_web_apache: dict[str, Any] | None = None
@@ -9053,17 +9063,17 @@ script:
                 if service := {
                     'ngfw': {
                         'product': 'ngfw',
-                        'ip': '172.16.77.251',
+                        'ip': '{_corp_client_segment_ip_prefix}.251',
                         'fqdn': 'ngfw.corp.cortex.lan'
                     },
                     'checkpoint-fw': {
                         'product': 'checkpoint-fw',
-                        'ip': '172.16.77.252',
+                        'ip': '{_corp_client_segment_ip_prefix}.252',
                         'fqdn': 'checkpoint.corp.cortex.lan'
                     },
                     'fortigate': {
                         'product': 'fortigate',
-                        'ip': '172.16.77.253',
+                        'ip': '{_corp_client_segment_ip_prefix}.253',
                         'fqdn': 'fortigate.corp.cortex.lan'
                     }
                 }.get(name):
@@ -9086,13 +9096,13 @@ script:
 
             self.__internal_proxy_squid = {
                 'product': 'squid',
-                'ip': '172.16.77.250',
+                'ip': '{_corp_client_segment_ip_prefix}.250',
                 'port': 8080,
                 'fqdn': 'squid.corp.cortex.lan',
                 'protocol': ['http', 'https'],
                 'proxy': {
                     'rule': {
-                        'src': ['172.16.77.0/27', '172.16.77.128/27']
+                        'src': ['{_corp_client_segment_ip_prefix}.0/27', '{_corp_client_segment_ip_prefix}.128/27']
                     },
                     'exception': {
                         'dst': '172.16.0.0/16'
@@ -9118,7 +9128,7 @@ script:
 
             self.__internal_web_apache = {
                 'product': 'apache-httpd',
-                'ip': '172.16.78.10',
+                'ip': '{_corp_portal_ip}',
                 'port': [80, 443],
                 'fqdn': 'apache-httpd.corp.cortex.lan',
                 'apache-httpd': {
@@ -9133,7 +9143,7 @@ script:
             """
             self.__internal_dns_bind = {
                 'product': 'bind',
-                'ip': '172.16.78.2',
+                'ip': '{_corp_internal_dns_ip}',
                 'port': 53,
                 'fqdn': 'bind.corp.cortex.lan',
                 'dns': {
@@ -9148,7 +9158,7 @@ script:
             """
             self.__internal_dhcp_windows = {
                 'product': 'windows-dhcp',
-                'ip': '172.16.77.240',
+                'ip': '{_corp_internal_ad_ip}',
                 'fqdn': 'win-dhcp.corp.cortex.lan'
             }
 
@@ -9184,14 +9194,15 @@ script:
 
         def build(
             self,
+            no_ip_entries: bool,
         ) -> ScenarioStruct:
             """ Build a scenario.
 
+            :param no_ip_entries: Set to True to prevent the setting of ip_entries; otherwise, set to False.
             :return: A default scenario.
             """
             scenario = ScenarioStruct()
-            scenario.update({'.variables': {}})
-            scenario.update({'ip_entries': self.__build_ip_entries()})
+            scenario.update({'variables': self.__variables})
             scenario.update(self.__normal_scenario or {})
             scenario.update(self.__anomaly_scenario or {})
             scenario.update({
@@ -9212,6 +9223,11 @@ script:
                     ),
                 )
             })
+            if not no_ip_entries:
+                variables = Variables(scenario.variables)
+                if prefix := variables.get_value('_corp_client_segment_ip_prefix'):
+                    scenario.update({'ip_entries': DefaultScenario.build_ip_entries(prefix)})
+
             return scenario
 
 
@@ -9228,7 +9244,7 @@ script:
             :return: The scenario loaded.
             """
             if not settings.custom_scenario_enable or settings.custom_scenario_merge:
-                scenario = DefaultScenario.build_default(settings).build()
+                scenario = DefaultScenario.build_default(settings).build(no_ip_entries=True)
             else:
                 scenario = ScenarioStruct()
 
@@ -9256,6 +9272,16 @@ script:
                                     scenario.update(json.loads(z.read(fname).decode()))
                         else:
                             scenario.update(json.loads(content.decode()))
+
+            if not settings.custom_scenario_enable or settings.custom_scenario_merge:
+                variables = Variables(scenario.variables)
+                if prefix := variables.get_value('_corp_client_segment_ip_prefix'):
+                    ip_entries = {
+                        k: ent
+                        for k, ent in DefaultScenario.build_ip_entries(prefix).items()
+                        if k not in scenario.ip_entries
+                    }
+                    scenario.update({'ip_entries': ip_entries})
 
             return scenario
 
@@ -9289,7 +9315,10 @@ script:
             self.__sources = [SourceTemplateUnit(tunit) for tunit in scenario.sources]
             self.__jobs = [JobUnit(junit, self.__variables) for junit in scenario.jobs]
             self.__callables = CallableUnits(scenario.callables)
-            self.__services = ServiceMap(settings, scenario.services)
+            self.__services = ServiceMap(
+                settings,
+                self.__variables.eval_val(scenario.services)
+            )
 
         @property
         def variables(
@@ -10545,7 +10574,7 @@ script:
         :param args: The argument parameters
         :param settings: The instance settings
         """
-        scenario = DefaultScenario.build_default(settings).build()
+        scenario = DefaultScenario.build_default(settings).build(no_ip_entries=False)
         return fileResult(
             args.get('save_as') or 'default-scenario.json',
             json.dumps(scenario.build(), indent=4)
