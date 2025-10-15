@@ -6508,13 +6508,13 @@ script:
             self.__rules = {
                 k: [
                     ipaddress.IPv4Network(ip_network, False)
-                    for ip_network in to_list(demisto.get(service, f'proxy.rule.{k}'))
+                    for ip_network in to_set(demisto.get(service, f'proxy.rule.{k}'))
                 ] for k in ('src', 'dst')
             }
             self.__exceptions = {
                 k: [
                     ipaddress.IPv4Network(ip_network, False)
-                    for ip_network in to_list(demisto.get(service, f'proxy.exception.{k}'))
+                    for ip_network in to_set(demisto.get(service, f'proxy.exception.{k}'))
                 ] for k in ('src', 'dst')
             }
 
