@@ -2831,11 +2831,18 @@ script:
         ) -> Any:
             return Variables.__eval_eval(value, self.__gvars)
 
-        def eval_val(
+        def eval_obj(
             self,
             value: Any,
         ) -> Any:
-            return Variables.__eval_val(value, self.__gvars)
+            if isinstance(value, str):
+                return self.__eval_val(value, self.__gvars)
+            elif isinstance(value, dict):
+                return {k: self.eval_obj(v) for k, v in value.items()}
+            elif isinstance(value, list):
+                return [self.eval_obj(v) for v in value]
+            else:
+                return value
 
         def get_value(
             self,
@@ -9317,7 +9324,7 @@ script:
             self.__callables = CallableUnits(scenario.callables)
             self.__services = ServiceMap(
                 settings,
-                self.__variables.eval_val(scenario.services)
+                self.__variables.eval_obj(scenario.services)
             )
 
         @property
