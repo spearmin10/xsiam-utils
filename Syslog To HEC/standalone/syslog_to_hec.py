@@ -65,38 +65,38 @@ class Settings:
     ) -> None:
         ap = argparse.ArgumentParser()
         ap.add_argument(
-            '--syslog_protocol',
+            '--syslog-protocol',
             type=str,
             choices=['udp', 'tcp'],
             default='udp',
             help='The protocol to receive syslog messages. Choose "udp" or "tcp". The default is "udp".'
         )
         ap.add_argument(
-            '--syslog_port',
+            '--syslog-port',
             type=int,
             default=514,
             help='The port number to receive syslog messages. The default is port 514.'
         )
         ap.add_argument(
-            '--hec_api_url',
+            '--hec-api-url',
             type=str,
             required=True,
             help='The URL of the HTTP Event Collector (HEC) API. This option is required.'
         )
         ap.add_argument(
-            '--hec_api_key_raw',
+            '--hec-api-key-raw',
             type=str,
             default='',
             help='The API key for sending raw logs to the HTTP Event Collector (HEC).'
         )
         ap.add_argument(
-            '--hec_api_key_cef',
+            '--hec-api-key-cef',
             type=str,
             default='',
             help='The API key for sending CEF logs to the HTTP Event Collector (HEC).'
         )
         ap.add_argument(
-            '--hec_compression',
+            '--hec-compression',
             action='store_true',
             help='Enables compression for HEC messages.'
         )
@@ -112,21 +112,26 @@ class Settings:
             help='Specifies the proxy server in the format "ip:port".'
         )
         ap.add_argument(
-            '--ignore_non_syslog_message',
+            '--ignore-non-syslog-message',
             action='store_true',
             help='Ignores non-syslog messages.'
         )
         ap.add_argument(
-            '--new_syslog_header',
+            '--new-syslog-header',
             type=str,
             choices=['RFC3164', 'RFC5424'],
             default='',
             help='Specifies the syslog header format to be used when forwarding received syslog messages.'
         )
         ap.add_argument(
-            '--print_logs',
+            '--print-logs',
             action='store_true',
             help='Enable printing of log messages queued.'
+        )
+        ap.add_argument(
+            '--debug',
+            action='store_true',
+            help='Enable debugging.'
         )
         args = ap.parse_args()
 
@@ -233,6 +238,12 @@ class Settings:
         self
     ) -> bool:
         return self.__print_logs
+
+    @property
+    def debug(
+        self
+    ) -> bool:
+        return self.__debug
 
 
 class RestApiClient:
@@ -582,6 +593,10 @@ class LogForwarder:
             self.__hec_raw.send_log(log)
             if self.__settings.print_logs:
                 print(f'[RAW] {log}')
+            return
+
+        if self.__settings.debug:
+            print(f'No target found for {log}')
 
     def flush(
         self,
