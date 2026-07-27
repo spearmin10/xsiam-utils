@@ -1082,27 +1082,27 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                         arraymap(
                             arraymap(
                                 arraycreate(
-                                    object_create("now", current_time())
+                                    object_create("now", to_epoch(current_time(), "SECONDS"))
                                 ),
                                 object_create(
-                                    "now_time", to_epoch("@element"->now, "SECONDS"),
+                                    "now_time", to_integer("@element"->now),
                                     "log_time", to_epoch(
                                         parse_timestamp(
                                             "%Y %b %d %H:%M:%S",
                                             format_string("%d %s",
                                                 add(
-                                                    extract_time("@element"->now, "YEAR"),
+                                                    extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "YEAR"),
                                                     if(
                                                         _x->mon = "Dec" and
                                                         _x->day = "31" and
-                                                        extract_time("@element"->now, "MONTH") = 1 and
-                                                        extract_time("@element"->now, "DAY") = 1,
+                                                        extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "MONTH") = 1 and
+                                                        extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "DAY") = 1,
                                                         -1,
                                                         if(
                                                             _x->mon = "Jan" and
                                                             _x->day = "1" and
-                                                            extract_time("@element"->now, "MONTH") = 12 and
-                                                            extract_time("@element"->now, "DAY") = 31,
+                                                            extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "MONTH") = 12 and
+                                                            extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "DAY") = 31,
                                                             1,
                                                             0
                                                         )
@@ -1267,27 +1267,27 @@ alter _x = regexcapture(__log, "^(<(?P<pri>\d{1,3})>)((?P<datetime_3164>(?P<mon>
                         arraymap(
                             arraymap(
                                 arraycreate(
-                                    object_create("now", current_time())
+                                    object_create("now", to_epoch(current_time(), "SECONDS"))
                                 ),
                                 object_create(
-                                    "now_time", to_epoch("@element"->now, "SECONDS"),
+                                    "now_time", to_integer("@element"->now),
                                     "log_time", to_epoch(
                                         parse_timestamp(
                                             "%Y %b %d %H:%M:%S",
                                             format_string("%d %s",
                                                 add(
-                                                    extract_time("@element"->now, "YEAR"),
+                                                    extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "YEAR"),
                                                     if(
                                                         _x->mon = "Dec" and
                                                         _x->day = "31" and
-                                                        extract_time("@element"->now, "MONTH") = 1 and
-                                                        extract_time("@element"->now, "DAY") = 1,
+                                                        extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "MONTH") = 1 and
+                                                        extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "DAY") = 1,
                                                         -1,
                                                         if(
                                                             _x->mon = "Jan" and
                                                             _x->day = "1" and
-                                                            extract_time("@element"->now, "MONTH") = 12 and
-                                                            extract_time("@element"->now, "DAY") = 31,
+                                                            extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "MONTH") = 12 and
+                                                            extract_time(to_timestamp(to_integer("@element"->now), "SECONDS"), "DAY") = 31,
                                                             1,
                                                             0
                                                         )
